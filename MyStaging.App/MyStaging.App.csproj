@@ -1,0 +1,28 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>netcoreapp1.1</TargetFramework>
+    <AssemblyName>MyStaging.App</AssemblyName>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Remove="gmall\**" />
+    <EmbeddedResource Remove="gmall\**" />
+    <None Remove="gmall\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Newtonsoft.Json" Version="10.0.2" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\MyStaging\MyStaging.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="gmall\DAL\Build\" />
+    <Folder Include="gmall\Model\Build\" />
+  </ItemGroup>
+
+</Project>
