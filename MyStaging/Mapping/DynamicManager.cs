@@ -112,7 +112,7 @@ namespace MyStaging.Mapping
                 PropertyInfo pi = pis[i];
                 drNameList[pi.Name.ToLower()] = pi;
             }
-            for (int i = 0; i < pis.Length; i++)
+            for (int i = 0; i < dataRecord.FieldCount; i++)
             {
                 string fieldName = dataRecord.GetName(i);
                 if (drNameList.ContainsKey(fieldName) == false)

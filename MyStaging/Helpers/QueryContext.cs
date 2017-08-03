@@ -161,6 +161,8 @@ namespace MyStaging.Helpers
             PropertyInfo[] ps = typeof(T).GetProperties();
             foreach (var item in ps)
             {
+                if (item.GetCustomAttribute<ForeignKeyMappingAttribute>() != null)
+                    continue;
                 string alia = UnionList.Count > 0 ? "a." : "";
                 Fields.Add(alia + item.Name);
             }
@@ -247,22 +249,22 @@ namespace MyStaging.Helpers
 
         public string ToSQLString<TResult>()
         {
-            Type maintype = typeof(TResult);
-            if (maintype != typeof(T))
-                maintype = typeof(T);
-            string tableName = MyStagingUtils.GetMapping(maintype);
+            Type mastertype = typeof(TResult);
+            if (mastertype != typeof(T))
+                mastertype = typeof(T);
+            string tableName = MyStagingUtils.GetMapping(mastertype);
             // 主表
             StringBuilder sqlText = new StringBuilder();
-            string main_AlisName = UnionList.Count > 0 ? "a" : "";
-            sqlText.AppendLine($"SELECT {string.Join(",", Fields)} FROM  {tableName} {main_AlisName}");
+            string masterAlisName = UnionList.Count > 0 ? "a" : "";
+            sqlText.AppendLine($"SELECT {string.Join(",", Fields)} FROM  {tableName} {masterAlisName}");
             // union
             int _index = 2;
             foreach (var item in UnionList)
             {
                 PgSqlExpression expression = new PgSqlExpression();
-                expression.MainType = maintype;
+                expression.MasterType = mastertype;
                 if (UnionList.Count > 0)
-                    expression.Main_AlisName = main_AlisName;
+                    expression.Master_AlisName = masterAlisName;
                 expression.Union_AlisName = item.AlisName;
                 expression.ExpressionCapture(item.Body);
                 string unionTableName = MyStagingUtils.GetMapping(item.Model);
@@ -278,15 +280,15 @@ namespace MyStaging.Helpers
                     PgSqlExpression expression = new PgSqlExpression();
                     if (UnionList.Count == 0)
                     {
-                        expression.MainType = item.Model;
+                        expression.MasterType = item.Model;
                     }
                     else
                     {
                         ExpressionUnionModel union = UnionList.FirstOrDefault(f => f.Model == item.Model);
                         if (union == null && typeof(T) == item.Model)
                         {
-                            expression.MainType = item.Model;
-                            expression.Main_AlisName = "a";
+                            expression.MasterType = item.Model;
+                            expression.Master_AlisName = "a";
                         }
                         else if (union != null)
                         {

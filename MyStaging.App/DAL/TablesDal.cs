@@ -18,19 +18,19 @@ namespace MyStaging.App.DAL
         private string modelpath = string.Empty;
         private string dalpath = string.Empty;
         private string schemaName = string.Empty;
-        private string tableName = string.Empty;
+        private TableViewModel table = null;
         private List<FieldInfo> fieldList = new List<FieldInfo>();
         private List<PrimarykeyInfo> pkList = new List<PrimarykeyInfo>();
         private List<ConstraintInfo> consList = new List<ConstraintInfo>();
         #endregion
 
-        public TablesDal(string projectName, string modelpath, string dalpath, string schemaName, string tableName)
+        public TablesDal(string projectName, string modelpath, string dalpath, string schemaName, TableViewModel table)
         {
             this.projectName = projectName;
             this.modelpath = modelpath;
             this.dalpath = dalpath;
             this.schemaName = schemaName;
-            this.tableName = tableName;
+            this.table = table;
             Get_Fields();
             Get_Primarykey(fieldList[0].Oid);
             Get_Constraint();
@@ -38,19 +38,20 @@ namespace MyStaging.App.DAL
 
         public void Generate()
         {
-            string _classname = $"{this.schemaName.ToUpperPascal()}_{this.tableName}Model";
+            string _classname = $"{this.schemaName.ToUpperPascal()}_{this.table.name}Model";
             string _fileName = $"{modelpath}/{_classname}.cs";
             using (StreamWriter writer = new StreamWriter(File.Create(_fileName)))
             {
                 writer.WriteLine("using System;");
                 writer.WriteLine("using System.Linq;");
+                writer.WriteLine($"using {projectName}.DAL;");
                 writer.WriteLine("using Newtonsoft.Json;");
                 writer.WriteLine("using Newtonsoft.Json.Linq;");
                 writer.WriteLine("using MyStaging.Mapping;");
                 writer.WriteLine();
                 writer.WriteLine($"namespace {projectName}.Model");
                 writer.WriteLine("{");
-                writer.WriteLine($"\t[EntityMapping(TableName = \"{this.schemaName}.{this.tableName}\")]");
+                writer.WriteLine($"\t[EntityMapping(TableName = \"{this.schemaName}.{this.table.name}\")]");
                 writer.WriteLine($"\tpublic partial class {_classname}");
                 writer.WriteLine("\t{");
 
@@ -65,6 +66,18 @@ namespace MyStaging.App.DAL
 
                     writer.WriteLine($"\t\tpublic {item.RelType} {item.Field.ToUpperPascal()} {{ get;set; }}");
                 }
+                Hashtable ht = new Hashtable();
+                foreach (var item in consList)
+                {
+
+                    string pname = $"{item.table_name.ToUpperPascal()}";
+                    string propertyName = $"{item.nspname.ToUpperPascal()}_{pname}";
+                    if (ht.ContainsKey(propertyName)) continue;
+                    string dalName = $"{item.nspname.ToUpperPascal()}_{item.table_name}";
+                    writer.WriteLine($"\t\t[NonDbPropertyMapping]public {dalName}Model {propertyName} {{ get{{ return {dalName}.Context.Where(f=>f.{item.ref_column.ToUpperPascal()}==this.{item.conname.ToUpperPascal()}).ToOne(); }} }}");
+                    ht.Add(propertyName, "");
+                }
+
                 writer.WriteLine("\t}");
                 writer.WriteLine("}");
                 writer.Flush();
@@ -75,8 +88,8 @@ namespace MyStaging.App.DAL
 
         protected void CreateDal()
         {
-            string _model_classname = $"{this.schemaName.ToUpperPascal()}_{this.tableName}Model";
-            string _classname = $"{this.schemaName.ToUpperPascal()}_{this.tableName}";
+            string _model_classname = $"{this.schemaName.ToUpperPascal()}_{this.table.name}Model";
+            string _classname = $"{this.schemaName.ToUpperPascal()}_{this.table.name}";
             string _fileName = $"{dalpath}/{_classname}.cs";
             using (StreamWriter writer = new StreamWriter(File.Create(_fileName)))
             {
@@ -111,7 +124,7 @@ namespace MyStaging.App.DAL
                     }
                 }
 
-                string insert_sql = $"INSERT INTO \\\"{this.schemaName}\\\".\\\"{this.tableName}\\\"({sb_field.ToString()}) VALUES({sb_param.ToString()}) RETURNING {sb_field.ToString()};";
+                string insert_sql = $"INSERT INTO \\\"{this.schemaName}\\\".\\\"{this.table.name}\\\"({sb_field.ToString()}) VALUES({sb_param.ToString()}) RETURNING {sb_field.ToString()};";
                 writer.WriteLine($"\t\tconst string insertCmdText=\"{insert_sql}\";");
 
                 StringBuilder sb_primarykey = new StringBuilder();
@@ -124,28 +137,19 @@ namespace MyStaging.App.DAL
                 }
                 string pkString = sb_primarykey.ToString();
 
-                writer.WriteLine($"\t\tconst string deleteCmdText=\"DELETE FROM \\\"{this.schemaName}\\\".\\\"{this.tableName}\\\" WHERE {pkString}\";");
+                writer.WriteLine($"\t\tconst string deleteCmdText=\"DELETE FROM \\\"{this.schemaName}\\\".\\\"{this.table.name}\\\" WHERE {pkString}\";");
                 writer.WriteLine($"\t\tpublic static {_classname} Context{{get{{return new {_classname}();}}}}");
 
-                writer.WriteLine();
-                Insert_Generator(writer, fieldList, _model_classname, _classname);
-                writer.WriteLine();
-                Delete_Generator(writer, _model_classname, _classname);
-                writer.WriteLine();
-                Update_Generator(writer, _model_classname, _classname);
-                writer.WriteLine();
-
-                Hashtable ht = new Hashtable();
-                foreach (var item in consList)
+                if (this.table.type == "table")
                 {
-
-                    string pname = $"{item.relname.ToUpperPascal()}";
-                    string propertyName = $"{item.nspname.ToUpperPascal()}_{pname}";
-                    if (ht.ContainsKey(propertyName)) continue;
-                    writer.WriteLine($"\t\tpublic {item.nspname.ToUpperPascal()}_{item.relname}Model {propertyName} {{ get;set; }}");
-                    ht.Add(propertyName, "");
+                    writer.WriteLine();
+                    Insert_Generator(writer, fieldList, _model_classname, _classname);
+                    writer.WriteLine();
+                    Delete_Generator(writer, _model_classname, _classname);
+                    writer.WriteLine();
+                    Update_Generator(writer, _model_classname, _classname);
+                    writer.WriteLine();
                 }
-
 
                 writer.WriteLine("\t}");
                 writer.WriteLine("}");
@@ -180,7 +184,7 @@ namespace MyStaging.App.DAL
                 d_key.Add(fs.RelType + " " + fs.Field);
                 d_key_fields.Add(fs.Field);
             }
-            string updateName = $"{this.tableName.ToUpperPascal()}UpdateBuilder";
+            string updateName = $"{this.table.name.ToUpperPascal()}UpdateBuilder";
 
             writer.WriteLine($"\t\tpublic static {updateName} Update({string.Join(",", d_key)})");
             writer.WriteLine("\t\t{");
@@ -213,8 +217,6 @@ namespace MyStaging.App.DAL
             }
             writer.WriteLine("\t\t}");
         }
-
-
 
         protected void Delete_Generator(StreamWriter writer, string class_model, string className)
         {
@@ -264,7 +266,7 @@ namespace MyStaging.App.DAL
                                 left join pg_type e2 on e2.oid=e.typelem
                                 inner join information_schema.columns f on f.table_schema = b.nspname and f.table_name=a.relname and column_name = c.attname
                                 WHERE b.nspname='{0}' and a.relname='{1}';";
-            _sqltext = string.Format(_sqltext, this.schemaName, this.tableName);
+            _sqltext = string.Format(_sqltext, this.schemaName, this.table.name);
 
 
             PgSqlHelper.ExecuteDataReader(dr =>
@@ -325,7 +327,7 @@ namespace MyStaging.App.DAL
             string _sqltext = $@"SELECT b.attname, format_type(b.atttypid, b.atttypmod) AS data_type
 FROM pg_index a
 INNER JOIN pg_attribute b ON b.attrelid = a.indrelid AND b.attnum = ANY(a.indkey)
-WHERE a.indrelid = '{schemaName}.{tableName}'::regclass AND a.indisprimary;
+WHERE a.indrelid = '{schemaName}.{table.name}'::regclass AND a.indisprimary;
 ";
             PgSqlHelper.ExecuteDataReader(dr =>
             {
@@ -336,38 +338,37 @@ WHERE a.indrelid = '{schemaName}.{tableName}'::regclass AND a.indisprimary;
             }, CommandType.Text, _sqltext);
         }
 
-        /// <summary>
-        ///  get constraint by schema an table
-        /// </summary>
         protected void Get_Constraint()
         {
-            string _sqltext = string.Format(@"SELECT a.conname, a.contype, a.conkey, a.consrc,b.relname,c.nspname
-                                             FROM pg_constraint a 
-                                            left JOIN  pg_class b on b.oid= a.confrelid
-                                            inner join pg_namespace c on b.relnamespace = c.oid
-                                            WHERE conrelid in 
-                                            (
-                                            SELECT a.oid FROM pg_class a inner join pg_namespace b 
-                                            on a.relnamespace=b.oid
-                                            WHERE b.nspname='{0}' and a.relname='{1}'
-                                            );", this.schemaName, this.tableName);
+            string _sqltext = string.Format(@"
+SELECT(select attname from pg_attribute where attrelid = a.conrelid and attnum = any(a.conkey)) as conname
+,b.relname,c.nspname,d.attname as ref_column,e.typname
+FROM pg_constraint a 
+left JOIN  pg_class b on b.oid= a.confrelid
+inner join pg_namespace c on b.relnamespace = c.oid
+INNER JOIN pg_attribute d on d.attrelid =a.confrelid and d.attnum=any(a.confkey)
+inner join pg_type e on e.oid = d.atttypid
+WHERE conrelid in 
+(
+SELECT a.oid FROM pg_class a 
+inner join pg_namespace b on a.relnamespace=b.oid
+WHERE b.nspname='{0}' and a.relname='{1}'
+);", this.schemaName, this.table.name);
 
 
             PgSqlHelper.ExecuteDataReader(dr =>
                 {
                     string conname = dr["conname"].ToString();
-                    string contype = dr["contype"].ToString();
-                    string conkey = dr["conkey"].ToString();
-                    string consrc = dr["consrc"].ToString();
+                    string contype = dr["typname"].ToString();
+                    string ref_column = dr["ref_column"].ToString();
                     string relname = dr["relname"].ToString();
                     string nspname = dr["nspname"].ToString();
                     consList.Add(new ConstraintInfo()
                     {
                         conname = conname,
                         contype = contype,
-                        conkey = conkey,
-                        consrc = consrc,
-                        relname = relname,
+                        ref_column = ref_column,
+                        table_name = relname,
                         nspname = nspname
                     });
                 }, CommandType.Text, _sqltext);

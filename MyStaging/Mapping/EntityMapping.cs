@@ -19,4 +19,9 @@ namespace MyStaging.Mapping
         public NpgsqlDbType DbType { get; set; }
         public int Length { get; set; }
     }
+
+    [AttributeUsage(AttributeTargets.Property, Inherited = true)]
+    public class ForeignKeyMappingAttribute : Attribute
+    {
+    }
 }

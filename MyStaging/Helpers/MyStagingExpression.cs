@@ -13,8 +13,8 @@ namespace MyStaging.Helpers
 {
     public class PgSqlExpression
     {
-        public Type MainType { get; set; }
-        public string Main_AlisName { get; set; }
+        public Type MasterType { get; set; }
+        public string Master_AlisName { get; set; }
         public string Union_AlisName { get; set; }
         public StringBuilder CommandText { get; set; } = new StringBuilder();
         public List<NpgsqlParameter> Parameters { get; set; } = new List<NpgsqlParameter>();
@@ -70,8 +70,8 @@ namespace MyStaging.Helpers
         private string GetTableName(Type type)
         {
             string tableName;
-            if (MainType != null)
-                tableName = type == MainType ? Main_AlisName : Union_AlisName;
+            if (MasterType != null)
+                tableName = type == MasterType ? Master_AlisName : Union_AlisName;
             else
                 tableName = type.Name;
 
@@ -88,17 +88,21 @@ namespace MyStaging.Helpers
             else if (selector is MemberExpression)
             {
                 MemberExpression me = ((MemberExpression)selector);
-                //string tableName = GetTableName(me.Member.DeclaringType);
-                //if (tableName != null)
-                //{
-                //    tableName = $"{tableName}.";
-                //}
-                string tableName = me.Member.DeclaringType == MainType ? Main_AlisName : Union_AlisName;
-                if (!string.IsNullOrEmpty(tableName))
+                if (me.Expression is ConstantExpression)
                 {
-                    tableName = tableName + ".";
+                    var f = Expression.Lambda(selector).Compile();
+                    object _value = f.DynamicInvoke();
+                    SetValue(_value, me.NodeType);
                 }
-                CommandText.Append($"{tableName}{me.Member.Name}");
+                else
+                {
+                    string tableName = me.Member.DeclaringType == MasterType ? Master_AlisName : Union_AlisName;
+                    if (!string.IsNullOrEmpty(tableName))
+                    {
+                        tableName = tableName + ".";
+                    }
+                    CommandText.Append($"{tableName}{me.Member.Name}");
+                }
             }
             else if (selector is NewArrayExpression)
             {

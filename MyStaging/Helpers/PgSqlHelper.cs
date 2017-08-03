@@ -22,7 +22,7 @@ namespace MyStaging.Helpers
                 throw new ArgumentNullException("connectionString not null");
 
             int poolsize = 0;
-            Match m = Regex.Match(connectionString, @"Maximum\s*pool\s*size\s*=\s*(\d+)", RegexOptions.IgnoreCase);
+            Match m = Regex.Match(connectionString.ToLower(), @"maximum\s*pool\s*size\s*=\s*(\d+)", RegexOptions.IgnoreCase);
             if (m.Success)
                 int.TryParse(m.Groups[1].Value, out poolsize);
             else

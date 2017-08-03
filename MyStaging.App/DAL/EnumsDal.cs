@@ -11,15 +11,18 @@ namespace MyStaging.App.DAL
 {
     public class EnumsDal
     {
-        private static string _pname = string.Empty;
-        /// <summary>
-        ///  获取枚举类型
-        /// </summary>
-        public static void Generate(string projectName)
-        {
-            _pname = projectName;
+        private static string projectName = string.Empty;
+        private static string modelPath = string.Empty;
+        private static string rootPath = string.Empty;
 
-            string _sqltext = @"select a.oid,a.typname,b.nspname from pg_type a 
+        public static void Generate(string rootpath, string modelpath, string projName)
+        {
+            rootPath = rootpath;
+            modelPath = modelpath;
+            projectName = projName;
+
+            string _sqltext = @"
+select a.oid,a.typname,b.nspname from pg_type a 
 INNER JOIN pg_namespace b on a.typnamespace = b.oid 
 where a.typtype = 'e' order by oid asc";
 
@@ -34,12 +37,12 @@ where a.typtype = 'e' order by oid asc";
                 });
             }, System.Data.CommandType.Text, _sqltext);
 
-            string _fileName = $"{_pname}/Model/Build/_Enums.cs";
+            string _fileName = Path.Combine(modelpath, "_Enums.cs");
             using (StreamWriter writer = new StreamWriter(File.Create(_fileName)))
             {
                 writer.WriteLine("using System;");
                 writer.WriteLine();
-                writer.WriteLine($"namespace {_pname}.Model");
+                writer.WriteLine($"namespace {projectName}.Model");
                 writer.WriteLine("{");
 
                 for (int i = 0; i < list.Count; i++)
@@ -63,16 +66,16 @@ where a.typtype = 'e' order by oid asc";
 
         public static void GenerateMapping(List<EnumTypeInfo> list)
         {
-            string _fileName = $"{_pname}/_startup.cs";
+            string _fileName = Path.Combine(rootPath, "_startup.cs");
             using (StreamWriter writer = new StreamWriter(File.Create(_fileName)))
             {
-                writer.WriteLine($"using {_pname}.Model;");
+                writer.WriteLine($"using {projectName}.Model;");
                 writer.WriteLine("using System;");
                 writer.WriteLine("using Microsoft.Extensions.Logging;");
                 writer.WriteLine("using MyStaging.Helpers;");
                 writer.WriteLine("using Npgsql;");
                 writer.WriteLine();
-                writer.WriteLine($"namespace {_pname}");
+                writer.WriteLine($"namespace {projectName}");
                 writer.WriteLine("{");
                 writer.WriteLine("\tpublic class _startup");
                 writer.WriteLine("\t{");

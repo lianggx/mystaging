@@ -7,13 +7,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Remove="gmall\**" />
-    <EmbeddedResource Remove="gmall\**" />
-    <None Remove="gmall\**" />
-  </ItemGroup>
-
-  <ItemGroup>
     <PackageReference Include="Newtonsoft.Json" Version="10.0.2" />
+    <PackageReference Include="System.IO.Compression.ZipFile" Version="4.3.0" />
   </ItemGroup>
 
   <ItemGroup>
@@ -21,8 +16,9 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="gmall\DAL\Build\" />
-    <Folder Include="gmall\Model\Build\" />
+    <None Update="build.bat">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
 
 </Project>
