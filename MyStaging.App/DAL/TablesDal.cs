@@ -69,12 +69,14 @@ namespace MyStaging.App.DAL
                 Hashtable ht = new Hashtable();
                 foreach (var item in consList)
                 {
-
                     string pname = $"{item.table_name.ToUpperPascal()}";
                     string propertyName = $"{item.nspname.ToUpperPascal()}_{pname}";
-                    if (ht.ContainsKey(propertyName)) continue;
+                    if (ht.ContainsKey(propertyName))
+                    {
+                        propertyName += "By" + item.conname;
+                    }
                     string dalName = $"{item.nspname.ToUpperPascal()}_{item.table_name}";
-                    writer.WriteLine($"\t\t[NonDbPropertyMapping]public {dalName}Model {propertyName} {{ get{{ return {dalName}.Context.Where(f=>f.{item.ref_column.ToUpperPascal()}==this.{item.conname.ToUpperPascal()}).ToOne(); }} }}");
+                    writer.WriteLine($"\t\t[ForeignKeyMapping]public {dalName}Model {propertyName} {{ get{{ return {dalName}.Context.Where(f=>f.{item.ref_column.ToUpperPascal()}==this.{item.conname.ToUpperPascal()}).ToOne(); }} }}");
                     ht.Add(propertyName, "");
                 }
 
