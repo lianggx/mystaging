@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Text;
+using Microsoft.Extensions.Logging;
 using Npgsql;
 using System.Linq;
 using System.Collections.Generic;
@@ -39,8 +40,7 @@ namespace MyStaging.App
                 }
                 i++;
             }
-            NLog.Logger logger = new NLog.LogFactory().CreateNullLogger();
-            PgSqlHelper.InitConnection(logger, connection.ToString());
+            PgSqlHelper.InitConnection(null, connection.ToString());
             SchemaFactory.Build(outPutPath, projName);
 
             Console.WriteLine("已完成.....");

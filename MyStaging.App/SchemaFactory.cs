@@ -67,6 +67,9 @@ namespace MyStaging.App
                 writer.WriteLine("\t</PropertyGroup>");
                 writer.WriteLine();
                 writer.WriteLine("\t<ItemGroup>");
+                writer.WriteLine("\t\t<ProjectReference Include=\"Newtonsoft.Json\" Version=\"10.0.3\" />");
+                writer.WriteLine("\t</ItemGroup>");
+                writer.WriteLine("\t<ItemGroup>");
                 writer.WriteLine("\t\t<ProjectReference Include=\"..\\MyStaging\\MyStaging.csproj\" />");
                 writer.WriteLine("\t</ItemGroup>");
                 writer.WriteLine("</Project>");
@@ -74,47 +77,50 @@ namespace MyStaging.App
 
             // unzip
             string mystaging_file = Path.Combine(outputDir, projectName, "MyStaging");
-            if (Directory.Exists(mystaging_file))
-                Directory.Delete(mystaging_file, true);
-            System.IO.Compression.ZipFile.ExtractToDirectory("MyStaging.zip", Path.Combine(outputDir, projectName));
-
+            if (!Directory.Exists(mystaging_file))
+            {
+                System.IO.Compression.ZipFile.ExtractToDirectory("MyStaging.zip", Path.Combine(outputDir, projectName));
+            }
             // sln
 
             string sln_file = Path.Combine(outputDir, projectName, $"{projectName}.sln");
-            using (StreamWriter writer = new StreamWriter(File.Create(sln_file)))
+            if (!File.Exists(sln_file))
             {
-                writer.WriteLine("Microsoft Visual Studio Solution File, Format Version 12.00");
-                writer.WriteLine("# Visual Studio 15>");
-                writer.WriteLine($"VisualStudioVersion = 15.0.26430.13");
+                using (StreamWriter writer = new StreamWriter(File.Create(sln_file)))
+                {
+                    writer.WriteLine("Microsoft Visual Studio Solution File, Format Version 12.00");
+                    writer.WriteLine("# Visual Studio 15>");
+                    writer.WriteLine($"VisualStudioVersion = 15.0.26430.13");
 
-                Guid db_guid = Guid.NewGuid();
-                writer.WriteLine($"Project(\"{Guid.NewGuid()}\") = \"{projectName}.db\", \"{projectName}.db\\{projectName}.db.csproj\", \"{ db_guid}\"");
-                writer.WriteLine($"EndProject");
+                    Guid db_guid = Guid.NewGuid();
+                    writer.WriteLine($"Project(\"{Guid.NewGuid()}\") = \"{projectName}.db\", \"{projectName}.db\\{projectName}.db.csproj\", \"{ db_guid}\"");
+                    writer.WriteLine($"EndProject");
 
-                Guid staging_guid = Guid.NewGuid();
-                writer.WriteLine($"Project(\"{Guid.NewGuid()}\") = \"MyStaging\", \"MyStaging\\MyStaging.csproj\", \"{ staging_guid}\"");
-                writer.WriteLine($"EndProject");
+                    Guid staging_guid = Guid.NewGuid();
+                    writer.WriteLine($"Project(\"{Guid.NewGuid()}\") = \"MyStaging\", \"MyStaging\\MyStaging.csproj\", \"{ staging_guid}\"");
+                    writer.WriteLine($"EndProject");
 
-                writer.WriteLine("Global");
-                writer.WriteLine("\tGlobalSection(SolutionConfigurationPlatforms) = preSolution");
-                writer.WriteLine("\t\tDebug|Any CPU = Debug|Any CPU");
-                writer.WriteLine("\t\tRelease|Any CPU = Release|Any CPU");
-                writer.WriteLine("\tEndGlobalSection");
+                    writer.WriteLine("Global");
+                    writer.WriteLine("\tGlobalSection(SolutionConfigurationPlatforms) = preSolution");
+                    writer.WriteLine("\t\tDebug|Any CPU = Debug|Any CPU");
+                    writer.WriteLine("\t\tRelease|Any CPU = Release|Any CPU");
+                    writer.WriteLine("\tEndGlobalSection");
 
-                writer.WriteLine("\tGlobalSection(ProjectConfigurationPlatforms) = postSolution");
-                writer.WriteLine($"\t\t{db_guid}.Debug|Any CPU.ActiveCfg = Debug|Any CPU");
-                writer.WriteLine($"\t\t{db_guid}.Debug|Any CPU.Build.0 = Debug|Any CPU");
-                writer.WriteLine($"\t\t{db_guid}.Release|Any CPU.ActiveCfg = Release|Any CPU");
-                writer.WriteLine($"\t\t{db_guid}.Release|Any CPU.Build.0 = Release|Any CPU");
-                writer.WriteLine($"\t\t{staging_guid}.Debug|Any CPU.ActiveCfg = Debug|Any CPU");
-                writer.WriteLine($"\t\t{staging_guid}.Debug|Any CPU.Build.0 = Debug|Any CPU");
-                writer.WriteLine($"\t\t{staging_guid}.Release|Any CPU.ActiveCfg = Release|Any CPU");
-                writer.WriteLine($"\t\t{staging_guid}.Release|Any CPU.Build.0 = Release|Any CPU");
-                writer.WriteLine("\tEndGlobalSection");
-                writer.WriteLine("\tGlobalSection(SolutionProperties) = preSolution");
-                writer.WriteLine("\t\tHideSolutionNode = FALSE");
-                writer.WriteLine("\tEndGlobalSection");
-                writer.WriteLine("EndGlobal");
+                    writer.WriteLine("\tGlobalSection(ProjectConfigurationPlatforms) = postSolution");
+                    writer.WriteLine($"\t\t{db_guid}.Debug|Any CPU.ActiveCfg = Debug|Any CPU");
+                    writer.WriteLine($"\t\t{db_guid}.Debug|Any CPU.Build.0 = Debug|Any CPU");
+                    writer.WriteLine($"\t\t{db_guid}.Release|Any CPU.ActiveCfg = Release|Any CPU");
+                    writer.WriteLine($"\t\t{db_guid}.Release|Any CPU.Build.0 = Release|Any CPU");
+                    writer.WriteLine($"\t\t{staging_guid}.Debug|Any CPU.ActiveCfg = Debug|Any CPU");
+                    writer.WriteLine($"\t\t{staging_guid}.Debug|Any CPU.Build.0 = Debug|Any CPU");
+                    writer.WriteLine($"\t\t{staging_guid}.Release|Any CPU.ActiveCfg = Release|Any CPU");
+                    writer.WriteLine($"\t\t{staging_guid}.Release|Any CPU.Build.0 = Release|Any CPU");
+                    writer.WriteLine("\tEndGlobalSection");
+                    writer.WriteLine("\tGlobalSection(SolutionProperties) = preSolution");
+                    writer.WriteLine("\t\tHideSolutionNode = FALSE");
+                    writer.WriteLine("\tEndGlobalSection");
+                    writer.WriteLine("EndGlobal");
+                }
             }
         }
 

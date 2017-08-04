@@ -6,7 +6,7 @@ using NpgsqlTypes;
 using System.Data;
 using System.Collections;
 using System.Threading;
-using NLog;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Caching.Memory;
 
 namespace MyStaging.Helpers
@@ -155,7 +155,7 @@ namespace MyStaging.Helpers
                 }
             RollBackTransaction();
             Clear(cmd, cmd.Connection);
-            _logger.Error(ex, "数据库执行出错：===== \n {0}\n{1}\n{2}", cmd.CommandText, cmd.Parameters, ps);
+            _logger.LogError(new EventId(111111), ex, "数据库执行出错：===== \n {0}\n{1}\n{2}", cmd.CommandText, cmd.Parameters, ps);
         }
         public void BeginTransaction()
         {

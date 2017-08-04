@@ -1,1 +1,1 @@
-dotnet MyStaging.App.dll -h 172.16.1.220 -p 5432 -u postgres -a 123456 -d superapp -pool 50 -o D:\\TestProjects -proj MyStaging.Test
+dotnet MyStaging.App.dll -h 127.0.0.1 -p 5432 -u postgres -a 123456 -d smallmarket -pool 50 -o D:\\TestProjects -proj SmallMarket

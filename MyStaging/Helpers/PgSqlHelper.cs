@@ -1,5 +1,5 @@
 ﻿using MyStaging.Helpers;
-using NLog;
+using Microsoft.Extensions.Logging;
 using Npgsql;
 using System;
 using System.Data;
