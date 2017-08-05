@@ -67,7 +67,7 @@ namespace MyStaging.App
                 writer.WriteLine("\t</PropertyGroup>");
                 writer.WriteLine();
                 writer.WriteLine("\t<ItemGroup>");
-                writer.WriteLine("\t\t<ProjectReference Include=\"Newtonsoft.Json\" Version=\"10.0.3\" />");
+                writer.WriteLine("\t\t<PackageReference Include=\"Newtonsoft.Json\" Version=\"10.0.3\" />");
                 writer.WriteLine("\t</ItemGroup>");
                 writer.WriteLine("\t<ItemGroup>");
                 writer.WriteLine("\t\t<ProjectReference Include=\"..\\MyStaging\\MyStaging.csproj\" />");

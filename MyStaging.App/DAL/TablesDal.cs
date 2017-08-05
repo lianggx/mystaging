@@ -285,17 +285,17 @@ namespace MyStaging.App.DAL
                 string typcategory = dr["typcategory"].ToString();
                 string _type = PgsqlType.SwitchToCSharp(type);
 
-                string _notnull = "";
-                if (_type != "string" && _type != "JToken")
-                {
-                    _notnull = notnull ? "" : "?";
-                }
-
                 bool is_array = typcategory == "A";
                 string _array = is_array ? "[]" : "";
                 bool is_enum = data_type == "e";
                 if (is_enum)
                     _type = _type.ToUpperPascal();
+
+                string _notnull = "";
+                if (_type != "string" && _type != "JToken" && !is_array)
+                {
+                    _notnull = notnull ? "" : "?";
+                }
 
                 string reltype = $"{_type}{_notnull}{_array}";
                 // dal
