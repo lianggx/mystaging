@@ -65,6 +65,7 @@ namespace MyStaging.App.DAL
                     }
 
                     writer.WriteLine($"\t\tpublic {item.RelType} {item.Field.ToUpperPascal()} {{ get;set; }}");
+                    writer.WriteLine();
                 }
                 Hashtable ht = new Hashtable();
                 foreach (var item in consList)
@@ -76,7 +77,10 @@ namespace MyStaging.App.DAL
                         propertyName += "By" + item.conname;
                     }
                     string dalName = $"{item.nspname.ToUpperPascal()}_{item.table_name}";
-                    writer.WriteLine($"\t\t[ForeignKeyMapping]public {dalName}Model {propertyName} {{ get{{ return {dalName}.Context.Where(f=>f.{item.ref_column.ToUpperPascal()}==this.{item.conname.ToUpperPascal()}).ToOne(); }} }}");
+                    string tmp_var = $"_{propertyName.ToLowerPascal()}";
+                    writer.WriteLine($"\t\tprivate {dalName}Model {tmp_var}=null;");
+                    writer.WriteLine($"\t\t[ForeignKeyMapping,JsonIgnore]public {dalName}Model {propertyName} {{ get{{ if({tmp_var}==null){tmp_var}= {dalName}.Context.Where(f=>f.{item.ref_column.ToUpperPascal()}==this.{item.conname.ToUpperPascal()}).ToOne();  return {tmp_var};}} }}");
+                    writer.WriteLine();
                     ht.Add(propertyName, "");
                 }
 
@@ -103,6 +107,7 @@ namespace MyStaging.App.DAL
                 writer.WriteLine("using MyStaging.Helpers;");
                 writer.WriteLine("using MyStaging.Common;");
                 writer.WriteLine("using NpgsqlTypes;");
+                writer.WriteLine("using System.Linq.Expressions;");
                 writer.WriteLine($"using {projectName}.Model;");
                 writer.WriteLine();
                 writer.WriteLine($"namespace {projectName}.DAL");
@@ -194,6 +199,15 @@ namespace MyStaging.App.DAL
             writer.WriteLine("\t\t}");
             writer.WriteLine();
 
+            if (d_key.Count > 0)
+            {
+                writer.WriteLine($"\t\tpublic static {updateName} Update()");
+                writer.WriteLine("\t\t{");
+                writer.WriteLine($"\t\t\t return new {updateName}();");
+                writer.WriteLine("\t\t}");
+                writer.WriteLine();
+            }
+
             writer.WriteLine($"\t\tpublic class {updateName}:UpdateBuilder<{class_model.ToUpperPascal()}>");
             writer.WriteLine("\t\t{");
             writer.WriteLine($"\t\t\tpublic {updateName}({string.Join(",", d_key)})");
@@ -203,9 +217,24 @@ namespace MyStaging.App.DAL
                 FieldInfo fi = fieldList.FirstOrDefault(f => f.Field == item.Field);
                 string _dbtype = PgsqlType.SwitchToSql(fi.Data_Type, fi.Db_type);
                 string specificType = GetspecificType(fi);
-                writer.WriteLine($"\t\t\t\tbase.AddParameter(\"{fi.Field}\", NpgsqlDbType.{_dbtype}, {fi.Field},{specificType});");
+                writer.WriteLine($"\t\t\t\tbase.Where(\"{fi.Field}=@{fi.Field}\").AddParameter(\"{fi.Field}\", NpgsqlDbType.{_dbtype}, {fi.Field},{specificType});");
             }
             writer.WriteLine("\t\t\t}");
+
+            if (d_key.Count > 0)
+            {
+                writer.WriteLine();
+                writer.WriteLine($"\t\t\tpublic {updateName}(){{}}");
+                writer.WriteLine();
+            }
+
+            writer.WriteLine($"\t\t\tpublic new {updateName} Where(Expression<Func<{class_model.ToUpperPascal()}, bool>> predicate)");
+            writer.WriteLine("\t\t\t{");
+            writer.WriteLine($"\t\t\t\t base.Where(predicate);");
+            writer.WriteLine($"\t\t\t\t return this;");
+            writer.WriteLine("\t\t\t}");
+            writer.WriteLine();
+
             foreach (var item in fieldList)
             {
                 if (item.Is_identity) continue;

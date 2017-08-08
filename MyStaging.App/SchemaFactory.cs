@@ -57,6 +57,9 @@ namespace MyStaging.App
             string path = Path.Combine(outputDir, projectName, $"{projectName}.db");
 
             string csproj = Path.Combine(path, $"{projectName}.db.csproj");
+            if (!File.Exists(csproj))
+                return;
+
             using (StreamWriter writer = new StreamWriter(File.Create(csproj)))
             {
                 writer.WriteLine("<Project Sdk=\"Microsoft.NET.Sdk\">");

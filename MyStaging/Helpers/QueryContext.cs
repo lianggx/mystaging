@@ -47,14 +47,14 @@ namespace MyStaging.Helpers
             return OrderBy(keySelector);
         }
 
-        public QueryContext<T> OrderDescing<TKey>(Expression<Func<TKey>> keySelector)
+        public QueryContext<T> OrderDescing<TKey>(Expression<Func<T, TKey>> keySelector)
         {
             MemberExpression exp = (MemberExpression)keySelector.Body;
             OrderByText = $"ORDER BY {exp.Member.Name} DESC";
             return this;
         }
 
-        public QueryContext<T> OrderDescing<TSource, TKey>(Expression<Func<TKey>> keySelector)
+        public QueryContext<T> OrderDescing<TSource, TKey>(Expression<Func<TSource, TKey>> keySelector)
         {
             return OrderDescing(keySelector);
         }
@@ -70,48 +70,63 @@ namespace MyStaging.Helpers
             return ToScalar<int>("COUNT(1)");
         }
 
-        public decimal Max(string field)
+        public TResult Max<TResult>(string field)
         {
-            return ToScalar<decimal>($"MAX({field})");
+            return ToScalar<TResult>($"MAX({field})");
         }
 
-        public decimal Max<TResult>(Expression<Func<TResult, string>> selector)
+        public TResult Max<TResult>(Expression<Func<T, TResult>> selector)
+        {
+            return Max<T, TResult>(selector);
+        }
+
+        public TResult Max<TSource, TResult>(Expression<Func<TSource, TResult>> selector)
         {
             MemberExpression exp = (MemberExpression)selector.Body;
-            return ToScalar<decimal>($"MAX({exp.Member.Name})");
+            return ToScalar<TResult>($"MAX({exp.Member.Name})");
         }
 
-        public decimal Min(string field)
+        public TResult Min<TResult>(string field)
         {
-            return ToScalar<decimal>($"MIN({field})");
+            return ToScalar<TResult>($"MIN({field})");
         }
 
-        public decimal Min<TResult>(Expression<Func<TResult, string>> selector)
+        public TResult Min<TResult>(Expression<Func<TResult, string>> selector)
         {
-            MemberExpression exp = (MemberExpression)selector.Body;
-            return ToScalar<decimal>($"MIN({exp.Member.Name})");
+            return Min(selector);
         }
 
-        public decimal Sum(string field)
-        {
-            return ToScalar<decimal>($"SUM({field})");
-        }
-
-        public decimal Sum<TResult>(Expression<Func<TResult, string>> selector)
+        public TResult Min<TSource, TResult>(Expression<Func<TSource, TResult>> selector)
         {
             MemberExpression exp = (MemberExpression)selector.Body;
-            return ToScalar<decimal>($"SUM({exp.Member.Name})");
+            return ToScalar<TResult>($"MIN({exp.Member.Name})");
         }
 
-        public decimal Avg(string field)
+        public TResult Sum<TResult>(string field)
         {
-            return ToScalar<decimal>($"AVG({field})");
+            return ToScalar<TResult>($"SUM({field})");
         }
 
-        public decimal Avg<TResult>(Expression<Func<TResult, string>> selector)
+        public TResult Sum<TResult>(Expression<Func<T, TResult>> selector)
+        {
+            return Sum<T, TResult>(selector);
+        }
+
+        public TResult Sum<TSource, TResult>(Expression<Func<TSource, TResult>> selector)
         {
             MemberExpression exp = (MemberExpression)selector.Body;
-            return ToScalar<decimal>($"AVG({exp.Member.Name})");
+            return ToScalar<TResult>($"SUM({exp.Member.Name})");
+        }
+
+        public TResult Avg<TResult>(string field)
+        {
+            return ToScalar<TResult>($"AVG({field})");
+        }
+
+        public TResult Avg<TSource, TResult>(Expression<Func<TSource, TResult>> selector)
+        {
+            MemberExpression exp = (MemberExpression)selector.Body;
+            return ToScalar<TResult>($"AVG({exp.Member.Name})");
         }
 
         public TResult ToScalar<TResult>(string field)
