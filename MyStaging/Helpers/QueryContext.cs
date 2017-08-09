@@ -176,7 +176,7 @@ namespace MyStaging.Helpers
             PropertyInfo[] ps = typeof(T).GetProperties();
             foreach (var item in ps)
             {
-                if (item.GetCustomAttribute<ForeignKeyMappingAttribute>() != null)
+                if (item.GetCustomAttribute<ForeignKeyMappingAttribute>() != null || item.GetCustomAttribute<NonDbColumnMappingAttribute>() != null)
                     continue;
                 string alia = UnionList.Count > 0 ? "a." : "";
                 Fields.Add(alia + item.Name);

@@ -24,4 +24,9 @@ namespace MyStaging.Mapping
     public class ForeignKeyMappingAttribute : Attribute
     {
     }
+
+    [AttributeUsage(AttributeTargets.Property, Inherited = true)]
+    public class NonDbColumnMappingAttribute : Attribute
+    {
+    }
 }

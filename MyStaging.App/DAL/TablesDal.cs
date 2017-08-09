@@ -67,6 +67,7 @@ namespace MyStaging.App.DAL
                     writer.WriteLine($"\t\tpublic {item.RelType} {item.Field.ToUpperPascal()} {{ get;set; }}");
                     writer.WriteLine();
                 }
+
                 Hashtable ht = new Hashtable();
                 foreach (var item in consList)
                 {
@@ -76,13 +77,26 @@ namespace MyStaging.App.DAL
                     {
                         propertyName += "By" + item.conname;
                     }
-                    string dalName = $"{item.nspname.ToUpperPascal()}_{item.table_name}";
+                    string f_dalName = $"{item.nspname.ToUpperPascal()}_{item.table_name}";
                     string tmp_var = $"_{propertyName.ToLowerPascal()}";
-                    writer.WriteLine($"\t\tprivate {dalName}Model {tmp_var}=null;");
-                    writer.WriteLine($"\t\t[ForeignKeyMapping,JsonIgnore]public {dalName}Model {propertyName} {{ get{{ if({tmp_var}==null){tmp_var}= {dalName}.Context.Where(f=>f.{item.ref_column.ToUpperPascal()}==this.{item.conname.ToUpperPascal()}).ToOne();  return {tmp_var};}} }}");
+                    writer.WriteLine($"\t\tprivate {f_dalName}Model {tmp_var}=null;");
+                    writer.WriteLine($"\t\t[ForeignKeyMapping,JsonIgnore]public {f_dalName}Model {propertyName} {{ get{{ if({tmp_var}==null){tmp_var}= {f_dalName}.Context.Where(f=>f.{item.ref_column.ToUpperPascal()}==this.{item.conname.ToUpperPascal()}).ToOne();  return {tmp_var};}} }}");
                     writer.WriteLine();
                     ht.Add(propertyName, "");
                 }
+
+                List<string> d_key = new List<string>();
+                foreach (var item in pkList)
+                {
+                    FieldInfo fs = fieldList.FirstOrDefault(f => f.Field == item.Field);
+                    d_key.Add("this." + fs.Field.ToUpperPascal());
+                }
+                string dalName = $"{this.schemaName.ToUpperPascal()}_{this.table.name}";
+                string updateName = $"{dalName}.{this.table.name.ToUpperPascal()}UpdateBuilder";
+                writer.WriteLine($"\t\t [NonDbColumnMappingAttribute,JsonIgnore] public  {updateName} UpdateBuilder{{get{{return new {updateName}({string.Join(",", d_key)});}}}}");
+                writer.WriteLine();
+                writer.WriteLine($"\t\tpublic {_classname} Insert(){{return {dalName}.Insert(this);}}");
+                writer.WriteLine();
 
                 writer.WriteLine("\t}");
                 writer.WriteLine("}");
