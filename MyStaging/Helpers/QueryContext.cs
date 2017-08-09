@@ -129,10 +129,13 @@ namespace MyStaging.Helpers
             return ToScalar<TResult>($"AVG({exp.Member.Name})");
         }
 
-        public TResult ToScalar<TResult>(string field)
+        public TResult ToScalar<TResult>(params string[] fields)
         {
             Fields.Clear();
-            Fields.Add(field);
+            foreach (var item in fields)
+            {
+                Fields.Add(item);
+            }
             string cmdText = ToSQLString<TResult>();
             object _val = PgSqlHelper.ExecuteScalar(CommandType.Text, cmdText, this.ParamList.ToArray());
 
@@ -141,19 +144,16 @@ namespace MyStaging.Helpers
 
         public T ToOne()
         {
-            Page(1, 1);
-            List<T> list = ToList();
-            if (list.Count > 0)
-                return list[0];
-            else
-                return default(T);
+            return ToOne<T>();
         }
 
-        public TResult ToOne<TResult>(string fields)
+        public TResult ToOne<TResult>(params string[] fields)
         {
-            if (string.IsNullOrEmpty(fields))
-                throw new ArgumentException("参数 fields 必须提供，并以逗号分隔");
-            Fields.AddRange(fields.Split(','));
+            Fields.Clear();
+            foreach (var item in fields)
+            {
+                Fields.Add(item);
+            }
             Page(1, 1);
             List<TResult> list = ToList<TResult>();
             if (list.Count > 0)
@@ -164,11 +164,7 @@ namespace MyStaging.Helpers
 
         public T ToOne(params string[] fields)
         {
-            foreach (var item in fields)
-            {
-                Fields.Add(item);
-            }
-            return this.ToOne();
+            return this.ToOne<T>(fields);
         }
 
         public List<T> ToList()
@@ -186,6 +182,7 @@ namespace MyStaging.Helpers
 
         public List<T> ToList(params string[] fields)
         {
+            Fields.Clear();
             foreach (var item in fields)
             {
                 Fields.Add(item);
@@ -195,6 +192,15 @@ namespace MyStaging.Helpers
 
         public List<TResult> ToList<TResult>()
         {
+            return ExecuteReader<TResult>();
+        }
+
+        public List<TResult> ToList<TResult>(params string[] fields)
+        {
+            foreach (var item in fields)
+            {
+                Fields.Add(item);
+            }
             return ExecuteReader<TResult>();
         }
 

@@ -206,21 +206,18 @@ namespace MyStaging.App.DAL
                 d_key_fields.Add(fs.Field);
             }
             string updateName = $"{this.table.name.ToUpperPascal()}UpdateBuilder";
-
-            writer.WriteLine($"\t\tpublic static {updateName} Update({string.Join(",", d_key)})");
-            writer.WriteLine("\t\t{");
-            writer.WriteLine($"\t\t\t return new {updateName}({string.Join(",", d_key_fields)});");
-            writer.WriteLine("\t\t}");
-            writer.WriteLine();
-
             if (d_key.Count > 0)
             {
-                writer.WriteLine($"\t\tpublic static {updateName} Update()");
+                writer.WriteLine($"\t\tpublic static {updateName} Update({string.Join(",", d_key)})");
                 writer.WriteLine("\t\t{");
-                writer.WriteLine($"\t\t\t return new {updateName}();");
+                writer.WriteLine($"\t\t\t return new {updateName}({string.Join(",", d_key_fields)});");
                 writer.WriteLine("\t\t}");
                 writer.WriteLine();
             }
+
+            writer.WriteLine($"\t\tpublic static {updateName} UpdateBuilder{{get{{return new {updateName}();}}}}");
+            writer.WriteLine();
+
 
             writer.WriteLine($"\t\tpublic class {updateName}:UpdateBuilder<{class_model.ToUpperPascal()}>");
             writer.WriteLine("\t\t{");
@@ -265,27 +262,32 @@ namespace MyStaging.App.DAL
 
         protected void Delete_Generator(StreamWriter writer, string class_model, string className)
         {
-            List<string> d_key = new List<string>();
-            foreach (var item in pkList)
+            if (pkList.Count > 0)
             {
-                FieldInfo fs = fieldList.FirstOrDefault(f => f.Field == item.Field);
-                d_key.Add(fs.RelType + " " + fs.Field);
-            }
+                List<string> d_key = new List<string>();
+                foreach (var item in pkList)
+                {
+                    FieldInfo fs = fieldList.FirstOrDefault(f => f.Field == item.Field);
+                    d_key.Add(fs.RelType + " " + fs.Field);
+                }
 
-            writer.WriteLine($"\t\tpublic static int Delete({string.Join(",", d_key)})");
-            writer.WriteLine("\t\t{");
-            string _cn = className.ToLower();
-            writer.WriteLine($"\t\t\t{className} {_cn} = Context;");
-            int len = pkList.Count;
-            foreach (var item in pkList)
-            {
-                FieldInfo fi = fieldList.FirstOrDefault(f => f.Field == item.Field);
-                string _dbtype = PgsqlType.SwitchToSql(fi.Data_Type, fi.Db_type);
-                string specificType = GetspecificType(fi);
-                writer.WriteLine($"\t\t\t{_cn}.AddParameter(\"{ item.Field}\", NpgsqlDbType.{_dbtype}, {item.Field},{specificType});");
+                writer.WriteLine($"\t\tpublic static int Delete({string.Join(",", d_key)})");
+                writer.WriteLine("\t\t{");
+                string _cn = className.ToLower();
+                writer.WriteLine($"\t\t\t{className} {_cn} = Context;");
+                int len = pkList.Count;
+                foreach (var item in pkList)
+                {
+                    FieldInfo fi = fieldList.FirstOrDefault(f => f.Field == item.Field);
+                    string _dbtype = PgsqlType.SwitchToSql(fi.Data_Type, fi.Db_type);
+                    string specificType = GetspecificType(fi);
+                    writer.WriteLine($"\t\t\t{_cn}.AddParameter(\"{ item.Field}\", NpgsqlDbType.{_dbtype}, {item.Field},{specificType});");
+                }
+                writer.WriteLine($"\t\t\treturn {_cn}.ExecuteNonQuery(deleteCmdText);");
+                writer.WriteLine("\t\t}");
             }
-            writer.WriteLine($"\t\t\treturn {_cn}.ExecuteNonQuery(deleteCmdText);");
-            writer.WriteLine("\t\t}");
+            string deletebuilder = $"DeleteBuilder<{class_model}>";
+            writer.WriteLine($"\t\tpublic static {deletebuilder} DeleteBuilder{{get{{return new {deletebuilder}();}}}}");
         }
 
         #region primary key / constraint

@@ -18,7 +18,17 @@ namespace MyStaging.Helpers
         public int SaveChange()
         {
             string tableName = MyStagingUtils.GetMapping(typeof(T));
-            string cmdText = $"UPDATE {tableName} SET {string.Join(",", this.setList)} WHERE id = @id";
+            if (WhereExpressionList.Count > 0)
+            {
+                foreach (var item in WhereExpressionList)
+                {
+                    PgSqlExpression expression = new PgSqlExpression();
+                    expression.ExpressionCapture(item.Body);
+                    WhereList.Add(expression.CommandText.ToString().ToLower());
+                    ParamList.AddRange(expression.Parameters);
+                }
+            }
+            string cmdText = $"UPDATE {tableName} SET {string.Join(",", this.setList)} {"WHERE " + string.Join("\nAND ", WhereList)}";
             return base.ExecuteNonQuery(cmdText);
         }
     }
