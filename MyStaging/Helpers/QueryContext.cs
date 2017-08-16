@@ -142,20 +142,10 @@ namespace MyStaging.Helpers
             return (TResult)_val;
         }
 
-        public T ToOne()
-        {
-            return ToOne<T>();
-        }
-
         public TResult ToOne<TResult>(params string[] fields)
         {
-            Fields.Clear();
-            foreach (var item in fields)
-            {
-                Fields.Add(item);
-            }
             Page(1, 1);
-            List<TResult> list = ToList<TResult>();
+            List<TResult> list = ToList<TResult>(fields);
             if (list.Count > 0)
                 return list[0];
             else
@@ -167,39 +157,31 @@ namespace MyStaging.Helpers
             return this.ToOne<T>(fields);
         }
 
-        public List<T> ToList()
-        {
-            PropertyInfo[] ps = typeof(T).GetProperties();
-            foreach (var item in ps)
-            {
-                if (item.GetCustomAttribute<ForeignKeyMappingAttribute>() != null || item.GetCustomAttribute<NonDbColumnMappingAttribute>() != null)
-                    continue;
-                string alia = UnionList.Count > 0 ? "a." : "";
-                Fields.Add(alia + item.Name);
-            }
-            return ExecuteReader<T>();
-        }
-
         public List<T> ToList(params string[] fields)
         {
-            Fields.Clear();
-            foreach (var item in fields)
-            {
-                Fields.Add(item);
-            }
-            return ExecuteReader<T>();
-        }
-
-        public List<TResult> ToList<TResult>()
-        {
-            return ExecuteReader<TResult>();
+            return ToList<T>(fields);
         }
 
         public List<TResult> ToList<TResult>(params string[] fields)
         {
-            foreach (var item in fields)
+            Fields.Clear();
+            if (fields == null || fields.Length == 0)
             {
-                Fields.Add(item);
+                PropertyInfo[] ps = typeof(TResult).GetProperties();
+                foreach (var item in ps)
+                {
+                    if (item.GetCustomAttribute<ForeignKeyMappingAttribute>() != null || item.GetCustomAttribute<NonDbColumnMappingAttribute>() != null)
+                        continue;
+                    string alia = UnionList.Count > 0 ? "a." : "";
+                    Fields.Add(alia + item.Name);
+                }
+            }
+            else
+            {
+                foreach (var item in fields)
+                {
+                    Fields.Add(item);
+                }
             }
             return ExecuteReader<TResult>();
         }

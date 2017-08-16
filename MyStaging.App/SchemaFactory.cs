@@ -64,13 +64,13 @@ namespace MyStaging.App
             {
                 writer.WriteLine("<Project Sdk=\"Microsoft.NET.Sdk\">");
                 writer.WriteLine("\t<PropertyGroup>");
-                writer.WriteLine($"\t\t<TargetFramework>netcoreapp1.1</TargetFramework>");
+                writer.WriteLine($"\t\t<TargetFramework>netcoreapp2.0</TargetFramework>");
                 writer.WriteLine($"\t\t<Authors></Authors>");
                 writer.WriteLine($"\t\t <Company></Company>");
                 writer.WriteLine("\t</PropertyGroup>");
                 writer.WriteLine();
                 writer.WriteLine("\t<ItemGroup>");
-                writer.WriteLine("\t\t<PackageReference Include=\"Newtonsoft.Json\" Version=\"10.0.3\" />");
+                writer.WriteLine("\t\t<PackageReference Include=\"Microsoft.AspNetCore.All\" Version=\"2.0.0\" />");
                 writer.WriteLine("\t</ItemGroup>");
                 writer.WriteLine("\t<ItemGroup>");
                 writer.WriteLine("\t\t<ProjectReference Include=\"..\\MyStaging\\MyStaging.csproj\" />");
