@@ -1,14 +1,18 @@
 # mystaging
 * 这是一个 .netcore+pgsql 的脚手架，它可以让你使用 .netcore2.0的新特性，基于 pgsql 数据库，可以在项目中自由的使用 lambda 表达式编写业务，同时支持自定义的 sql 语句。
-mystaging，非常的小巧，下面将介绍 mystaging 的项目框架。
+* mystaging，非常的小巧，下面将介绍 mystaging 的项目框架。
 
+* 该项目目前处于起步阶段，可能不适用于大型项目，请结合业务需要酌情使用
+  
 ---
 
-######开发交流QQ群：614072957
+* 开发交流QQ群：614072957
 
 ---
 **构建工具 MyStaging.App**
-  * 编辑构建工具下的 @build.bat 文件,配置相关参数，运行该批处理文件，可以直接生成 proj.db 项
+  1. 将 MyStaging.csproj 项目打包成 MyStaging.zip ，并复制到 MyStaging.App/bin/debug 目录下
+  2. 编辑构建工具下的 @build.bat 文件,配置相关参数，参数配置见*参数说明*
+  3. 运行该批处理文件，可以直接生成 proj.db 项目文件
      
 **参数说明**
    * **-h** host，数据库所在服务器地址
