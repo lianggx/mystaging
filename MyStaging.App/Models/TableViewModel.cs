@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace MyStaging.Common
+namespace MyStaging.App.Models
 {
    public class TableViewModel
     {
