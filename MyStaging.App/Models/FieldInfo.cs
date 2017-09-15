@@ -16,5 +16,6 @@ namespace MyStaging.App.Models
         public bool Is_array { get; set; }
         public bool Is_enum { get; set; }
         public bool Is_not_null { get; set; }
+        public NpgsqlTypes.NpgsqlDbType PgDbType { get; set; }
     }
 }

@@ -1,6 +1,7 @@
 ﻿using MyStaging.App.Models;
 using MyStaging.Common;
 using MyStaging.Helpers;
+using NpgsqlTypes;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -160,6 +161,22 @@ namespace MyStaging.App.DAL
 
                 writer.WriteLine($"\t\tconst string deleteCmdText=\"DELETE FROM \\\"{this.schemaName}\\\".\\\"{this.table.name}\\\" WHERE {pkString}\";");
                 writer.WriteLine($"\t\tpublic static {_classname} Context{{get{{return new {_classname}();}}}}");
+                writer.WriteLine();
+
+                foreach (var item in fieldList)
+                {
+                    if (item.Is_array)
+                    {
+                        writer.WriteLine($"\t\tpublic {_classname} Where{item.Field.ToUpperPascal()}Any(params {item.RelType} {item.Field})");
+                        writer.WriteLine("\t\t{");
+                        writer.WriteLine($"\t\t\t if ({item.Field} == null || {item.Field}.Length == 0) return this;");
+                        writer.WriteLine($"\t\t\t string text = ValueJoinTo({item.Field}, NpgsqlDbType.{item.PgDbType},\"{item.Db_type}\");");
+                        writer.WriteLine($"\t\t\t base.Where($\"{item.Field} @> array[{{ text}}]\");");
+                        writer.WriteLine($"\t\t\t return this;");
+                        writer.WriteLine("\t\t}");
+                        writer.WriteLine();
+                    }
+                }
 
                 if (this.table.type == "table")
                 {
@@ -186,9 +203,8 @@ namespace MyStaging.App.DAL
             foreach (var item in fieldList)
             {
                 if (item.Is_identity) continue;
-                string _dbtype = PgsqlType.SwitchToSql(item.Data_Type, item.Db_type);
                 string specificType = GetspecificType(item);
-                writer.WriteLine($"\t\t\t{_cn}.AddParameter(\"{ item.Field}\", NpgsqlDbType.{_dbtype}, model.{item.Field.ToUpperPascal()},{specificType});");
+                writer.WriteLine($"\t\t\t{_cn}.AddParameter(\"{ item.Field}\", NpgsqlDbType.{item.PgDbType}, model.{item.Field.ToUpperPascal()},{specificType});");
             }
             writer.WriteLine();
             writer.WriteLine($"\t\t\treturn {_cn}.InsertOnReader(insertCmdText);");
@@ -226,9 +242,8 @@ namespace MyStaging.App.DAL
             foreach (var item in pkList)
             {
                 FieldInfo fi = fieldList.FirstOrDefault(f => f.Field == item.Field);
-                string _dbtype = PgsqlType.SwitchToSql(fi.Data_Type, fi.Db_type);
                 string specificType = GetspecificType(fi);
-                writer.WriteLine($"\t\t\t\tbase.Where(\"{fi.Field}=@{fi.Field}\").AddParameter(\"{fi.Field}\", NpgsqlDbType.{_dbtype}, {fi.Field},{specificType});");
+                writer.WriteLine($"\t\t\t\tbase.Where(\"{fi.Field}=@{fi.Field}\").AddParameter(\"{fi.Field}\", NpgsqlDbType.{fi.PgDbType}, {fi.Field},{specificType});");
             }
             writer.WriteLine("\t\t\t}");
 
@@ -249,7 +264,7 @@ namespace MyStaging.App.DAL
             foreach (var item in fieldList)
             {
                 if (item.Is_identity) continue;
-                string _dbtype = PgsqlType.SwitchToSql(item.Data_Type, item.Db_type);
+                NpgsqlDbType _dbtype = PgsqlType.SwitchToSql(item.Data_Type, item.Db_type);
 
                 writer.WriteLine($"\t\t\tpublic {updateName} Set{item.Field.ToUpperPascal()}({item.RelType} {item.Field})");
                 writer.WriteLine("\t\t\t{");
@@ -279,9 +294,8 @@ namespace MyStaging.App.DAL
                 foreach (var item in pkList)
                 {
                     FieldInfo fi = fieldList.FirstOrDefault(f => f.Field == item.Field);
-                    string _dbtype = PgsqlType.SwitchToSql(fi.Data_Type, fi.Db_type);
                     string specificType = GetspecificType(fi);
-                    writer.WriteLine($"\t\t\t{_cn}.AddParameter(\"{ item.Field}\", NpgsqlDbType.{_dbtype}, {item.Field},{specificType});");
+                    writer.WriteLine($"\t\t\t{_cn}.AddParameter(\"{ item.Field}\", NpgsqlDbType.{fi.PgDbType}, {item.Field},{specificType});");
                 }
                 writer.WriteLine($"\t\t\treturn {_cn}.ExecuteNonQuery(deleteCmdText);");
                 writer.WriteLine("\t\t}");
@@ -324,11 +338,12 @@ namespace MyStaging.App.DAL
                 int lengthvar = Convert.ToInt32(dr["lengthvar"]);
                 bool notnull = Convert.ToBoolean(dr["notnull"]);
                 string comment = dr["comment"].ToString();
-                string type = dr["type"].ToString();
+                string db_type = dr["type"].ToString();
+                db_type = db_type.StartsWith("_") ? db_type.Remove(0, 1) : db_type;
                 string data_type = dr["data_type"].ToString();
                 string is_identity = dr["is_identity"].ToString();
                 string typcategory = dr["typcategory"].ToString();
-                string _type = PgsqlType.SwitchToCSharp(type);
+                string _type = PgsqlType.SwitchToCSharp(db_type);
 
                 bool is_array = typcategory == "A";
                 string _array = is_array ? "[]" : "";
@@ -349,13 +364,14 @@ namespace MyStaging.App.DAL
                     Field = field,
                     Comment = comment,
                     RelType = reltype,
-                    Db_type = type,
+                    Db_type = db_type,
                     Data_Type = data_type,
                     Is_identity = is_identity == "YES",
-                    Is_array = data_type == "ARRAY",
+                    Is_array = is_array,
                     Is_not_null = notnull,
                     Is_enum = is_enum,
-                    Oid = f_oid
+                    Oid = f_oid,
+                    PgDbType = PgsqlType.SwitchToSql(data_type, db_type)
                 });
             }, CommandType.Text, _sqltext);
         }

@@ -1,4 +1,6 @@
-﻿namespace MyStaging.Common
+﻿using NpgsqlTypes;
+
+namespace MyStaging.Common
 {
     public class PgsqlType
     {
@@ -55,25 +57,27 @@
             }
         }
 
-        public static string SwitchToSql(string data_type, string db_type)
+        public static NpgsqlDbType SwitchToSql(string data_type, string db_type)
         {
-            string _dbtype;
+            NpgsqlDbType _dbtype;
             if (data_type == "e")
-                _dbtype = "Enum";  //   _dbtype = item.Db_type.ToUpperPascal();
+                _dbtype = NpgsqlDbType.Enum;  //   _dbtype = item.Db_type.ToUpperPascal();
             else if (db_type == "int2" || db_type == "int4")
             {
-                _dbtype = "Integer";
+                _dbtype = NpgsqlDbType.Integer;
             }
             else if (db_type == "int8")
             {
-                _dbtype = "Bigint";
+                _dbtype = NpgsqlDbType.Bigint;
             }
             else if (db_type == "bool")
             {
-                _dbtype = "Boolean";
+                _dbtype = NpgsqlDbType.Boolean;
             }
             else
-                _dbtype = db_type.Replace("_", "").ToUpperPascal();
+            {
+                _dbtype = System.Enum.Parse<NpgsqlDbType>(db_type.ToUpperPascal());
+            }
 
             return _dbtype;
         }

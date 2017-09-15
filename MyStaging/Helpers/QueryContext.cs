@@ -341,6 +341,20 @@ namespace MyStaging.Helpers
             return PgSqlHelper.ExecuteNonQuery(CommandType.Text, cmdText, ParamList.ToArray());
         }
 
+        private static NpgsqlDbType[] dbtypes = { NpgsqlDbType.Varchar, NpgsqlDbType.Char, NpgsqlDbType.Text, NpgsqlDbType.Date, NpgsqlDbType.Time, NpgsqlDbType.Timestamp, NpgsqlDbType.TimestampTZ, NpgsqlDbType.TimeTZ, NpgsqlDbType.Uuid, NpgsqlDbType.Enum, NpgsqlDbType.Json, NpgsqlDbType.Jsonb, NpgsqlDbType.Xml, NpgsqlDbType.Bytea, NpgsqlDbType.MacAddr };
+        protected string ValueJoinTo<T>(T[] values, NpgsqlDbType dbtype)
+        {
+            string s = dbtypes.Contains(dbtype) ? "'" : "";
+            StringBuilder sb = new StringBuilder();
+            for (int i = 0; i < values.Length; i++)
+            {
+                sb.Append(s + values[i].ToString() + s + "::" + dbtype);
+                if (i + 1 < values.Length)
+                    sb.Append(",");
+            }
+            return sb.ToString();
+        }
+
         #region Properties
         protected List<NpgsqlParameter> ParamList { get; set; } = new List<NpgsqlParameter>();
         protected List<ExpressionUnionModel> UnionList { get; set; } = new List<ExpressionUnionModel>();
