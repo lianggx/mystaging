@@ -8,6 +8,7 @@ namespace MyStaging.App.Models
     {
         public int Oid { get; set; }
         public string Field { get; set; }
+        public int Length { get; set; }
         public string Comment { get; set; }
         public string RelType { get; set; }
         public string Db_type { get; set; }

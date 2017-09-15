@@ -8,9 +8,9 @@ namespace MyStaging.Helpers
     public class UpdateBuilder<T> : QueryContext<T> where T : class, new()
     {
         private List<string> setList = new List<string>();
-        protected UpdateBuilder<T> SetField(string field, NpgsqlDbType dbType, object value, Type specificType = null)
+        protected UpdateBuilder<T> SetField(string field, NpgsqlDbType dbType, object value, int size, Type specificType = null)
         {
-            base.AddParameter(field, dbType, value, specificType);
+            base.AddParameter(field, dbType, value, size, specificType);
             setList.Add($"{field}=@{field}");
             return this;
         }

@@ -204,7 +204,7 @@ namespace MyStaging.App.DAL
             {
                 if (item.Is_identity) continue;
                 string specificType = GetspecificType(item);
-                writer.WriteLine($"\t\t\t{_cn}.AddParameter(\"{ item.Field}\", NpgsqlDbType.{item.PgDbType}, model.{item.Field.ToUpperPascal()},{specificType});");
+                writer.WriteLine($"\t\t\t{_cn}.AddParameter(\"{ item.Field}\", NpgsqlDbType.{item.PgDbType}, model.{item.Field.ToUpperPascal()},{item.Length},{specificType});");
             }
             writer.WriteLine();
             writer.WriteLine($"\t\t\treturn {_cn}.InsertOnReader(insertCmdText);");
@@ -243,7 +243,7 @@ namespace MyStaging.App.DAL
             {
                 FieldInfo fi = fieldList.FirstOrDefault(f => f.Field == item.Field);
                 string specificType = GetspecificType(fi);
-                writer.WriteLine($"\t\t\t\tbase.Where(\"{fi.Field}=@{fi.Field}\").AddParameter(\"{fi.Field}\", NpgsqlDbType.{fi.PgDbType}, {fi.Field},{specificType});");
+                writer.WriteLine($"\t\t\t\tbase.Where(\"{fi.Field}=@{fi.Field}\").AddParameter(\"{fi.Field}\", NpgsqlDbType.{fi.PgDbType}, {fi.Field},{fi.Length},{specificType});");
             }
             writer.WriteLine("\t\t\t}");
 
@@ -269,7 +269,7 @@ namespace MyStaging.App.DAL
                 writer.WriteLine($"\t\t\tpublic {updateName} Set{item.Field.ToUpperPascal()}({item.RelType} {item.Field})");
                 writer.WriteLine("\t\t\t{");
                 string specificType = GetspecificType(item);
-                writer.WriteLine($"\t\t\t\treturn base.SetField(\"{ item.Field}\", NpgsqlDbType.{_dbtype}, {item.Field},{specificType}) as {updateName};");
+                writer.WriteLine($"\t\t\t\treturn base.SetField(\"{ item.Field}\", NpgsqlDbType.{_dbtype}, {item.Field},{item.Length},{specificType}) as {updateName};");
                 writer.WriteLine("\t\t\t}");
             }
             writer.WriteLine("\t\t}");
@@ -295,7 +295,7 @@ namespace MyStaging.App.DAL
                 {
                     FieldInfo fi = fieldList.FirstOrDefault(f => f.Field == item.Field);
                     string specificType = GetspecificType(fi);
-                    writer.WriteLine($"\t\t\t{_cn}.AddParameter(\"{ item.Field}\", NpgsqlDbType.{fi.PgDbType}, {item.Field},{specificType});");
+                    writer.WriteLine($"\t\t\t{_cn}.AddParameter(\"{ item.Field}\", NpgsqlDbType.{fi.PgDbType}, {item.Field},{fi.Length},{specificType});");
                 }
                 writer.WriteLine($"\t\t\treturn {_cn}.ExecuteNonQuery(deleteCmdText);");
                 writer.WriteLine("\t\t}");
@@ -311,8 +311,7 @@ namespace MyStaging.App.DAL
             string _sqltext = @"SELECT a.oid
 ,c.attnum as num
 ,c.attname as field
-,c.attlen as length
-,c.atttypmod as lengthvar
+, (case when f.character_maximum_length is null then c.attlen else f.character_maximum_length end) as length
 ,c.attnotnull as notnull
 ,d.description as comment
 ,(case when e.typelem = 0 then e.typname else e2.typname end) as type
@@ -332,47 +331,31 @@ namespace MyStaging.App.DAL
 
             PgSqlHelper.ExecuteDataReader(dr =>
             {
-                int f_oid = Convert.ToInt32(dr["oid"]);
-                string field = dr["field"].ToString();
-                string length = dr["length"].ToString();
-                int lengthvar = Convert.ToInt32(dr["lengthvar"]);
-                bool notnull = Convert.ToBoolean(dr["notnull"]);
-                string comment = dr["comment"].ToString();
-                string db_type = dr["type"].ToString();
-                db_type = db_type.StartsWith("_") ? db_type.Remove(0, 1) : db_type;
-                string data_type = dr["data_type"].ToString();
-                string is_identity = dr["is_identity"].ToString();
-                string typcategory = dr["typcategory"].ToString();
-                string _type = PgsqlType.SwitchToCSharp(db_type);
+                FieldInfo fi = new FieldInfo();
+                fi.Oid = Convert.ToInt32(dr["oid"]);
+                fi.Field = dr["field"].ToString();
+                fi.Length = Convert.ToInt32(dr["length"].ToString());
+                fi.Is_not_null = Convert.ToBoolean(dr["notnull"]);
+                fi.Comment = dr["comment"].ToString();
+                fi.Data_Type = dr["data_type"].ToString();
+                fi.Db_type = dr["type"].ToString();
+                fi.Db_type = fi.Db_type.StartsWith("_") ? fi.Db_type.Remove(0, 1) : fi.Db_type;
+                fi.PgDbType = PgsqlType.SwitchToSql(fi.Data_Type, fi.Db_type);
+                fi.Is_identity = dr["is_identity"].ToString() == "YES";
+                fi.Is_array = dr["typcategory"].ToString() == "A";
+                fi.Is_enum = fi.Data_Type == "e";
 
-                bool is_array = typcategory == "A";
-                string _array = is_array ? "[]" : "";
-                bool is_enum = data_type == "e";
-                if (is_enum)
-                    _type = _type.ToUpperPascal();
+                string _type = PgsqlType.SwitchToCSharp(fi.Db_type);
 
+                if (fi.Is_enum) _type = _type.ToUpperPascal();
                 string _notnull = "";
-                if (_type != "string" && _type != "JToken" && !is_array)
-                {
-                    _notnull = notnull ? "" : "?";
-                }
+                if (_type != "string" && _type != "JToken" && !fi.Is_array)
+                    _notnull = fi.Is_not_null ? "" : "?";
 
-                string reltype = $"{_type}{_notnull}{_array}";
+                string _array = fi.Is_array ? "[]" : "";
+                fi.RelType = $"{_type}{_notnull}{_array}";
                 // dal
-                this.fieldList.Add(new FieldInfo()
-                {
-                    Field = field,
-                    Comment = comment,
-                    RelType = reltype,
-                    Db_type = db_type,
-                    Data_Type = data_type,
-                    Is_identity = is_identity == "YES",
-                    Is_array = is_array,
-                    Is_not_null = notnull,
-                    Is_enum = is_enum,
-                    Oid = f_oid,
-                    PgDbType = PgsqlType.SwitchToSql(data_type, db_type)
-                });
+                this.fieldList.Add(fi);
             }, CommandType.Text, _sqltext);
         }
 

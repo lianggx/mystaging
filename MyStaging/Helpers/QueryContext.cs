@@ -325,9 +325,21 @@ namespace MyStaging.Helpers
             return this.CommandText;
         }
 
-        public QueryContext<T> AddParameter(string field, NpgsqlDbType dbType, object value, Type specificType = null)
+        public QueryContext<T> AddParameter(string field, NpgsqlDbType dbType, object value)
         {
-            NpgsqlParameter p = new NpgsqlParameter(field, dbType);
+            return this.AddParameter(field, dbType, value, -1, null);
+        }
+        public QueryContext<T> AddParameter(string field, NpgsqlDbType dbType, object value, Type specificType)
+        {
+            return this.AddParameter(field, dbType, -1, specificType);
+        }
+        public QueryContext<T> AddParameter(string field, NpgsqlDbType dbType, object value, int size)
+        {
+            return this.AddParameter(field, dbType, size, null);
+        }
+        public QueryContext<T> AddParameter(string field, NpgsqlDbType dbType, object value, int size, Type specificType)
+        {
+            NpgsqlParameter p = new NpgsqlParameter(field, dbType, size);
             if (specificType != null)
                 p.SpecificType = specificType;
 
