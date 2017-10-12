@@ -9,7 +9,7 @@ using System.Linq.Expressions;
 using System.Reflection;
 using System.Text;
 using System.Linq;
-
+using System.Text.RegularExpressions;
 
 namespace MyStaging.Helpers
 {
@@ -214,9 +214,21 @@ namespace MyStaging.Helpers
             return restult;
         }
 
-        public QueryContext<T> Where(string expression)
+        public QueryContext<T> Where(string formatCommad, params object[] pValue)
         {
-            WhereList.Add(expression);
+            if (pValue == null || pValue.Length == 0) throw new ArgumentNullException("必须传递参数 pValue");
+            Regex regx = new Regex("{\\d}");
+            MatchCollection matchs = regx.Matches(formatCommad);
+            if (matchs.Count != pValue.Length) throw new ArgumentException("参数 formatCommad 中的格式化参数（{..}）个数必须和 pValue 参数的个数匹配");
+            List<string> nameList = new List<string>();
+            foreach (var item in pValue)
+            {
+                string name = Guid.NewGuid().ToString("N");
+                this.AddParameter(name, item);
+                nameList.Add("@" + name);
+            }
+            formatCommad = string.Format(formatCommad, string.Join(",", nameList));
+            WhereList.Add(formatCommad);
             return this;
         }
 
@@ -256,7 +268,7 @@ namespace MyStaging.Helpers
             if (mastertype != typeof(T))
                 mastertype = typeof(T);
             string tableName = MyStagingUtils.GetMapping(mastertype);
-            // 主表
+            // master table
             StringBuilder sqlText = new StringBuilder();
             string masterAlisName = UnionList.Count > 0 ? "a" : "";
             sqlText.AppendLine($"SELECT {string.Join(",", Fields)} FROM  {tableName} {masterAlisName}");
@@ -295,7 +307,6 @@ namespace MyStaging.Helpers
                         }
                         else if (union != null)
                         {
-                            //  expression. = item.Model;
                             expression.Union_AlisName = union.AlisName;
                         }
                         else
@@ -323,6 +334,12 @@ namespace MyStaging.Helpers
             this.CommandText = sqlText.ToString();
 
             return this.CommandText;
+        }
+        public QueryContext<T> AddParameter(string field, object value)
+        {
+            NpgsqlParameter p = new NpgsqlParameter(field, value);
+            ParamList.Add(p);
+            return this;
         }
 
         public QueryContext<T> AddParameter(string field, NpgsqlDbType dbType, object value)
@@ -354,13 +371,14 @@ namespace MyStaging.Helpers
         }
 
         private static NpgsqlDbType[] dbtypes = { NpgsqlDbType.Varchar, NpgsqlDbType.Char, NpgsqlDbType.Text, NpgsqlDbType.Date, NpgsqlDbType.Time, NpgsqlDbType.Timestamp, NpgsqlDbType.TimestampTZ, NpgsqlDbType.TimeTZ, NpgsqlDbType.Uuid, NpgsqlDbType.Enum, NpgsqlDbType.Json, NpgsqlDbType.Jsonb, NpgsqlDbType.Xml, NpgsqlDbType.Bytea, NpgsqlDbType.MacAddr };
-        protected string ValueJoinTo<T>(T[] values, NpgsqlDbType dbtype)
+        protected string ValueJoinTo<T>(T[] values, NpgsqlDbType dbtype, string enumtype)
         {
             string s = dbtypes.Contains(dbtype) ? "'" : "";
+            string _dbType_text = dbtype == NpgsqlDbType.Enum ? enumtype : dbtype.ToString();
             StringBuilder sb = new StringBuilder();
             for (int i = 0; i < values.Length; i++)
             {
-                sb.Append(s + values[i].ToString() + s + "::" + dbtype);
+                sb.Append(s + values[i].ToString() + s + "::" + _dbType_text);
                 if (i + 1 < values.Length)
                     sb.Append(",");
             }

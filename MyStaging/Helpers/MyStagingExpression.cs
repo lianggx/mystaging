@@ -22,60 +22,13 @@ namespace MyStaging.Helpers
         {
             CommandText.Append("(");
             // left
-            MemberExpression me = left as MemberExpression;
             ExpressionCapture(left);
             CommandText.Append(" ");
             CommandText.Append(NodeTypeToString(type));
             CommandText.Append(" ");
-            object _value = null;
             // right
-            if (me != null && me.Expression is ParameterExpression)
-            {
-                try
-                {
-                    var f = Expression.Lambda(right).Compile();
-                    _value = f.DynamicInvoke();
-                    SetValue(_value, type);
-                }
-                catch
-                {
-                    ExpressionCapture(right);
-                }
-            }
-            else
-                ExpressionCapture(right);
-
+            ExpressionCapture(right);
             CommandText.Append(")");
-        }
-
-        protected void SetValue(object _value, ExpressionType type)
-        {
-            if (_value == null)
-            {
-                CommandText.Remove(CommandText.Length - 3, 3);
-                if (type == ExpressionType.Equal)
-                    CommandText.Append("IS NULL");
-                else if (type == ExpressionType.NotEqual)
-                    CommandText.Append("IS NOT NULL");
-            }
-            else
-            {
-                string p_key = Guid.NewGuid().ToString("N");
-                NpgsqlParameter _p = new NpgsqlParameter(p_key, _value);
-                Parameters.Add(_p);
-                CommandText.Append($"@{p_key}");
-            }
-        }
-
-        private string GetTableName(Type type)
-        {
-            string tableName;
-            if (MasterType != null)
-                tableName = type == MasterType ? Master_AlisName : Union_AlisName;
-            else
-                tableName = type.Name;
-
-            return tableName;
         }
 
         public void ExpressionCapture(Expression selector)
@@ -88,11 +41,13 @@ namespace MyStaging.Helpers
             else if (selector is MemberExpression)
             {
                 MemberExpression me = ((MemberExpression)selector);
-                if (me.Expression is ConstantExpression)
+                if (me.Expression == null || me.Expression is ConstantExpression || ((me.Expression as MemberExpression)?.Expression is ConstantExpression))
                 {
-                    var f = Expression.Lambda(selector).Compile();
-                    object _value = f.DynamicInvoke();
-                    SetValue(_value, me.NodeType);
+                    InvokeExpression(selector);
+                }
+                else if (me.Expression != null && (me.Expression.NodeType == ExpressionType.MemberAccess || me.Expression.NodeType != ExpressionType.Parameter))
+                {
+                    ExpressionCapture(me.Expression);
                 }
                 else
                 {
@@ -116,30 +71,43 @@ namespace MyStaging.Helpers
             }
             else if (selector is MethodCallExpression)
             {
-                MethodCallExpression mce = (MethodCallExpression)selector;
+                MethodCallExpression callExp = (MethodCallExpression)selector;
                 CommandText.Append("(");
-                ExpressionCapture(mce.Arguments[0]);
-                switch (mce.Method.Name)
+                switch (callExp.Method.Name)
                 {
                     case "Like":
+                        ExpressionCapture(callExp.Arguments[0]);
                         CommandText.Append($" LIKE '%");
-                        ExpressionCapture(mce.Arguments[1]);
+                        ExpressionCapture(callExp.Arguments[1]);
                         CommandText.Append("%'");
                         break;
                     case "NotLike":
+                        ExpressionCapture(callExp.Arguments[0]);
                         CommandText.Append($" NOT LIKE '%");
-                        ExpressionCapture(mce.Arguments[1]);
+                        ExpressionCapture(callExp.Arguments[1]);
                         CommandText.Append("%'");
                         break;
                     case "In":
+                        ExpressionCapture(callExp.Arguments[0]);
                         CommandText.Append($" IN (");
-                        ExpressionCapture(mce.Arguments[1]);
+                        ExpressionCapture(callExp.Arguments[1]);
                         CommandText.Append(")");
                         break;
                     case "NotIn":
+                        ExpressionCapture(callExp.Arguments[0]);
                         CommandText.Append($" NOT IN (");
-                        ExpressionCapture(mce.Arguments[1]);
+                        ExpressionCapture(callExp.Arguments[1]);
                         CommandText.Append(")");
+                        break;
+                    default:
+                        try
+                        {
+                            InvokeExpression(selector);
+                        }
+                        catch (Exception ex)
+                        {
+                            throw new NotSupportedException("使用数据库字段和CLR对象进行函数计算查询时，仅支持 Like,NotLike,In,NotIn 查询", ex);
+                        }
                         break;
                 }
                 CommandText.Append(")");
@@ -153,6 +121,36 @@ namespace MyStaging.Helpers
             {
                 UnaryExpression ue = ((UnaryExpression)selector);
                 ExpressionCapture(ue.Operand);
+            }
+            else if (selector is ParameterExpression)
+            {
+                InvokeExpression(selector);
+            }
+        }
+
+        protected void InvokeExpression(Expression exp)
+        {
+            var f = Expression.Lambda(exp).Compile();
+            object _value = f.DynamicInvoke();
+            SetValue(_value, exp.NodeType);
+        }
+
+        protected void SetValue(object val, ExpressionType type)
+        {
+            if (val == null)
+            {
+                CommandText.Remove(CommandText.Length - 3, 3);
+                if (type == ExpressionType.Equal)
+                    CommandText.Append("IS NULL");
+                else if (type == ExpressionType.NotEqual)
+                    CommandText.Append("IS NOT NULL");
+            }
+            else
+            {
+                string p_key = Guid.NewGuid().ToString("N");
+                NpgsqlParameter parameter = new NpgsqlParameter(p_key, val);
+                Parameters.Add(parameter);
+                CommandText.Append($"@{p_key}");
             }
         }
 

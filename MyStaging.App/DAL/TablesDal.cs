@@ -171,7 +171,7 @@ namespace MyStaging.App.DAL
                         writer.WriteLine("\t\t{");
                         writer.WriteLine($"\t\t\t if ({item.Field} == null || {item.Field}.Length == 0) return this;");
                         writer.WriteLine($"\t\t\t string text = ValueJoinTo({item.Field}, NpgsqlDbType.{item.PgDbType},\"{item.Db_type}\");");
-                        writer.WriteLine($"\t\t\t base.Where($\"{item.Field} @> array[{{ text}}]\");");
+                        writer.WriteLine($"\t\t\t base.Where(\"{item.Field} @> array[{{0}}]\",text);");
                         writer.WriteLine($"\t\t\t return this;");
                         writer.WriteLine("\t\t}");
                         writer.WriteLine();
@@ -204,7 +204,8 @@ namespace MyStaging.App.DAL
             {
                 if (item.Is_identity) continue;
                 string specificType = GetspecificType(item);
-                writer.WriteLine($"\t\t\t{_cn}.AddParameter(\"{ item.Field}\", NpgsqlDbType.{item.PgDbType}, model.{item.Field.ToUpperPascal()},{item.Length},{specificType});");
+                string ap = item.Is_array ? " | NpgsqlDbType.Array" : "";
+                writer.WriteLine($"\t\t\t{_cn}.AddParameter(\"{ item.Field}\", NpgsqlDbType.{item.PgDbType}{ap}, model.{item.Field.ToUpperPascal()},{item.Length},{specificType});");
             }
             writer.WriteLine();
             writer.WriteLine($"\t\t\treturn {_cn}.InsertOnReader(insertCmdText);");
@@ -239,11 +240,19 @@ namespace MyStaging.App.DAL
             writer.WriteLine("\t\t{");
             writer.WriteLine($"\t\t\tpublic {updateName}({string.Join(",", d_key)})");
             writer.WriteLine("\t\t\t{");
-            foreach (var item in pkList)
+            if (pkList.Count > 0)
             {
-                FieldInfo fi = fieldList.FirstOrDefault(f => f.Field == item.Field);
-                string specificType = GetspecificType(fi);
-                writer.WriteLine($"\t\t\t\tbase.Where(\"{fi.Field}=@{fi.Field}\").AddParameter(\"{fi.Field}\", NpgsqlDbType.{fi.PgDbType}, {fi.Field},{fi.Length},{specificType});");
+                writer.Write($"\t\t\t\tbase.Where(f => ");
+                for (int i = 0; i < pkList.Count; i++)
+                {
+                    var item = pkList[i];
+                    writer.Write($"f.{item.Field.ToUpperPascal()} == {item.Field}");
+                    if (i + 1 < pkList.Count)
+                    {
+                        writer.Write(" && ");
+                    }
+                }
+                writer.Write(");\n");
             }
             writer.WriteLine("\t\t\t}");
 
@@ -269,7 +278,8 @@ namespace MyStaging.App.DAL
                 writer.WriteLine($"\t\t\tpublic {updateName} Set{item.Field.ToUpperPascal()}({item.RelType} {item.Field})");
                 writer.WriteLine("\t\t\t{");
                 string specificType = GetspecificType(item);
-                writer.WriteLine($"\t\t\t\treturn base.SetField(\"{ item.Field}\", NpgsqlDbType.{_dbtype}, {item.Field},{item.Length},{specificType}) as {updateName};");
+                string ap = item.Is_array ? " | NpgsqlDbType.Array" : "";
+                writer.WriteLine($"\t\t\t\treturn base.SetField(\"{ item.Field}\", NpgsqlDbType.{_dbtype}{ap}, {item.Field},{item.Length},{specificType}) as {updateName};");
                 writer.WriteLine("\t\t\t}");
             }
             writer.WriteLine("\t\t}");
@@ -295,7 +305,8 @@ namespace MyStaging.App.DAL
                 {
                     FieldInfo fi = fieldList.FirstOrDefault(f => f.Field == item.Field);
                     string specificType = GetspecificType(fi);
-                    writer.WriteLine($"\t\t\t{_cn}.AddParameter(\"{ item.Field}\", NpgsqlDbType.{fi.PgDbType}, {item.Field},{fi.Length},{specificType});");
+                    string ap = fi.Is_array ? " | NpgsqlDbType.Array" : "";
+                    writer.WriteLine($"\t\t\t{_cn}.AddParameter(\"{ item.Field}\", NpgsqlDbType.{fi.PgDbType}{ap}, {item.Field},{fi.Length},{specificType});");
                 }
                 writer.WriteLine($"\t\t\treturn {_cn}.ExecuteNonQuery(deleteCmdText);");
                 writer.WriteLine("\t\t}");
