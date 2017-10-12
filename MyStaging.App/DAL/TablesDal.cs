@@ -342,6 +342,10 @@ namespace MyStaging.App.DAL
 
             PgSqlHelper.ExecuteDataReader(dr =>
             {
+                if (this.table.name == "memberdeallog")
+                {
+
+                }
                 FieldInfo fi = new FieldInfo();
                 fi.Oid = Convert.ToInt32(dr["oid"]);
                 fi.Field = dr["field"].ToString();
@@ -356,6 +360,10 @@ namespace MyStaging.App.DAL
                 fi.Is_array = dr["typcategory"].ToString() == "A";
                 fi.Is_enum = fi.Data_Type == "e";
 
+                if (fi.Db_type == "Bpchar")
+                {
+
+                }
                 string _type = PgsqlType.SwitchToCSharp(fi.Db_type);
 
                 if (fi.Is_enum) _type = _type.ToUpperPascal();

@@ -14,7 +14,6 @@ namespace MyStaging.App
         private static string dalPath = string.Empty;
         private static string projectName = string.Empty;
         private static string outputDir = string.Empty;
-        private static string db_path = string.Empty;
 
         public static void Build(string outputdir, string projName)
         {
@@ -43,8 +42,7 @@ namespace MyStaging.App
         {
             modelPath = Path.Combine(outputDir, projectName, projectName + ".db", "Model", "Build");
             dalPath = Path.Combine(outputDir, projectName, projectName + ".db", "DAL", "Build");
-            db_path = Path.Combine(outputDir, projectName, projectName + ".db", $"{projectName}.db");
-            string[] ps = { modelPath, dalPath, db_path };
+            string[] ps = { modelPath, dalPath };
             for (int i = 0; i < ps.Length; i++)
             {
                 if (!Directory.Exists(ps[i]))
@@ -57,7 +55,7 @@ namespace MyStaging.App
             string path = Path.Combine(outputDir, projectName, $"{projectName}.db");
 
             string csproj = Path.Combine(path, $"{projectName}.db.csproj");
-            if (!File.Exists(csproj))
+            if (File.Exists(csproj))
                 return;
 
             using (StreamWriter writer = new StreamWriter(File.Create(csproj)))
@@ -80,9 +78,10 @@ namespace MyStaging.App
 
             // unzip
             string mystaging_file = Path.Combine(outputDir, projectName, "MyStaging");
-            if (!Directory.Exists(mystaging_file))
+            string mystaging_zip_file = "MyStaging.zip";
+            if (!Directory.Exists(mystaging_file) && File.Exists(mystaging_zip_file))
             {
-                System.IO.Compression.ZipFile.ExtractToDirectory("MyStaging.zip", Path.Combine(outputDir, projectName));
+                System.IO.Compression.ZipFile.ExtractToDirectory(mystaging_zip_file, Path.Combine(outputDir, projectName));
             }
             // sln
 

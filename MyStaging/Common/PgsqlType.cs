@@ -31,6 +31,7 @@ namespace MyStaging.Common
                 case "bigserial": return "long";
                 case "varchar": return "string";
                 case "char": return "char";
+                case "bpchar": return "char";
                 case "text": return "string";
                 case "boolean": return "bool";
                 case "bit": return "byte";
@@ -73,6 +74,10 @@ namespace MyStaging.Common
             else if (db_type == "bool")
             {
                 _dbtype = NpgsqlDbType.Boolean;
+            }
+            else if (db_type == "bpchar")
+            {
+                _dbtype = NpgsqlDbType.Char;
             }
             else
             {
