@@ -37,26 +37,34 @@ namespace MyStaging.Helpers
 
         public QueryContext<T> OrderBy<TKey>(Expression<Func<T, TKey>> keySelector)
         {
-            MemberExpression exp = (MemberExpression)keySelector.Body;
-            OrderByText = $"ORDER BY {exp.Member.Name}";
-            return this;
+            return OrderTransafer(keySelector);
         }
 
         public QueryContext<T> OrderBy<TSource, TKey>(Expression<Func<TSource, TKey>> keySelector)
         {
-            return OrderBy(keySelector);
+            return OrderTransafer(keySelector);
         }
 
-        public QueryContext<T> OrderDescing<TKey>(Expression<Func<T, TKey>> keySelector)
+        public QueryContext<T> OrderByDescing<TKey>(Expression<Func<T, TKey>> keySelector)
         {
-            MemberExpression exp = (MemberExpression)keySelector.Body;
-            OrderByText = $"ORDER BY {exp.Member.Name} DESC";
+            return OrderTransafer(keySelector.Body, "DESC");
+        }
+
+        public QueryContext<T> OrderByDescing<TSource, TKey>(Expression<Func<TSource, TKey>> keySelector)
+        {
+            return OrderTransafer(keySelector.Body, "DESC");
+        }
+
+        private QueryContext<T> OrderTransafer(Expression keySelector, string direction = "ASC")
+        {
+            MemberExpression exp = (MemberExpression)keySelector;
+            string alisname = UnionList.FirstOrDefault(f => f.Model.Equals(exp.Member.DeclaringType))?.AlisName;
+            if (!string.IsNullOrEmpty(alisname))
+            {
+                alisname += ".";
+            }
+            OrderByText = $"ORDER BY {alisname}{exp.Member.Name} {direction}";
             return this;
-        }
-
-        public QueryContext<T> OrderDescing<TSource, TKey>(Expression<Func<TSource, TKey>> keySelector)
-        {
-            return OrderDescing(keySelector);
         }
 
         public QueryContext<T> Having(string havingText)
@@ -371,6 +379,7 @@ namespace MyStaging.Helpers
         }
 
         private static NpgsqlDbType[] dbtypes = { NpgsqlDbType.Varchar, NpgsqlDbType.Char, NpgsqlDbType.Text, NpgsqlDbType.Date, NpgsqlDbType.Time, NpgsqlDbType.Timestamp, NpgsqlDbType.TimestampTZ, NpgsqlDbType.TimeTZ, NpgsqlDbType.Uuid, NpgsqlDbType.Enum, NpgsqlDbType.Json, NpgsqlDbType.Jsonb, NpgsqlDbType.Xml, NpgsqlDbType.Bytea, NpgsqlDbType.MacAddr };
+
         protected string ValueJoinTo<T>(T[] values, NpgsqlDbType dbtype, string enumtype)
         {
             string s = dbtypes.Contains(dbtype) ? "'" : "";
@@ -380,6 +389,18 @@ namespace MyStaging.Helpers
             {
                 sb.Append(s + values[i].ToString() + s + "::" + _dbType_text);
                 if (i + 1 < values.Length)
+                    sb.Append(",");
+            }
+            return sb.ToString();
+        }
+
+        protected string ValueJoinTo(System.Collections.ICollection values)
+        {
+            StringBuilder sb = new StringBuilder();
+            for (int i = 0; i < values.Count; i++)
+            {
+                sb.Append("{" + i + "}");
+                if (i + 1 < values.Count)
                     sb.Append(",");
             }
             return sb.ToString();

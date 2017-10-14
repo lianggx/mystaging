@@ -89,15 +89,11 @@ namespace MyStaging.Helpers
                         break;
                     case "In":
                         ExpressionCapture(callExp.Arguments[0]);
-                        CommandText.Append($" IN (");
-                        ExpressionCapture(callExp.Arguments[1]);
-                        CommandText.Append(")");
+                        In_Not_Parameter(callExp.Arguments[1], "IN");
                         break;
                     case "NotIn":
                         ExpressionCapture(callExp.Arguments[0]);
-                        CommandText.Append($" NOT IN (");
-                        ExpressionCapture(callExp.Arguments[1]);
-                        CommandText.Append(")");
+                        In_Not_Parameter(callExp.Arguments[1], "NOT IN");
                         break;
                     default:
                         try
@@ -126,6 +122,22 @@ namespace MyStaging.Helpers
             {
                 InvokeExpression(selector);
             }
+        }
+
+        protected void In_Not_Parameter(Expression exp, string method)
+        {
+            var f = Expression.Lambda(exp).Compile();
+            ICollection _value = (ICollection)f.DynamicInvoke();
+            List<string> keys = new List<string>();
+            IEnumerator rator = _value.GetEnumerator();
+            while (rator.MoveNext())
+            {
+                string p_key = Guid.NewGuid().ToString("N");
+                NpgsqlParameter parameter = new NpgsqlParameter(p_key, rator.Current);
+                Parameters.Add(parameter);
+                keys.Add("@" + p_key);
+            }
+            CommandText.Append($" {method} ({string.Join(",", keys)})");
         }
 
         protected void InvokeExpression(Expression exp)

@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "MyStaging.App": {
+      "commandName": "Project",
+      "commandLineArgs": "dotnet MyStaging.App.dll -h 124.227.12.7 -p 5433 -u postgres -a 123668%AAb% -d gxdkjweb -pool 50 -o D:\\\\TestProjects -proj GxdkjWeb"
+    }
+  }
+}

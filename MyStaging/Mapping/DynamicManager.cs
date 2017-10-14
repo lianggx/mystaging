@@ -90,6 +90,10 @@ namespace MyStaging.Mapping
                     {
                         generator.Emit(OpCodes.Box, memberType);
                     }
+                    else if (unboxType == typeof(char))
+                    {
+                        generator.Emit(OpCodes.Call, typeof(Convert).GetMethod("ToChar", new Type[] { typeof(object) }));
+                    }
                     else
                     {
                         generator.Emit(OpCodes.Unbox_Any, dataRecord.GetFieldType(i));
