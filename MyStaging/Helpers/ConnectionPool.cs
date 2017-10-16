@@ -11,7 +11,9 @@ namespace MyStaging.Helpers
     {
         public static int Pool_Size = 32;
         private static object _lock_obj = new object();
+        private static object _lock_getconnection = new object();
         public static int Connection_Total = 0;
+        private static Queue<ManualResetEvent> GetConnectionQueue = new Queue<ManualResetEvent>();
         public static Queue<NpgsqlConnection> Free { get; } = new Queue<NpgsqlConnection>();
 
         public static string Connection_String { get; set; }
@@ -19,24 +21,36 @@ namespace MyStaging.Helpers
         public static NpgsqlConnection GetConnection()
         {
             Console.WriteLine(Connection_Total);
-
-            if (Free.Count == 0)
+            NpgsqlConnection conn = null;
+            if (Free.Count > 0)
             {
                 lock (_lock_obj)
+                    if (Free.Count > 0)
+                        conn = Free.Dequeue();
+            }
+
+            if (conn == null && Connection_Total < Pool_Size)
+            {
+                lock (_lock_obj)
+                    if (Connection_Total < Pool_Size)
+                        conn = new NpgsqlConnection(Connection_String);
+            }
+
+            if (conn == null)
+            {
+                ManualResetEvent wait = new ManualResetEvent(false);
+                lock (_lock_getconnection)
                 {
-                    if (Connection_Total >= Pool_Size)
-                    {
-                        ManualResetEvent manual = new ManualResetEvent(false);
-                        manual.WaitOne(TimeSpan.FromSeconds(5));
-                        return GetConnection();
-                    }
-                    Interlocked.Increment(ref Connection_Total);
-                    NpgsqlConnection cm = new NpgsqlConnection(Connection_String);
-                    Free.Enqueue(cm);
+                    GetConnectionQueue.Enqueue(wait);
+                    if (wait.WaitOne(TimeSpan.FromSeconds(10)))
+                        GetConnection();
+                    else
+                        return null;
                 }
             }
 
-            return Free.Dequeue();
+            Interlocked.Increment(ref Connection_Total);
+            return conn;
         }
 
         private static object _lock_enq_obj = new object();
@@ -47,6 +61,15 @@ namespace MyStaging.Helpers
                 Free.Enqueue(conn);
                 Interlocked.Decrement(ref Connection_Total);
             }
+
+            if (GetConnectionQueue.Count > 0)
+            {
+                ManualResetEvent wait = null;
+                lock (_lock_getconnection)
+                    if (GetConnectionQueue.Count > 0)
+                        wait = GetConnectionQueue.Dequeue();
+                if (wait != null) wait.Set();
+            }
         }
 
         #region IDisposable Support
@@ -56,22 +79,16 @@ namespace MyStaging.Helpers
             if (!disposedValue)
             {
                 if (disposing)
-                {
                     if (ConnectionPool.Free.Count > 3)
-                    {
                         lock (_lock_obj)
-                        {
                             for (int i = 0; i < ConnectionPool.Free.Count - 3; i++)
                             {
                                 NpgsqlConnection conn = ConnectionPool.Free.Dequeue();
                                 conn.Dispose();
                                 Interlocked.Decrement(ref Connection_Total);
                             }
-                        }
-                    }
 
-                    disposedValue = true;
-                }
+                disposedValue = true;
             }
         }
 
