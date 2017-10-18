@@ -64,8 +64,8 @@ namespace MyStaging.App.DAL
                         writer.WriteLine($"\t\t/// {item.Comment}");
                         writer.WriteLine("\t\t/// </summary>");
                     }
-
-                    writer.WriteLine($"\t\tpublic {item.RelType} {item.Field.ToUpperPascal()} {{ get;set; }}");
+                    string _type = item.RelType == "char" || item.RelType == "char?" ? "string" : item.RelType;
+                    writer.WriteLine($"\t\tpublic {_type} {item.Field.ToUpperPascal()} {{ get;set; }}");
                     writer.WriteLine();
                 }
 

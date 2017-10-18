@@ -57,7 +57,11 @@ namespace MyStaging.Helpers
 
         private QueryContext<T> OrderTransafer(Expression keySelector, string direction = "ASC")
         {
-            MemberExpression exp = (MemberExpression)keySelector;
+            MemberExpression exp = null;
+            if (keySelector.NodeType == ExpressionType.Lambda)
+                exp = (MemberExpression)((LambdaExpression)keySelector).Body;
+            else
+                exp = (MemberExpression)keySelector;
             string alisname = UnionList.FirstOrDefault(f => f.Model.Equals(exp.Member.DeclaringType))?.AlisName;
             if (!string.IsNullOrEmpty(alisname))
             {
