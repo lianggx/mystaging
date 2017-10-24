@@ -67,6 +67,10 @@ namespace MyStaging.Helpers
             {
                 alisname += ".";
             }
+            else if (string.IsNullOrEmpty(alisname) && UnionList.Count > 0)
+            {
+                alisname = "a.";
+            }
             OrderByText = $"ORDER BY {alisname}{exp.Member.Name} {direction}";
             return this;
         }

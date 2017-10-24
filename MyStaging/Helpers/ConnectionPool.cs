@@ -20,7 +20,6 @@ namespace MyStaging.Helpers
 
         public static NpgsqlConnection GetConnection()
         {
-            Console.WriteLine(Connection_Total);
             NpgsqlConnection conn = null;
             if (Free.Count > 0)
             {

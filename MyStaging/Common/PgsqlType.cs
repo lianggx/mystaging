@@ -26,7 +26,9 @@ namespace MyStaging.Common
                 case "decimal": return "decimal";
                 case "numeric": return "decimal";
                 case "real": return "decimal";
-                case "double": return "double";
+                case "double":
+                case "float4":
+                case "float8": return "double";
                 case "serial": return "int";
                 case "bigserial": return "long";
                 case "varchar": return "string";
@@ -43,7 +45,9 @@ namespace MyStaging.Common
                 case "_decimal": return "decimal";
                 case "_numeric": return "decimal";
                 case "_real": return "decimal";
-                case "_double": return "double";
+                case "_double":
+                case "_float4":
+                case "_float8": return "double";
                 case "_serial": return "int";
                 case "_bigserial": return "long";
                 case "_varchar": return "string";
@@ -78,6 +82,10 @@ namespace MyStaging.Common
             else if (db_type == "bpchar")
             {
                 _dbtype = NpgsqlDbType.Char;
+            }
+            else if (db_type == "float4" || db_type == "float8")
+            {
+                _dbtype = NpgsqlDbType.Double;
             }
             else
             {

@@ -137,6 +137,8 @@ namespace MyStaging.Helpers
                 Parameters.Add(parameter);
                 keys.Add("@" + p_key);
             }
+            if (keys.Count == 0)
+                throw new ArgumentNullException($"{method} 查询必须提供参数，{exp}");
             CommandText.Append($" {method} ({string.Join(",", keys)})");
         }
 
