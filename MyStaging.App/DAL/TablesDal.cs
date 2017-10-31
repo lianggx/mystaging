@@ -49,6 +49,7 @@ namespace MyStaging.App.DAL
                 writer.WriteLine("using Newtonsoft.Json;");
                 writer.WriteLine("using Newtonsoft.Json.Linq;");
                 writer.WriteLine("using MyStaging.Mapping;");
+                writer.WriteLine("using NpgsqlTypes;");
                 writer.WriteLine();
                 writer.WriteLine($"namespace {projectName}.Model");
                 writer.WriteLine("{");
@@ -326,7 +327,7 @@ namespace MyStaging.App.DAL
 , (case when f.character_maximum_length is null then c.attlen else f.character_maximum_length end) as length
 ,c.attnotnull as notnull
 ,d.description as comment
-,(case when e.typelem = 0 then e.typname else e2.typname end) as type
+,(case when e.typcategory ='G' then e.typname when e.typelem = 0 then e.typname else e2.typname end) as type
 ,(case when e.typelem = 0 then e.typtype else e2.typtype end) as data_type
 ,e.typcategory
 ,f.is_identity
@@ -361,15 +362,19 @@ namespace MyStaging.App.DAL
                 fi.Is_array = dr["typcategory"].ToString() == "A";
                 fi.Is_enum = fi.Data_Type == "e";
 
-                if (fi.Db_type == "Bpchar")
-                {
-
-                }
                 string _type = PgsqlType.SwitchToCSharp(fi.Db_type);
 
                 if (fi.Is_enum) _type = _type.ToUpperPascal();
                 string _notnull = "";
-                if (_type != "string" && _type != "JToken" && !fi.Is_array)
+                if (
+                _type != "string"
+                && _type != "JToken"
+                && !fi.Is_array
+                && _type != "System.Net.IPAddress"
+                && _type != "System.Net.NetworkInformation.PhysicalAddress"
+                && _type != "System.Xml.Linq.XDocument"
+                && _type != "System.Collections.BitArray"
+                )
                     _notnull = fi.Is_not_null ? "" : "?";
 
                 string _array = fi.Is_array ? "[]" : "";
@@ -418,8 +423,8 @@ WHERE conrelid in
 (
 SELECT a.oid FROM pg_class a 
 inner join pg_namespace b on a.relnamespace=b.oid
-WHERE b.nspname='{0}' and a.relname='{1}'
-);", this.schemaName, this.table.name);
+WHERE b.nspname='{0}' and a.relname='{1}');"
+, this.schemaName, this.table.name);
 
 
             PgSqlHelper.ExecuteDataReader(dr =>

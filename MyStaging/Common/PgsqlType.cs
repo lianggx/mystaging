@@ -14,56 +14,62 @@ namespace MyStaging.Common
             switch (type)
             {
                 case "uuid": return "Guid";
-                case "timestamp": return "DateTime";
-                case "smallint": return "short";
-                case "integer": return "int";
-                case "int2": return "short";
+                case "oid":
+                case "xid":
+                case "cid": return "uint";
+                case "integer":
+                case "serial":
+                case "serial4":
                 case "int4": return "int";
-                case "int8": return "long";
-                case "_int2": return "short";
-                case "_int4": return "int";
-                case "_int8": return "long";
-                case "decimal": return "decimal";
-                case "numeric": return "decimal";
+                case "oidvector": return "uint[]";
+                case "serial2":
+                case "smallint":
+                case "int2": return "short";
+                case "money":
+                case "decimal":
+                case "numeric":
                 case "real": return "decimal";
                 case "double":
                 case "float4":
                 case "float8": return "double";
-                case "serial": return "int";
+                case "int8":
+                case "serial8":
                 case "bigserial": return "long";
-                case "varchar": return "string";
-                case "char": return "char";
-                case "bpchar": return "char";
+                case "name":
+                case "varchar":
+                case "char":
+                case "bpchar":
                 case "text": return "string";
                 case "boolean": return "bool";
+                case "bytea": return "byte[]";
                 case "bit": return "byte";
-                case "_uuid": return "Guid";
-                case "_timestamp": return "DateTime";
-                case "_smallint": return "short";
-                case "_integer": return "int";
-                case "_bigint": return "long";
-                case "_decimal": return "decimal";
-                case "_numeric": return "decimal";
-                case "_real": return "decimal";
-                case "_double":
-                case "_float4":
-                case "_float8": return "double";
-                case "_serial": return "int";
-                case "_bigserial": return "long";
-                case "_varchar": return "string";
-                case "_char": return "char";
-                case "_text": return "string";
-                case "_boolean": return "bool";
-                case "_bit": return "byte";
+                case "timetz": return "DateTimeOffset";
+                case "interval": return "TimeSpan";
+                case "date":
+                case "timestamptz":
+                case "timestamp": return "DateTime";
                 case "json": return "JToken";
                 case "jsonb": return "JToken";
-                case "date": return "DateTime";
+                case "geometry": return "string";
+                case "path": return "NpgsqlPath";
+                case "line": return "NpgsqlLine";
+                case "polygon": return "NpgsqlPolygon";
+                case "circle": return "NpgsqlCircle";
+                case "point": return "NpgsqlPoint";
+                case "box": return "NpgsqlBox";
+                case "lseg": return "NpgsqlLSeg";
+                case "inet": return "System.Net.IPAddress";
+                case "macaddr": return "System.Net.NetworkInformation.PhysicalAddress";
+                case "xml": return "System.Xml.Linq.XDocument";
+                case "varbit": return "System.Collections.BitArray";
+
                 default: return type;
             }
         }
 
         public static NpgsqlDbType SwitchToSql(string data_type, string db_type)
         {
+
             NpgsqlDbType _dbtype;
             if (data_type == "e")
                 _dbtype = NpgsqlDbType.Enum;  //   _dbtype = item.Db_type.ToUpperPascal();
@@ -86,6 +92,19 @@ namespace MyStaging.Common
             else if (db_type == "float4" || db_type == "float8")
             {
                 _dbtype = NpgsqlDbType.Double;
+            }
+            else if (db_type == "path" || db_type == "line" || db_type == "polygon" || db_type == "circle" || db_type == "point" || db_type == "box" || db_type == "lseg")
+            {
+                if (db_type == "lseg") db_type = "LSeg";
+                _dbtype = System.Enum.Parse<NpgsqlDbType>($"{db_type.ToUpperPascal()}");
+            }
+            else if (db_type == "interval")
+            {
+                _dbtype = NpgsqlDbType.Interval;
+            }
+            else if (db_type == "macaddr")
+            {
+                _dbtype = NpgsqlDbType.MacAddr;
             }
             else
             {

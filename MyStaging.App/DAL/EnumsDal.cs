@@ -80,12 +80,17 @@ where a.typtype = 'e' order by oid asc";
                 writer.WriteLine("\t\tpublic static void Init(ILogger logger, string connectionString)");
                 writer.WriteLine("\t\t{");
                 writer.WriteLine("\t\t\tPgSqlHelper.InitConnection(logger, connectionString);");
-                writer.WriteLine();
-                writer.WriteLine("\t\t\tNpgsqlNameTranslator translator = new NpgsqlNameTranslator();");
-                foreach (var item in list)
+
+                if (list.Count > 0)
                 {
-                    writer.WriteLine($"\t\t\tNpgsqlConnection.MapEnumGlobally<{item.typename.ToUpperPascal()}>(\"{item.nspname}.{item.typename}\", translator);");
+                    writer.WriteLine();
+                    writer.WriteLine("\t\t\tNpgsqlNameTranslator translator = new NpgsqlNameTranslator();");
+                    foreach (var item in list)
+                    {
+                        writer.WriteLine($"\t\t\tNpgsqlConnection.MapEnumGlobally<{item.typename.ToUpperPascal()}>(\"{item.nspname}.{item.typename}\", translator);");
+                    }
                 }
+
                 writer.WriteLine("\t\t}");
                 writer.WriteLine("\t}");
                 writer.WriteLine("\tpublic partial class NpgsqlNameTranslator : INpgsqlNameTranslator");
