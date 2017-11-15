@@ -29,6 +29,7 @@ namespace MyStaging.App
             List<string> schemaList = SchemaDal.Get_List();
             foreach (var schemaName in schemaList)
             {
+                Console.WriteLine("正在生成模式：{0}", schemaName);
                 List<TableViewModel> tableList = GetTables(schemaName);
                 foreach (var item in tableList)
                 {
