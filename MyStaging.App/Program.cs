@@ -40,8 +40,8 @@ namespace MyStaging.App
                 }
                 i++;
             }
-            outPutPath = "D:\\TestProjects";
-            projName = "Postgis_24_sample";
+            //outPutPath = "D:\\TestProjects";
+            //projName = "Postgis_24_sample";
             //PgSqlHelper.InitConnection(null, "Host=127.0.0.1;Port=5432;Username=piao_p;Password=123456;Database=postgis_24_sample;Pooling=true;Maximum Pool Size=100");
             PgSqlHelper.InitConnection(null, connection.ToString());
             SchemaFactory.Build(outPutPath, projName);
