@@ -22,16 +22,21 @@ namespace MyStaging.Helpers
         {
             CommandText.Append("(");
             // left
-            ExpressionCapture(left);
+            ExpressionCapture(left, type);
             CommandText.Append(" ");
             CommandText.Append(NodeTypeToString(type));
             CommandText.Append(" ");
             // right
-            ExpressionCapture(right);
+            ExpressionCapture(right, type);
             CommandText.Append(")");
         }
 
         public void ExpressionCapture(Expression selector)
+        {
+            ExpressionCapture(selector, selector.NodeType);
+        }
+
+        private void ExpressionCapture(Expression selector, ExpressionType parent_type)
         {
             if (selector is BinaryExpression)
             {
@@ -43,11 +48,11 @@ namespace MyStaging.Helpers
                 MemberExpression me = ((MemberExpression)selector);
                 if (me.Expression == null || me.Expression is ConstantExpression || ((me.Expression as MemberExpression)?.Expression is ConstantExpression))
                 {
-                    InvokeExpression(selector);
+                    InvokeExpression(selector, parent_type);
                 }
                 else if (me.Expression != null && (me.Expression.NodeType == ExpressionType.MemberAccess || me.Expression.NodeType != ExpressionType.Parameter))
                 {
-                    ExpressionCapture(me.Expression);
+                    ExpressionCapture(me.Expression, parent_type);
                 }
                 else
                 {
@@ -64,7 +69,7 @@ namespace MyStaging.Helpers
                 NewArrayExpression ae = ((NewArrayExpression)selector);
                 foreach (Expression ex in ae.Expressions)
                 {
-                    ExpressionCapture(ex);
+                    ExpressionCapture(ex, parent_type);
                     CommandText.Append(",");
                 }
                 CommandText.Remove(CommandText.Length - 1, 1);
@@ -76,29 +81,29 @@ namespace MyStaging.Helpers
                 switch (callExp.Method.Name)
                 {
                     case "Like":
-                        ExpressionCapture(callExp.Arguments[0]);
-                        CommandText.Append($" LIKE '%");
-                        ExpressionCapture(callExp.Arguments[1]);
-                        CommandText.Append("%'");
+                        ExpressionCapture(callExp.Arguments[0], parent_type);
+                        CommandText.Append($" ILIKE '%' || ");
+                        ExpressionCapture(callExp.Arguments[1], parent_type);
+                        CommandText.Append(" || '%'");
                         break;
                     case "NotLike":
-                        ExpressionCapture(callExp.Arguments[0]);
-                        CommandText.Append($" NOT LIKE '%");
-                        ExpressionCapture(callExp.Arguments[1]);
-                        CommandText.Append("%'");
+                        ExpressionCapture(callExp.Arguments[0], parent_type);
+                        CommandText.Append($" NOT ILIKE '%' || ");
+                        ExpressionCapture(callExp.Arguments[1], parent_type);
+                        CommandText.Append(" || '%'");
                         break;
                     case "In":
-                        ExpressionCapture(callExp.Arguments[0]);
+                        ExpressionCapture(callExp.Arguments[0], parent_type);
                         In_Not_Parameter(callExp.Arguments[1], "IN");
                         break;
                     case "NotIn":
-                        ExpressionCapture(callExp.Arguments[0]);
+                        ExpressionCapture(callExp.Arguments[0], parent_type);
                         In_Not_Parameter(callExp.Arguments[1], "NOT IN");
                         break;
                     default:
                         try
                         {
-                            InvokeExpression(selector);
+                            InvokeExpression(selector, parent_type);
                         }
                         catch (Exception ex)
                         {
@@ -116,11 +121,11 @@ namespace MyStaging.Helpers
             else if (selector is UnaryExpression)
             {
                 UnaryExpression ue = ((UnaryExpression)selector);
-                ExpressionCapture(ue.Operand);
+                ExpressionCapture(ue.Operand, parent_type);
             }
             else if (selector is ParameterExpression)
             {
-                InvokeExpression(selector);
+                InvokeExpression(selector, parent_type);
             }
         }
 
@@ -142,11 +147,11 @@ namespace MyStaging.Helpers
             CommandText.Append($" {method} ({string.Join(",", keys)})");
         }
 
-        protected void InvokeExpression(Expression exp)
+        protected void InvokeExpression(Expression exp, ExpressionType parent_type)
         {
             var f = Expression.Lambda(exp).Compile();
             object _value = f.DynamicInvoke();
-            SetValue(_value, exp.NodeType);
+            SetValue(_value, parent_type);
         }
 
         protected void SetValue(object val, ExpressionType type)
@@ -155,9 +160,9 @@ namespace MyStaging.Helpers
             {
                 CommandText.Remove(CommandText.Length - 3, 3);
                 if (type == ExpressionType.Equal)
-                    CommandText.Append("IS NULL");
+                    CommandText.Append(" IS NULL");
                 else if (type == ExpressionType.NotEqual)
-                    CommandText.Append("IS NOT NULL");
+                    CommandText.Append(" IS NOT NULL");
             }
             else
             {

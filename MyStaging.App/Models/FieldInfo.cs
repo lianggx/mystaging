@@ -10,6 +10,7 @@ namespace MyStaging.App.Models
         public string Field { get; set; }
         public int Length { get; set; }
         public string Comment { get; set; }
+        public string CsType { get; set; }
         public string RelType { get; set; }
         public string Db_type { get; set; }
         public string Data_Type { get; set; }

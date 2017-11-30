@@ -283,6 +283,20 @@ namespace MyStaging.App.DAL
                 string ap = item.Is_array ? " | NpgsqlDbType.Array" : "";
                 writer.WriteLine($"\t\t\t\treturn base.SetField(\"{ item.Field}\", NpgsqlDbType.{_dbtype}{ap}, {item.Field},{item.Length},{specificType}) as {updateName};");
                 writer.WriteLine("\t\t\t}");
+
+                if (item.Is_array)
+                {
+                    writer.WriteLine($"\t\t\tpublic {updateName} Set{item.Field.ToUpperPascal()}Append({item.CsType} {item.Field})");
+                    writer.WriteLine("\t\t\t{");
+                    writer.WriteLine($"\t\t\t\treturn base.SetArrayAppend(\"{ item.Field}\", NpgsqlDbType.{_dbtype}, {item.Field},{item.Length},{specificType}) as {updateName};");
+                    writer.WriteLine("\t\t\t}");
+
+                    writer.WriteLine($"\t\t\tpublic {updateName} Set{item.Field.ToUpperPascal()}Remove({item.CsType} {item.Field})");
+                    writer.WriteLine("\t\t\t{");
+                    writer.WriteLine($"\t\t\t\treturn base.SetArrayRemove(\"{ item.Field}\", NpgsqlDbType.{_dbtype}, {item.Field},{item.Length},{specificType}) as {updateName};");
+                    writer.WriteLine("\t\t\t}");
+                }
+
             }
             writer.WriteLine("\t\t}");
         }
@@ -362,23 +376,23 @@ namespace MyStaging.App.DAL
                 fi.Is_array = dr["typcategory"].ToString() == "A";
                 fi.Is_enum = fi.Data_Type == "e";
 
-                string _type = PgsqlType.SwitchToCSharp(fi.Db_type);
+                fi.CsType = PgsqlType.SwitchToCSharp(fi.Db_type);
 
-                if (fi.Is_enum) _type = _type.ToUpperPascal();
+                if (fi.Is_enum) fi.CsType = fi.CsType.ToUpperPascal();
                 string _notnull = "";
                 if (
-                _type != "string"
-                && _type != "JToken"
+                fi.CsType != "string"
+                && fi.CsType != "JToken"
                 && !fi.Is_array
-                && _type != "System.Net.IPAddress"
-                && _type != "System.Net.NetworkInformation.PhysicalAddress"
-                && _type != "System.Xml.Linq.XDocument"
-                && _type != "System.Collections.BitArray"
+                && fi.CsType != "System.Net.IPAddress"
+                && fi.CsType != "System.Net.NetworkInformation.PhysicalAddress"
+                && fi.CsType != "System.Xml.Linq.XDocument"
+                && fi.CsType != "System.Collections.BitArray"
                 )
                     _notnull = fi.Is_not_null ? "" : "?";
 
                 string _array = fi.Is_array ? "[]" : "";
-                fi.RelType = $"{_type}{_notnull}{_array}";
+                fi.RelType = $"{fi.CsType}{_notnull}{_array}";
                 // dal
                 this.fieldList.Add(fi);
             }, CommandType.Text, _sqltext);

@@ -230,9 +230,14 @@ namespace MyStaging.Helpers
             return restult;
         }
 
+        /// <summary>
+        ///  该方法没有对sql注入进行参数化过滤
+        /// </summary>
+        /// <param name="expression"></param>
+        /// <returns></returns>
         public QueryContext<T> Where(string expression)
         {
-            if (string.IsNullOrEmpty(expression)) throw new ArgumentNullException("必须传递参数 pValue");
+            if (string.IsNullOrEmpty(expression)) throw new ArgumentNullException("必须传递参数 expression");
 
             WhereList.Add(expression);
             return this;
@@ -380,7 +385,12 @@ namespace MyStaging.Helpers
         }
         public QueryContext<T> AddParameter(string field, NpgsqlDbType dbType, object value, int size, Type specificType)
         {
-            NpgsqlParameter p = new NpgsqlParameter(field, dbType, size);
+            NpgsqlParameter p = this.ParamList.FirstOrDefault(f => f.ParameterName == field);
+            if (p != null)
+            {
+                this.ParamList.Remove(p);
+            }
+            p = new NpgsqlParameter(field, dbType, size);
             if (specificType != null)
                 p.SpecificType = specificType;
 

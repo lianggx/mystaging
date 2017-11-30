@@ -15,6 +15,20 @@ namespace MyStaging.Helpers
             return this;
         }
 
+        protected UpdateBuilder<T> SetArrayAppend(string field, NpgsqlDbType dbType, object value, int size, Type specificType = null)
+        {
+            base.AddParameter(field, dbType, value, size, specificType);
+            setList.Add($"{field}=array_append({field},@{field})");
+            return this;
+        }
+
+        protected UpdateBuilder<T> SetArrayRemove(string field, NpgsqlDbType dbType, object value, int size, Type specificType = null)
+        {
+            base.AddParameter(field, dbType, value, size, specificType);
+            setList.Add($"{field} = array_remove({field},@{field})");
+            return this;
+        }
+
         public int SaveChange()
         {
             string tableName = MyStagingUtils.GetMapping(typeof(T));
