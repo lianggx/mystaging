@@ -88,7 +88,7 @@ namespace MyStaging.Mapping
                     }
                     else if (isEnum)
                     {
-                        generator.Emit(OpCodes.Box, memberType);
+                        generator.Emit(OpCodes.Unbox_Any, memberType);
                     }
                     else if (unboxType == typeof(char))
                     {

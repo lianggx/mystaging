@@ -12,8 +12,17 @@ namespace MyStaging.Helpers
         {
             public _execute() { }
         }
+        static PgExecute _instance = null;
+        private static PgExecute Instance
+        {
+            get
+            {
+                if (_instance == null)
+                    _instance = new _execute();
 
-        private static PgExecute Instance { get { return new _execute(); } }
+                return _instance;
+            }
+        }
         private static ILogger _logger;
         public static void InitConnection(ILogger logger, string connectionString)
         {
@@ -56,6 +65,11 @@ namespace MyStaging.Helpers
                 Instance.BeginTransaction();
                 action?.Invoke();
                 Instance.CommitTransaction();
+            }
+            catch (Exception e)
+            {
+                Instance.RollBackTransaction();
+                throw e;
             }
             finally
             {

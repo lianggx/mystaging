@@ -377,11 +377,11 @@ namespace MyStaging.Helpers
         }
         public QueryContext<T> AddParameter(string field, NpgsqlDbType dbType, object value, Type specificType)
         {
-            return this.AddParameter(field, dbType, -1, specificType);
+            return this.AddParameter(field, dbType, value, -1, specificType);
         }
         public QueryContext<T> AddParameter(string field, NpgsqlDbType dbType, object value, int size)
         {
-            return this.AddParameter(field, dbType, size, null);
+            return this.AddParameter(field, dbType, value, size, null);
         }
         public QueryContext<T> AddParameter(string field, NpgsqlDbType dbType, object value, int size, Type specificType)
         {
@@ -390,9 +390,11 @@ namespace MyStaging.Helpers
             {
                 this.ParamList.Remove(p);
             }
-            p = new NpgsqlParameter(field, dbType, size);
+            p = new NpgsqlParameter(field, dbType);
             if (specificType != null)
                 p.SpecificType = specificType;
+            if (size != -1)
+                p.Size = size;
 
             p.Value = value;
             ParamList.Add(p);

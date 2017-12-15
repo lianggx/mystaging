@@ -1,7 +1,10 @@
 ﻿using Microsoft.Extensions.Logging;
 using Npgsql;
 using System;
+using System.Collections.Generic;
 using System.Data;
+using System.Data.SqlClient;
+using System.Threading;
 
 namespace MyStaging.Helpers
 {
@@ -15,7 +18,20 @@ namespace MyStaging.Helpers
             _logger = logger;
         }
         public PgExecute() { }
+
+        private Dictionary<int, NpgsqlTransaction> _trans = new Dictionary<int, NpgsqlTransaction>();
+        private object _trans_lock = new object();
         #endregion
+        private NpgsqlTransaction CurrentThreadTransaction
+        {
+            get
+            {
+                int tid = Thread.CurrentThread.ManagedThreadId;
+                if (_trans.ContainsKey(tid) && _trans[tid] != null)
+                    return _trans[tid];
+                return null;
+            }
+        }
 
         protected void AttachParameters(NpgsqlCommand command, NpgsqlParameter[] commandParameters)
         {
@@ -35,11 +51,20 @@ namespace MyStaging.Helpers
         protected void PrepareCommand(NpgsqlCommand command, CommandType commandType, string commandText, NpgsqlParameter[] commandParameters)
         {
             if (commandText == null || commandText.Length == 0) throw new ArgumentNullException("commandText");
-            if (Connection == null)
+            if (Connection == null && CurrentThreadTransaction == null)
                 Connection = ConnectionPool.GetConnection();
+            else if (CurrentThreadTransaction != null)
+                Connection = CurrentThreadTransaction.Connection;
+
+            if (Connection.State != ConnectionState.Open)
+                Connection.Open();
+
             command.Connection = Connection;
             command.CommandText = commandText;
             command.CommandType = commandType;
+
+
+
             if (commandParameters != null)
                 AttachParameters(command, commandParameters);
         }
@@ -51,8 +76,6 @@ namespace MyStaging.Helpers
             try
             {
                 PrepareCommand(_cmd, commandType, commandText, commandParameters);
-                if (_cmd.Connection.State != ConnectionState.Open)
-                    _cmd.Connection.Open();
                 retval = _cmd.ExecuteScalar();
             }
             catch (Exception ex)
@@ -62,7 +85,7 @@ namespace MyStaging.Helpers
             }
             finally
             {
-                if (_tran == null)
+                if (this.CurrentThreadTransaction == null)
                     Clear(_cmd, _cmd.Connection);
             }
             return retval;
@@ -75,8 +98,6 @@ namespace MyStaging.Helpers
             try
             {
                 PrepareCommand(_cmd, commandType, commandText, commandParameters);
-                if (_cmd.Connection.State != ConnectionState.Open)
-                    _cmd.Connection.Open();
                 retval = _cmd.ExecuteNonQuery();
             }
             catch (Exception ex)
@@ -86,7 +107,7 @@ namespace MyStaging.Helpers
             }
             finally
             {
-                if (_tran == null)
+                if (this.CurrentThreadTransaction == null)
                     Clear(_cmd, _cmd.Connection);
             }
             return retval;
@@ -97,8 +118,6 @@ namespace MyStaging.Helpers
             try
             {
                 PrepareCommand(_cmd, commandType, commandText, commandParameters);
-                if (_cmd.Connection.State != ConnectionState.Open)
-                    _cmd.Connection.Open();
                 using (NpgsqlDataReader reader = _cmd.ExecuteReader())
                 {
                     while (reader.Read())
@@ -114,7 +133,7 @@ namespace MyStaging.Helpers
             }
             finally
             {
-                if (_tran == null)
+                if (this.CurrentThreadTransaction == null)
                     Clear(_cmd, _cmd.Connection);
             }
         }
@@ -137,7 +156,6 @@ namespace MyStaging.Helpers
             }
         }
 
-        private NpgsqlTransaction _tran = null;
         protected void ExceptionOutPut(NpgsqlCommand cmd, Exception ex)
         {
             string ps = string.Empty;
@@ -154,28 +172,54 @@ namespace MyStaging.Helpers
         }
         public void BeginTransaction()
         {
-            if (_tran != null)
-                throw new Exception("the transaction is opend");
+            if (CurrentThreadTransaction != null)
+                CommitTransaction(true);
+
             Connection = ConnectionPool.GetConnection();
             if (Connection.State != ConnectionState.Open)
                 Connection.Open();
-            _tran = Connection.BeginTransaction();
+            NpgsqlTransaction tran = Connection.BeginTransaction();
+            int tid = Thread.CurrentThread.ManagedThreadId;
+            if (_trans.ContainsKey(tid))
+                CommitTransaction();
+
+            lock (_trans_lock)
+            {
+                _trans.Add(tid, tran);
+            }
         }
         public void CommitTransaction()
         {
-            if (_tran != null)
-            {
-                _tran.Commit();
-                _tran.Dispose();
-            }
-            Clear(null, _tran.Connection);
+            CommitTransaction(true);
         }
+
+        public void CommitTransaction(bool iscommit)
+        {
+            int tid = Thread.CurrentThread.ManagedThreadId;
+
+            NpgsqlTransaction tran = CurrentThreadTransaction;
+            if (tran != null)
+            {
+                if (iscommit)
+                    tran.Commit();
+                else
+                    tran.Rollback();
+
+                tran.Dispose();
+                lock (_trans_lock)
+                {
+                    _trans.Remove(tid);
+                }
+            }
+            Clear(null, tran?.Connection);
+        }
+
         public void RollBackTransaction()
         {
-            if (_tran != null)
+            NpgsqlTransaction tran = CurrentThreadTransaction;
+            if (tran != null && !tran.IsCompleted)
             {
-                _tran.Rollback();
-                _tran.Dispose();
+                CommitTransaction(false);
             }
         }
     }
