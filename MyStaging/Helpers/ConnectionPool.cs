@@ -41,14 +41,15 @@ namespace MyStaging.Helpers
                 lock (_lock_getconnection)
                 {
                     GetConnectionQueue.Enqueue(wait);
-                    if (wait.WaitOne(TimeSpan.FromSeconds(10)))
-                        GetConnection();
-                    else
-                        return null;
                 }
-            }
+                if (wait.WaitOne(TimeSpan.FromSeconds(10)))
+                    return GetConnection();
+                else
+                    return null;
 
-            Interlocked.Increment(ref Connection_Total);
+            }
+            if (conn != null)
+                Interlocked.Increment(ref Connection_Total);
             return conn;
         }
 
