@@ -71,10 +71,6 @@ namespace MyStaging.Helpers
                 Instance.RollBackTransaction();
                 throw e;
             }
-            finally
-            {
-                Instance.Clear(null, Instance.Connection);
-            }
         }
     }
 }

@@ -12,7 +12,6 @@ namespace MyStaging.Helpers
     {
         #region Identity        
         public static ILogger _logger = null;
-        public NpgsqlConnection Connection = null;
         public PgExecute(ILogger logger)
         {
             _logger = logger;
@@ -51,19 +50,15 @@ namespace MyStaging.Helpers
         protected void PrepareCommand(NpgsqlCommand command, CommandType commandType, string commandText, NpgsqlParameter[] commandParameters)
         {
             if (commandText == null || commandText.Length == 0) throw new ArgumentNullException("commandText");
-            if (Connection == null && CurrentThreadTransaction == null)
-                Connection = ConnectionPool.GetConnection();
-            else if (CurrentThreadTransaction != null)
+            NpgsqlConnection Connection = null;
+            if (CurrentThreadTransaction != null)
                 Connection = CurrentThreadTransaction.Connection;
-
-            if (Connection.State != ConnectionState.Open)
-                Connection.Open();
+            else
+                Connection = ConnectionPool.GetConnection();
 
             command.Connection = Connection;
             command.CommandText = commandText;
             command.CommandType = commandType;
-
-
 
             if (commandParameters != null)
                 AttachParameters(command, commandParameters);
@@ -72,21 +67,23 @@ namespace MyStaging.Helpers
         public object ExecuteScalar(CommandType commandType, string commandText, params NpgsqlParameter[] commandParameters)
         {
             object retval = null;
-            NpgsqlCommand _cmd = new NpgsqlCommand();
+            NpgsqlCommand cmd = new NpgsqlCommand();
             try
             {
-                PrepareCommand(_cmd, commandType, commandText, commandParameters);
-                retval = _cmd.ExecuteScalar();
+                PrepareCommand(cmd, commandType, commandText, commandParameters);
+                if (cmd.Connection.State == ConnectionState.Closed)
+                    cmd.Connection.Open();
+                retval = cmd.ExecuteScalar();
             }
             catch (Exception ex)
             {
-                ExceptionOutPut(_cmd, ex);
+                ExceptionOutPut(cmd, ex);
                 throw ex;
             }
             finally
             {
                 if (this.CurrentThreadTransaction == null)
-                    Clear(_cmd, _cmd.Connection);
+                    Clear(cmd, cmd.Connection);
             }
             return retval;
         }
@@ -94,31 +91,35 @@ namespace MyStaging.Helpers
         public int ExecuteNonQuery(CommandType commandType, string commandText, params NpgsqlParameter[] commandParameters)
         {
             int retval = 0;
-            NpgsqlCommand _cmd = new NpgsqlCommand();
+            NpgsqlCommand cmd = new NpgsqlCommand();
             try
             {
-                PrepareCommand(_cmd, commandType, commandText, commandParameters);
-                retval = _cmd.ExecuteNonQuery();
+                PrepareCommand(cmd, commandType, commandText, commandParameters);
+                if (cmd.Connection.State == ConnectionState.Closed)
+                    cmd.Connection.Open();
+                retval = cmd.ExecuteNonQuery();
             }
             catch (Exception ex)
             {
-                ExceptionOutPut(_cmd, ex);
+                ExceptionOutPut(cmd, ex);
                 throw ex;
             }
             finally
             {
                 if (this.CurrentThreadTransaction == null)
-                    Clear(_cmd, _cmd.Connection);
+                    Clear(cmd, cmd.Connection);
             }
             return retval;
         }
         public void ExecuteDataReader(Action<NpgsqlDataReader> action, CommandType commandType, string commandText, params NpgsqlParameter[] commandParameters)
         {
-            NpgsqlCommand _cmd = new NpgsqlCommand();
+            NpgsqlCommand cmd = new NpgsqlCommand();
             try
             {
-                PrepareCommand(_cmd, commandType, commandText, commandParameters);
-                using (NpgsqlDataReader reader = _cmd.ExecuteReader())
+                PrepareCommand(cmd, commandType, commandText, commandParameters);
+                if (cmd.Connection.State == ConnectionState.Closed)
+                    cmd.Connection.Open();
+                using (NpgsqlDataReader reader = cmd.ExecuteReader())
                 {
                     while (reader.Read())
                     {
@@ -128,13 +129,13 @@ namespace MyStaging.Helpers
             }
             catch (Exception ex)
             {
-                ExceptionOutPut(_cmd, ex);
+                ExceptionOutPut(cmd, ex);
                 throw ex;
             }
             finally
             {
                 if (this.CurrentThreadTransaction == null)
-                    Clear(_cmd, _cmd.Connection);
+                    Clear(cmd, cmd.Connection);
             }
         }
         public void Clear(NpgsqlCommand cmd, NpgsqlConnection conn)
@@ -146,14 +147,7 @@ namespace MyStaging.Helpers
 
                 cmd.Dispose();
             }
-            if (conn != null)
-            {
-                if (conn.State != ConnectionState.Closed)
-                {
-                    conn.Close();
-                }
-                ConnectionPool.FreeConnection(conn);
-            }
+            ConnectionPool.FreeConnection(conn);
         }
 
         protected void ExceptionOutPut(NpgsqlCommand cmd, Exception ex)
@@ -175,7 +169,7 @@ namespace MyStaging.Helpers
             if (CurrentThreadTransaction != null)
                 CommitTransaction(true);
 
-            Connection = ConnectionPool.GetConnection();
+            NpgsqlConnection Connection = ConnectionPool.GetConnection();
             if (Connection.State != ConnectionState.Open)
                 Connection.Open();
             NpgsqlTransaction tran = Connection.BeginTransaction();
