@@ -53,7 +53,7 @@ namespace MyStaging.App.DAL
                 writer.WriteLine();
                 writer.WriteLine($"namespace {projectName}.Model");
                 writer.WriteLine("{");
-                writer.WriteLine($"\t[EntityMapping(TableName = \"{this.schemaName}.{this.table.name}\")]");
+                writer.WriteLine($"\t[EntityMapping(name:\"{this.table.name}\",Schema=\"{this.schemaName}\")]");
                 writer.WriteLine($"\tpublic partial class {_classname}");
                 writer.WriteLine("\t{");
 
@@ -96,7 +96,7 @@ namespace MyStaging.App.DAL
                     }
                     string dalName = $"{this.schemaName.ToUpperPascal()}_{this.table.name}";
                     string updateName = $"{dalName}.{this.table.name.ToUpperPascal()}UpdateBuilder";
-                    writer.WriteLine($"\t\t [NonDbColumnMappingAttribute,JsonIgnore] public  {updateName} UpdateBuilder{{get{{return new {updateName}({string.Join(",", d_key)});}}}}");
+                    writer.WriteLine($"\t\t [NonDbColumnMapping,JsonIgnore] public  {updateName} UpdateBuilder{{get{{return new {updateName}({string.Join(",", d_key)});}}}}");
                     writer.WriteLine();
                     writer.WriteLine($"\t\tpublic {_classname} Insert(){{return {dalName}.Insert(this);}}");
                     writer.WriteLine();

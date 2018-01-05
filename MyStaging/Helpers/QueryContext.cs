@@ -408,20 +408,6 @@ namespace MyStaging.Helpers
 
         private static NpgsqlDbType[] dbtypes = { NpgsqlDbType.Varchar, NpgsqlDbType.Char, NpgsqlDbType.Text, NpgsqlDbType.Date, NpgsqlDbType.Time, NpgsqlDbType.Timestamp, NpgsqlDbType.TimestampTZ, NpgsqlDbType.TimeTZ, NpgsqlDbType.Uuid, NpgsqlDbType.Enum, NpgsqlDbType.Json, NpgsqlDbType.Jsonb, NpgsqlDbType.Xml, NpgsqlDbType.Bytea, NpgsqlDbType.MacAddr };
 
-        protected string ValueJoinTo<T>(T[] values, NpgsqlDbType dbtype, string enumtype)
-        {
-            string s = dbtypes.Contains(dbtype) ? "'" : "";
-            string _dbType_text = dbtype == NpgsqlDbType.Enum ? enumtype : dbtype.ToString();
-            StringBuilder sb = new StringBuilder();
-            for (int i = 0; i < values.Length; i++)
-            {
-                sb.Append(s + values[i].ToString() + s + "::" + _dbType_text);
-                if (i + 1 < values.Length)
-                    sb.Append(",");
-            }
-            return sb.ToString();
-        }
-
         protected string ValueJoinTo(System.Collections.ICollection values)
         {
             StringBuilder sb = new StringBuilder();

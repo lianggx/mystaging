@@ -2,18 +2,21 @@
 using System;
 using System.Collections.Generic;
 using System.Data;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Text;
 
 namespace MyStaging.Mapping
 {
     [AttributeUsage(AttributeTargets.Property | AttributeTargets.Class, Inherited = true)]
-    public class EntityMappingAttribute : Attribute
+    public class EntityMappingAttribute : TableAttribute
     {
-        public string TableName { get; set; }
+        public EntityMappingAttribute(string name) : base(name) {
+           
+        }
     }
 
     [AttributeUsage(AttributeTargets.Property | AttributeTargets.Class, Inherited = true)]
-    public class PropertyMappingAttribute : Attribute
+    public class PropertyMappingAttribute : ColumnAttribute
     {
         public string FieldName { get; set; }
         public NpgsqlDbType DbType { get; set; }
@@ -21,12 +24,13 @@ namespace MyStaging.Mapping
     }
 
     [AttributeUsage(AttributeTargets.Property, Inherited = true)]
-    public class ForeignKeyMappingAttribute : Attribute
+    public class ForeignKeyMappingAttribute : ForeignKeyAttribute
     {
+        public ForeignKeyMappingAttribute(string name) : base(name) { }
     }
 
     [AttributeUsage(AttributeTargets.Property, Inherited = true)]
-    public class NonDbColumnMappingAttribute : Attribute
+    public class NonDbColumnMappingAttribute : NotMappedAttribute
     {
     }
 }

@@ -15,7 +15,11 @@ namespace MyStaging.Helpers
             EntityMappingAttribute mapping = typeInfo.GetCustomAttribute(typeof(EntityMappingAttribute)) as EntityMappingAttribute;
             if (mapping != null)
             {
-                tableName = mapping.TableName;
+                tableName = mapping.Name;
+                if (!string.IsNullOrEmpty(mapping.Schema))
+                {
+                    tableName = $"{mapping.Schema}.{tableName}";
+                }
             }
             else
                 throw new NotSupportedException("在表连接实体上找不到特性 EntityMappingAttribute ，请确认数据库实体模型");
