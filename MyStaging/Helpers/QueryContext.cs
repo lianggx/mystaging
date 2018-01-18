@@ -152,7 +152,7 @@ namespace MyStaging.Helpers
             {
                 Fields.Add(item);
             }
-            string cmdText = ToSQLString<TResult>();
+            string cmdText = ToString();
             object _val = PgSqlHelper.ExecuteScalar(CommandType.Text, cmdText, this.ParamList.ToArray());
 
             return (TResult)_val;
@@ -204,7 +204,7 @@ namespace MyStaging.Helpers
 
         protected List<TResult> ExecuteReader<TResult>()
         {
-            ToSQLString<TResult>();
+            ToString();
             List<TResult> list = new List<TResult>();
 
             PgSqlHelper.ExecuteDataReader(dr =>
@@ -291,11 +291,9 @@ namespace MyStaging.Helpers
             return this;
         }
 
-        public string ToSQLString<TResult>()
+        public override string ToString()
         {
-            Type mastertype = typeof(TResult);
-            if (mastertype != typeof(T))
-                mastertype = typeof(T);
+            Type mastertype = typeof(T);
             string tableName = MyStagingUtils.GetMapping(mastertype);
             // master table
             StringBuilder sqlText = new StringBuilder();
