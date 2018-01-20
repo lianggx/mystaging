@@ -12,15 +12,15 @@ namespace MyStaging.Helpers
     {
         #region Identity        
         public static ILogger _logger = null;
+        private Dictionary<int, NpgsqlTransaction> _trans = new Dictionary<int, NpgsqlTransaction>();
+        private object _trans_lock = new object();
+        public PgExecute() { }
         public PgExecute(ILogger logger)
         {
             _logger = logger;
         }
-        public PgExecute() { }
-
-        private Dictionary<int, NpgsqlTransaction> _trans = new Dictionary<int, NpgsqlTransaction>();
-        private object _trans_lock = new object();
         #endregion
+
         private NpgsqlTransaction CurrentThreadTransaction
         {
             get
@@ -47,6 +47,7 @@ namespace MyStaging.Helpers
             }
 
         }
+
         protected void PrepareCommand(NpgsqlCommand command, CommandType commandType, string commandText, NpgsqlParameter[] commandParameters)
         {
             if (commandText == null || commandText.Length == 0) throw new ArgumentNullException("commandText");
@@ -111,6 +112,7 @@ namespace MyStaging.Helpers
             }
             return retval;
         }
+
         public void ExecuteDataReader(Action<NpgsqlDataReader> action, CommandType commandType, string commandText, params NpgsqlParameter[] commandParameters)
         {
             NpgsqlCommand cmd = new NpgsqlCommand();
@@ -138,6 +140,7 @@ namespace MyStaging.Helpers
                     Clear(cmd, cmd.Connection);
             }
         }
+
         public void Clear(NpgsqlCommand cmd, NpgsqlConnection conn)
         {
             if (cmd != null)
@@ -159,11 +162,10 @@ namespace MyStaging.Helpers
                     var item = cmd.Parameters[i];
                     ps += $"{ item.ParameterName}:{item.Value},";
                 }
-            RollBackTransaction();
-            Clear(cmd, cmd.Connection);
             if (_logger != null)
                 _logger.LogError(new EventId(111111), ex, "数据库执行出错：===== \n {0}\n{1}\n{2}", cmd.CommandText, cmd.Parameters, ps);
         }
+
         public void BeginTransaction()
         {
             if (CurrentThreadTransaction != null)
@@ -182,6 +184,7 @@ namespace MyStaging.Helpers
                 _trans.Add(tid, tran);
             }
         }
+
         public void CommitTransaction()
         {
             CommitTransaction(true);
