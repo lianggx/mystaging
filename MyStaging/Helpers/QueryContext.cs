@@ -404,8 +404,6 @@ namespace MyStaging.Helpers
             return PgSqlHelper.ExecuteNonQuery(CommandType.Text, cmdText, ParamList.ToArray());
         }
 
-        private static NpgsqlDbType[] dbtypes = { NpgsqlDbType.Varchar, NpgsqlDbType.Char, NpgsqlDbType.Text, NpgsqlDbType.Date, NpgsqlDbType.Time, NpgsqlDbType.Timestamp, NpgsqlDbType.TimestampTZ, NpgsqlDbType.TimeTZ, NpgsqlDbType.Uuid, NpgsqlDbType.Enum, NpgsqlDbType.Json, NpgsqlDbType.Jsonb, NpgsqlDbType.Xml, NpgsqlDbType.Bytea, NpgsqlDbType.MacAddr };
-
         protected string ValueJoinTo(System.Collections.ICollection values)
         {
             StringBuilder sb = new StringBuilder();

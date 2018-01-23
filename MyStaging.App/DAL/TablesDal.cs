@@ -358,10 +358,6 @@ namespace MyStaging.App.DAL
 
             PgSqlHelper.ExecuteDataReader(dr =>
             {
-                if (this.table.name == "memberdeallog")
-                {
-
-                }
                 FieldInfo fi = new FieldInfo();
                 fi.Oid = Convert.ToInt32(dr["oid"]);
                 fi.Field = dr["field"].ToString();
