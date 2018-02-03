@@ -59,7 +59,7 @@ namespace MyStaging.Mapping
             }
             for (int i = 0; i < dataRecord.FieldCount; i++)
             {
-                string fieldName = dataRecord.GetName(i);
+                string fieldName = dataRecord.GetName(i).ToLower();
                 if (drNameList.ContainsKey(fieldName) == false)
                     continue;
 
