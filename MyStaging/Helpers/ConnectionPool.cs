@@ -24,7 +24,7 @@ namespace MyStaging.Helpers
             if (Free.Count > 0)
             {
                 lock (_lock_obj)
-                    if (Free.Count > 0)
+                    if (conn == null && Free.Count > 0)
                         conn = Free.Dequeue();
             }
 
