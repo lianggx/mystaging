@@ -56,6 +56,7 @@ namespace MyStaging.Helpers
         private static object _lock_enq_obj = new object();
         public static void FreeConnection(NpgsqlConnection conn)
         {
+            conn.Close();
             lock (_lock_enq_obj)
             {
                 Free.Enqueue(conn);
@@ -81,7 +82,7 @@ namespace MyStaging.Helpers
                 if (disposing)
                     if (ConnectionPool.Free.Count > 3)
                         lock (_lock_obj)
-                            for (int i = 0; i < ConnectionPool.Free.Count - 3; i++)
+                            for (int i = 0; i < ConnectionPool.Free.Count; i++)
                             {
                                 NpgsqlConnection conn = ConnectionPool.Free.Dequeue();
                                 conn.Dispose();
