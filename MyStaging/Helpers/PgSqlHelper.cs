@@ -10,24 +10,29 @@ namespace MyStaging.Helpers
     {
         public partial class _execute : PgExecute
         {
-            public _execute() { }
+            public _execute(ILogger logger, string connectionString) : base(logger, connectionString) { }
         }
-        static PgExecute _instance = null;
-        private static PgExecute Instance
+
+        private static _execute _instance = null;
+        public static PgExecute Instance
         {
             get
             {
                 if (_instance == null)
-                    _instance = new _execute();
+                    _instance = new _execute(_logger, _connectionString);
 
                 return _instance;
             }
         }
+        private static string _connectionString = string.Empty;
         private static ILogger _logger;
         public static void InitConnection(ILogger logger, string connectionString)
         {
             if (string.IsNullOrEmpty(connectionString))
                 throw new ArgumentNullException("connectionString not null");
+
+            _logger = logger;
+            _connectionString = connectionString;
 
             int poolsize = 0;
             Match m = Regex.Match(connectionString.ToLower(), @"maximum\s*pool\s*size\s*=\s*(\d+)", RegexOptions.IgnoreCase);
@@ -38,10 +43,7 @@ namespace MyStaging.Helpers
             if (poolsize <= 0)
                 poolsize = 32;
 
-            _logger = logger;
-            PgExecute._logger = _logger;
-            ConnectionPool.Connection_String = connectionString;
-            ConnectionPool.Pool_Size = poolsize;
+
         }
 
         public static object ExecuteScalar(CommandType commandType, string commandText, params NpgsqlParameter[] commandParameters)

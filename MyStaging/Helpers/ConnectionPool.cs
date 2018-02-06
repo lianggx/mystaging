@@ -7,61 +7,56 @@ using System.Threading;
 
 namespace MyStaging.Helpers
 {
-    public partial class ConnectionPool : IDisposable
+    public partial class ConnectionPool
     {
-        public static int Pool_Size = 32;
-        private static object _lock_obj = new object();
-        private static object _lock_getconnection = new object();
-        public static int Connection_Total = 0;
-        private static Queue<ManualResetEvent> GetConnectionQueue = new Queue<ManualResetEvent>();
-        public static Queue<NpgsqlConnection> Free { get; } = new Queue<NpgsqlConnection>();
+        public int PoolSize = 32;
 
-        public static string Connection_String { get; set; }
+        public List<NpgsqlConnection> All_Connection = new List<NpgsqlConnection>();
+        public Queue<NpgsqlConnection> Free { get; } = new Queue<NpgsqlConnection>();
+        private Queue<ManualResetEvent> GetConnectionQueue = new Queue<ManualResetEvent>();
+        private object _lock = new object();
+        private object _lock_getconnection = new object();
+        public string ConnectionString { get; set; }
+        public ConnectionPool(string connectionString)
+        {
+            this.ConnectionString = connectionString;
+        }
 
-        public static NpgsqlConnection GetConnection()
+        public NpgsqlConnection GetConnection()
         {
             NpgsqlConnection conn = null;
             if (Free.Count > 0)
-            {
-                lock (_lock_obj)
-                    if (conn == null && Free.Count > 0)
+                lock (_lock)
+                    if (Free.Count > 0)
                         conn = Free.Dequeue();
-            }
-
-            if (conn == null && Connection_Total < Pool_Size)
+            if (conn == null && All_Connection.Count < PoolSize)
             {
-                lock (_lock_obj)
-                    if (Connection_Total < Pool_Size)
-                        conn = new NpgsqlConnection(Connection_String);
+                lock (_lock)
+                    if (All_Connection.Count < PoolSize)
+                    {
+                        conn = new NpgsqlConnection(ConnectionString);
+                        All_Connection.Add(conn);
+                    }
             }
 
             if (conn == null)
             {
                 ManualResetEvent wait = new ManualResetEvent(false);
                 lock (_lock_getconnection)
-                {
                     GetConnectionQueue.Enqueue(wait);
-                }
                 if (wait.WaitOne(TimeSpan.FromSeconds(10)))
                     return GetConnection();
-                else
-                    return null;
-
+                return null;
             }
-            if (conn != null)
-                Interlocked.Increment(ref Connection_Total);
+
             return conn;
         }
 
-        private static object _lock_enq_obj = new object();
-        public static void FreeConnection(NpgsqlConnection conn)
+        public void FreeConnection(NpgsqlConnection conn)
         {
             conn.Close();
-            lock (_lock_enq_obj)
-            {
+            lock (_lock)
                 Free.Enqueue(conn);
-                Interlocked.Decrement(ref Connection_Total);
-            }
 
             if (GetConnectionQueue.Count > 0)
             {
@@ -72,32 +67,5 @@ namespace MyStaging.Helpers
                 if (wait != null) wait.Set();
             }
         }
-
-        #region IDisposable Support
-        private bool disposedValue = false;
-        protected virtual void Dispose(bool disposing)
-        {
-            if (!disposedValue)
-            {
-                if (disposing)
-                    if (ConnectionPool.Free.Count > 3)
-                        lock (_lock_obj)
-                            for (int i = 0; i < ConnectionPool.Free.Count; i++)
-                            {
-                                NpgsqlConnection conn = ConnectionPool.Free.Dequeue();
-                                conn.Dispose();
-                                Interlocked.Decrement(ref Connection_Total);
-                            }
-
-                disposedValue = true;
-            }
-        }
-
-        void IDisposable.Dispose()
-        {
-            Dispose(true);
-            GC.SuppressFinalize(this);
-        }
-        #endregion
     }
 }
