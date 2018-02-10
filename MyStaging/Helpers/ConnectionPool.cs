@@ -10,16 +10,18 @@ namespace MyStaging.Helpers
     public partial class ConnectionPool
     {
         public int PoolSize = 32;
-
-        public List<NpgsqlConnection> All_Connection = new List<NpgsqlConnection>();
-        public Queue<NpgsqlConnection> Free { get; } = new Queue<NpgsqlConnection>();
-        private Queue<ManualResetEvent> GetConnectionQueue = new Queue<ManualResetEvent>();
         private object _lock = new object();
         private object _lock_getconnection = new object();
-        public string ConnectionString { get; set; }
-        public ConnectionPool(string connectionString)
+        public List<NpgsqlConnection> All_Connection = new List<NpgsqlConnection>();
+        private Queue<ManualResetEvent> GetConnectionQueue = new Queue<ManualResetEvent>();
+
+        public ConnectionPool(string connectionString, int poolSize = 32)
         {
             this.ConnectionString = connectionString;
+            if (poolSize > 32)
+            {
+                PoolSize = poolSize;
+            }
         }
 
         public NpgsqlConnection GetConnection()
@@ -67,5 +69,8 @@ namespace MyStaging.Helpers
                 if (wait != null) wait.Set();
             }
         }
+
+        public string ConnectionString { get; set; }
+        public Queue<NpgsqlConnection> Free { get; } = new Queue<NpgsqlConnection>();
     }
 }

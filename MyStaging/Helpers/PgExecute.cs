@@ -16,12 +16,12 @@ namespace MyStaging.Helpers
         private Dictionary<int, NpgsqlTransaction> _trans = new Dictionary<int, NpgsqlTransaction>();
         private object _trans_lock = new object();
         public PgExecute() { }
-        public PgExecute(ILogger logger, string connectionString)
+        public PgExecute(ILogger logger, string connectionString, int poolSize)
         {
             _logger = logger;
             if (_logger == null)
                 _logger = new LoggerFactory().CreateLogger<PgExecute>();
-            Pool = new ConnectionPool(connectionString);
+            Pool = new ConnectionPool(connectionString, poolSize);
         }
         #endregion
 

@@ -10,7 +10,7 @@ namespace MyStaging.Helpers
     {
         public partial class _execute : PgExecute
         {
-            public _execute(ILogger logger, string connectionString) : base(logger, connectionString) { }
+            public _execute(ILogger logger, string connectionString, int poolSize) : base(logger, connectionString, poolSize) { }
         }
 
         private static _execute _instance = null;
@@ -19,11 +19,12 @@ namespace MyStaging.Helpers
             get
             {
                 if (_instance == null)
-                    _instance = new _execute(_logger, _connectionString);
+                    _instance = new _execute(_logger, _connectionString, poolsize);
 
                 return _instance;
             }
         }
+        private static int poolsize = 0;
         private static string _connectionString = string.Empty;
         private static ILogger _logger;
         public static void InitConnection(ILogger logger, string connectionString)
@@ -34,7 +35,7 @@ namespace MyStaging.Helpers
             _logger = logger;
             _connectionString = connectionString;
 
-            int poolsize = 0;
+
             Match m = Regex.Match(connectionString.ToLower(), @"maximum\s*pool\s*size\s*=\s*(\d+)", RegexOptions.IgnoreCase);
             if (m.Success)
                 int.TryParse(m.Groups[1].Value, out poolsize);
