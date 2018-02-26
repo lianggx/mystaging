@@ -212,20 +212,20 @@ namespace MyStaging.Helpers
                 TResult obj = DynamicBuilder<TResult>.CreateBuilder(dr).Build(dr);
                 list.Add(obj);
 
-            }, CommandType.Text, this.CommandText, this.ParamList.ToArray());
+            }, CommandType.Text, this.commandtext, this.ParamList.ToArray());
 
             return list;
         }
 
         protected T InsertOnReader(string cmdText)
         {
-            this.CommandText = cmdText;
+            this.commandtext = cmdText;
             T restult = default(T);
             PgSqlHelper.ExecuteDataReader(dr =>
             {
                 restult = DynamicBuilder<T>.CreateBuilder(dr).Build(dr);
 
-            }, CommandType.Text, this.CommandText, this.ParamList.ToArray());
+            }, CommandType.Text, this.commandtext, this.ParamList.ToArray());
 
             return restult;
         }
@@ -280,6 +280,7 @@ namespace MyStaging.Helpers
             Union<T, TModel>(alisName, unionType, predicate);
             return this;
         }
+
         public QueryContext<T> Union<TModel1, TModel2>(string alisName, UnionType unionType, Expression<Func<TModel1, TModel2, bool>> predicate)
         {
             ExpressionUnionModel us = new ExpressionUnionModel();
@@ -358,17 +359,17 @@ namespace MyStaging.Helpers
             if (!string.IsNullOrEmpty(LimitText))
                 sqlText.AppendLine(LimitText);
 
-            this.CommandText = sqlText.ToString();
+            this.commandtext = sqlText.ToString();
 
-            return this.CommandText;
+            return this.commandtext;
         }
+
         public QueryContext<T> AddParameter(string field, object value)
         {
             NpgsqlParameter p = new NpgsqlParameter(field, value);
             ParamList.Add(p);
             return this;
         }
-
         public QueryContext<T> AddParameter(string field, NpgsqlDbType dbType, object value)
         {
             return this.AddParameter(field, dbType, value, -1, null);
@@ -399,21 +400,25 @@ namespace MyStaging.Helpers
             return this;
         }
 
-        public int ExecuteNonQuery(string cmdText)
+        private static NpgsqlDbType[] dbtypes = { NpgsqlDbType.Varchar, NpgsqlDbType.Char, NpgsqlDbType.Text, NpgsqlDbType.Date, NpgsqlDbType.Time, NpgsqlDbType.Timestamp, NpgsqlDbType.TimestampTZ, NpgsqlDbType.TimeTZ, NpgsqlDbType.Uuid, NpgsqlDbType.Enum, NpgsqlDbType.Json, NpgsqlDbType.Jsonb, NpgsqlDbType.Xml, NpgsqlDbType.Bytea, NpgsqlDbType.MacAddr };
+        protected string JoinTo(System.Collections.ICollection items, NpgsqlDbType dbtype, string enumtype)
         {
-            return PgSqlHelper.ExecuteNonQuery(CommandType.Text, cmdText, ParamList.ToArray());
-        }
-
-        protected string ValueJoinTo(System.Collections.ICollection values)
-        {
+            string s = dbtypes.Contains(dbtype) ? "'" : "";
+            string _dbType_text = dbtype == NpgsqlDbType.Enum ? enumtype : dbtype.ToString();
             StringBuilder sb = new StringBuilder();
-            for (int i = 0; i < values.Count; i++)
+            int i = 0;
+            foreach (var item in items)
             {
-                sb.Append("{" + i + "}");
-                if (i + 1 < values.Count)
+                sb.Append(s + item.ToString() + s + "::" + _dbType_text);
+                if (i + 1 < items.Count)
                     sb.Append(",");
             }
             return sb.ToString();
+        }
+
+        public int ExecuteNonQuery(string cmdText)
+        {
+            return PgSqlHelper.ExecuteNonQuery(CommandType.Text, cmdText, ParamList.ToArray());
         }
 
         #region Properties
@@ -426,7 +431,8 @@ namespace MyStaging.Helpers
         protected string GroupByText { get; set; }
         protected string HavingText { get; set; }
         protected string OrderByText { get; set; }
-        protected string CommandText { get; set; }
+        private string commandtext = string.Empty;
+        protected string CommandText { get { return commandtext; } set { this.commandtext = value; } }
         #endregion
     }
 }

@@ -83,7 +83,7 @@ namespace MyStaging.App.DAL
                         string f_dalName = $"{item.nspname.ToUpperPascal()}_{item.table_name}";
                         string tmp_var = $"_{propertyName.ToLowerPascal()}";
                         writer.WriteLine($"\t\tprivate {f_dalName}Model {tmp_var}=null;");
-                        writer.WriteLine($"\t\t[ForeignKeyMapping,JsonIgnore]public {f_dalName}Model {propertyName} {{ get{{ if({tmp_var}==null){tmp_var}= {f_dalName}.Context.Where(f=>f.{item.ref_column.ToUpperPascal()}==this.{item.conname.ToUpperPascal()}).ToOne();  return {tmp_var};}} }}");
+                        writer.WriteLine($"\t\t[ForeignKeyMapping(name:\"{item.conname}\"),JsonIgnore]public {f_dalName}Model {propertyName} {{ get{{ if({tmp_var}==null){tmp_var}= {f_dalName}.Context.Where(f=>f.{item.ref_column.ToUpperPascal()}==this.{item.conname.ToUpperPascal()}).ToOne();  return {tmp_var};}} }}");
                         writer.WriteLine();
                         ht.Add(propertyName, "");
                     }
@@ -172,7 +172,7 @@ namespace MyStaging.App.DAL
                         writer.WriteLine($"\t\tpublic {_classname} Where{item.Field.ToUpperPascal()}Any(params {item.RelType} {item.Field})");
                         writer.WriteLine("\t\t{");
                         writer.WriteLine($"\t\t\t if ({item.Field} == null || {item.Field}.Length == 0) return this;");
-                        writer.WriteLine($"\t\t\t string text = ValueJoinTo({item.Field});");
+                        writer.WriteLine($"\t\t\t string text = JoinTo({item.Field}, NpgsqlDbType.{item.PgDbType}, \"{item.Db_type}\");");
                         writer.WriteLine($"\t\t\t base.Where($\"{item.Field} @> array[{{text}}]\",{item.Field});");
                         writer.WriteLine($"\t\t\t return this;");
                         writer.WriteLine("\t\t}");
