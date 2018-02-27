@@ -40,10 +40,10 @@ namespace MyStaging.App
                 }
                 i++;
             }
-            outPutPath = @"E:\my\";
-            projName = "Crmmt";
-            PgSqlHelper.InitConnection(null, "Host=127.0.0.1;Port=5432;Username=postgres;Password=postgres;Database=crmmt;Pooling=true;Maximum Pool Size=100");
-            // PgSqlHelper.InitConnection(null, connection.ToString());
+            //outPutPath = @"E:\my\";
+            //projName = "Crmmt";
+            //PgSqlHelper.InitConnection(null, "Host=127.0.0.1;Port=5432;Username=postgres;Password=postgres;Database=crmmt;Pooling=true;Maximum Pool Size=100");
+            PgSqlHelper.InitConnection(null, connection.ToString());
             GeneralFactory.Build(outPutPath, projName);
 
             Console.WriteLine("已完成.....");
