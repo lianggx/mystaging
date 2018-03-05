@@ -20,12 +20,12 @@
 
 **如何开始？**
 
-######使用构建工具 MyStaging.App
+###### 使用构建工具 MyStaging.App
   1. 将 MyStaging.csproj 项目打包成 MyStaging.zip ，并复制到 MyStaging.App/bin/debug 目录下
   2. 编辑构建工具下的 @build.bat 文件,配置相关参数，参数配置见*参数说明*
   3. 运行该批处理文件，可以直接生成 proj.db 项目文件
      
-######参数说明
+###### 参数说明
    * **-h** host，数据库所在服务器地址
    * **-p** port,端口号
    * **-u** username，登录数据库账号名称
@@ -35,7 +35,7 @@
    * **-proj** csproj,生成的 db 层项目名称
    * **-o** output path，生成项目的输出路径
 
-######初始化数据库连接
+###### 初始化数据库连接
 * 在生成的 db 项目文件根目录下，找到： _startup.cs 文件，在程序入口 Program.cs 或者  Startup.cs 的适当位置，使用以下代码，传递日志记录对象和数据库连接字符串进行 db 层初始化
 ``` C#
  string connectionString = "Host=127.0.0.1;Port=5432;Username=postgres;Password=123456;Database=your db;Pooling=true;Maximum Pool Size=100";
@@ -53,8 +53,8 @@
         该特性类接受一个属性：TableName，指明该实体模型映射到数据库中的>模式.表名，如
 
         ```
-        [EntityMapping(TableName = "public.user")]
-        public partial class Public_userModel
+        [EntityMapping(name: "public", Schema = "user")]
+        public partial class UserModel
         {
         }
         ```
@@ -64,25 +64,25 @@
         应用该该特性类到属性上，表示这个是一个外键引用的属性，如
 
         ```
-        private Public_userModel _public_User=null;
-        [ForeignKeyMapping,JsonIgnore]public Public_userModel Public_User { get{ if(_public_User==null)_public_User= Public_user.Context.Where(f=>f.Id==this.User_id).ToOne();  return _public_User;} }
+        private UserModel user=null;
+        [ForeignKeyMapping,JsonIgnore]public UserModel User { get{ if(user==null)_User= User.Context.Where(f=>f.Id==this.User_id).ToOne();  return user;} }
         ```
         *以上代码还应用了特性：JsonIgnore ，表示，该外键在对象进行 json 序列化的时候选择忽略该属性*
 
 
 
-*  **NonDbColumnMappingAttribute**
+* **NonDbColumnMappingAttribute**
         应用该该特性类到属性上，表示这个是一个自定义的属性，在进行数据库查询的时候将忽略该属性，如
 
         ```
-        [NonDbColumnMappingAttribute,JsonIgnore] public  Public_user.UpdateBuilder UpdateBuilder{get{return new Public_user.UpdateBuilder(this.Id);}}
+        [NonDbColumnMappingAttribute,JsonIgnore] public  User.UpdateBuilder UpdateBuilder{get{return new User.UpdateBuilder(this.Id);}}
         ```
         
   *以上代码还应用了特性：JsonIgnore ，表示，该外键在对象进行 json 序列化的时候选择忽略该属性*
 
 
 
-####MyStaging 命名空间
+#### MyStaging 命名空间
 
 *  **MyStaging.Common**  主要定义公共类型和资源
 * **MyStaging.Helpers**     数据库操作帮助类、连接池管理工具类、DAL操作辅助函数
@@ -99,10 +99,10 @@
 * **插入记录**
 
 ``` C#
-    Public_userModel user = new Public_userModel();
+    UserModel user = new UserModel();
     user.Id = Guid.NewGuid();
     user.Login_name = "test@gmail.com";
-    Public_user.Insert(user);
+    User.Insert(user);
 ```
 
 
@@ -110,17 +110,17 @@
 
 ``` C#
     // 自动根据主键修改
-    Public_userModel user = new Public_userModel();
+    UserModel user = new UserModel();
     user.UpdateBuilder.SetLogin_time(DateTime.Now).SaveChange(); 
 
     // 自定义条件修改
     user.UpdateBuilder.SetLogin_time(DateTime.Now).Where(f => f.Sex == true).SaveChange();
 
     // 直接修改
-    Public_user.Update(Guid.Empty).SetLogin_time(DateTime.Now).Where(f => f.Sex == true).SaveChange();
+    User.Update(Guid.Empty).SetLogin_time(DateTime.Now).Where(f => f.Sex == true).SaveChange();
 
     // 自定义条件的直接修改
-    Public_user.UpdateBuilder.SetLogin_time(DateTime.Now).Where(f => f.Id == Guid.Empty).Where(f => f.Sex == true).SaveChange();
+    User.UpdateBuilder.SetLogin_time(DateTime.Now).Where(f => f.Id == Guid.Empty).Where(f => f.Sex == true).SaveChange();
 ```
 
 
@@ -128,16 +128,16 @@
 
 ``` C#
     // 根据主键删除
-    Public_user.Delete(Guid.Empty);
+    User.Delete(Guid.Empty);
     // 根据条件删除
-    Public_user.DeleteBuilder.Where(f => f.Id == Guid.Empty).Where(f => f.Sex == true).SaveChange();
+    User.DeleteBuilder.Where(f => f.Id == Guid.Empty).Where(f => f.Sex == true).SaveChange();
 ```
 
 
 * **查询单条记录**
 
 ``` C#
-    Public_userModel user = Public_user.Context.Where(f => f.Login_name == "test@gmail.com").ToOne();
+    UserModel user = User.Context.Where(f => f.Login_name == "test@gmail.com").ToOne();
 ```
 
 
@@ -145,7 +145,7 @@
 * **指定查询列**
 
 ``` C#
-    Public_userModel user = Public_user.Context.Where(f => f.Login_name == "test@gmail.com").ToOne("id","login_name");
+    UserModel user = User.Context.Where(f => f.Login_name == "test@gmail.com").ToOne("id","login_name");
 ```
 
 
@@ -156,22 +156,22 @@
         public string Login_name{get;set;}
         public Guid Id{get;set;}
     }
-    Public_userModel user = Public_user.Context.Where(f => f.Login_name == "test@gmail.com").ToOne<UserModel>("id","login_name");
+    UserModel user = User.Context.Where(f => f.Login_name == "test@gmail.com").ToOne<UserModel>("id","login_name");
 ```
 
 
 * **查询列表**
 
 ``` C#
-    List<Public_userModel> list = Public_user.Context.ToList();
-    List<Public_userModel> list = Public_user.Context.Where(f => f.Login_name == "test@gmail.com").ToList();    
+    List<UserModel> list = User.Context.ToList();
+    List<UserModel> list = User.Context.Where(f => f.Login_name == "test@gmail.com").ToList();    
 
     public class UserModel{
         public string Login_name{get;set;}
         public Guid Id{get;set;}
     }
 
-    List<UserModel> list = Public_user.Context.ToList<UserModel>("id","login_name");
+    List<UserModel> list = User.Context.ToList<UserModel>("id","login_name");
 
 ```
 
@@ -184,7 +184,7 @@
         public Guid Id{get;set;}
     }
 
-    List<UserModel> list = Public_user.Context.Union<TopicModel>("b",UnionType.INNER_JOIN,(a,b)=>a.Id==b.User_Id).Where(a=>a.Id=Guid.Empty).Where<TopicModel>(b=>b.Publish==true).ToList<UserModel>("id","login_name");
+    List<UserModel> list = User.Context.Union<TopicModel>("b",UnionType.INNER_JOIN,(a,b)=>a.Id==b.User_Id).Where(a=>a.Id=Guid.Empty).Where<TopicModel>(b=>b.Publish==true).ToList<UserModel>("id","login_name");
 
 ```
 
@@ -192,23 +192,23 @@
 * **分页**
 
 ``` C#
-    Public_user.Context.Where(f => f.Login_name == "test@gmail.com").OrderBy(f=>f.State).Page(1,10);
+    User.Context.Where(f => f.Login_name == "test@gmail.com").OrderBy(f=>f.State).Page(1,10);
 ```
 
 
 * **排序**
 
 ``` C#
-    Public_user.Context.Where(f => f.Login_name == "test@gmail.com").OrderBy(f=>f.State);
-    Public_user.Context.Where(f => f.Login_name == "test@gmail.com").OrderDescing(f=>f.State);
+    User.Context.Where(f => f.Login_name == "test@gmail.com").OrderBy(f=>f.State);
+    User.Context.Where(f => f.Login_name == "test@gmail.com").OrderDescing(f=>f.State);
 ```
 
 
 * **聚合查询**
 
 ``` C#
-    Public_user.Context.Where(f => f.Login_name == "test@gmail.com").Avg(f=>f.Age);
-    Public_user.Context.Where(f => f.Login_name == "test@gmail.com").Sum(f=>f.Blance);
+    User.Context.Where(f => f.Login_name == "test@gmail.com").Avg(f=>f.Age);
+    User.Context.Where(f => f.Login_name == "test@gmail.com").Sum(f=>f.Blance);
     // Max,Min,GroupBy,Having
 ```
 
@@ -219,7 +219,7 @@
 ``` C#
      PgSqlHelper.Transaction(() =>
         {
-            Public_userModel user= Public_user.Context.Where(f => f.Login_name == "test@gmail.com").ToOne();
+            UserModel user= User.Context.Where(f => f.Login_name == "test@gmail.com").ToOne();
             user.UpdateBuilder.SetLogin_time(DateTime.Now).SaveChange();
         });
 ```
