@@ -39,7 +39,8 @@ namespace MyStaging.App.DAL
 
         public void Generate()
         {
-            string _classname = $"{this.schemaName.ToUpperPascal()}_{this.table.name}Model";
+            string _classname = CreateName() + "Model";
+
             string _fileName = $"{modelpath}/{_classname}.cs";
             using (StreamWriter writer = new StreamWriter(File.Create(_fileName)))
             {
@@ -53,7 +54,7 @@ namespace MyStaging.App.DAL
                 writer.WriteLine();
                 writer.WriteLine($"namespace {projectName}.Model");
                 writer.WriteLine("{");
-                writer.WriteLine($"\t[EntityMapping(name:\"{this.table.name}\",Schema=\"{this.schemaName}\")]");
+                writer.WriteLine($"\t[EntityMapping(name: \"{this.table.name}\", Schema = \"{this.schemaName}\")]");
                 writer.WriteLine($"\tpublic partial class {_classname}");
                 writer.WriteLine("\t{");
 
@@ -66,24 +67,27 @@ namespace MyStaging.App.DAL
                         writer.WriteLine("\t\t/// </summary>");
                     }
                     string _type = item.RelType == "char" || item.RelType == "char?" ? "string" : item.RelType;
-                    writer.WriteLine($"\t\tpublic {_type} {item.Field.ToUpperPascal()} {{ get;set; }}");
+                    writer.WriteLine($"\t\tpublic {_type} {item.Field.ToUpperPascal()} {{ get; set; }}");
                     writer.WriteLine();
                 }
                 if (this.table.type == "table")
                 {
+                    string dalPath = $"{ projectName }.DAL.";
                     Hashtable ht = new Hashtable();
                     foreach (var item in consList)
                     {
+                        string f_dalName = CreateName(item.nspname, item.table_name);
                         string pname = $"{item.table_name.ToUpperPascal()}";
-                        string propertyName = $"{item.nspname.ToUpperPascal()}_{pname}";
-                        if (ht.ContainsKey(propertyName))
+                        string propertyName = f_dalName;
+                        if (ht.ContainsKey(propertyName) || _classname == propertyName)
                         {
-                            propertyName += "By" + item.conname;
+                            propertyName += "By" + item.conname.ToUpperPascal();
                         }
-                        string f_dalName = $"{item.nspname.ToUpperPascal()}_{item.table_name}";
-                        string tmp_var = $"_{propertyName.ToLowerPascal()}";
-                        writer.WriteLine($"\t\tprivate {f_dalName}Model {tmp_var}=null;");
-                        writer.WriteLine($"\t\t[ForeignKeyMapping(name:\"{item.conname}\"),JsonIgnore]public {f_dalName}Model {propertyName} {{ get{{ if({tmp_var}==null){tmp_var}= {f_dalName}.Context.Where(f=>f.{item.ref_column.ToUpperPascal()}==this.{item.conname.ToUpperPascal()}).ToOne();  return {tmp_var};}} }}");
+
+                        
+                        string tmp_var = propertyName.ToLowerPascal();
+                        writer.WriteLine($"\t\tprivate {f_dalName}Model {tmp_var} = null;");
+                        writer.WriteLine($"\t\t[ForeignKeyMapping(name: \"{item.conname}\"), JsonIgnore] public {f_dalName}Model {propertyName} {{ get {{ if ({tmp_var} == null) {tmp_var} = {dalPath}{f_dalName}.Context.Where(f => f.{item.ref_column.ToUpperPascal()} == this.{item.conname.ToUpperPascal()}).ToOne(); return {tmp_var}; }} }}");
                         writer.WriteLine();
                         ht.Add(propertyName, "");
                     }
@@ -94,11 +98,11 @@ namespace MyStaging.App.DAL
                         FieldInfo fs = fieldList.FirstOrDefault(f => f.Field == item.Field);
                         d_key.Add("this." + fs.Field.ToUpperPascal());
                     }
-                    string dalName = $"{this.schemaName.ToUpperPascal()}_{this.table.name}";
-                    string updateName = $"{dalName}.{this.table.name.ToUpperPascal()}UpdateBuilder";
-                    writer.WriteLine($"\t\t [NonDbColumnMapping,JsonIgnore] public  {updateName} UpdateBuilder{{get{{return new {updateName}({string.Join(",", d_key)});}}}}");
+                    string dalName = CreateName();
+                    string updateName = $"{dalPath}{dalName}.{dalName}UpdateBuilder";
+                    writer.WriteLine($"\t\t[NonDbColumnMapping, JsonIgnore] public {updateName} UpdateBuilder {{ get {{ return new {updateName}({string.Join(",", d_key)}); }} }}");
                     writer.WriteLine();
-                    writer.WriteLine($"\t\tpublic {_classname} Insert(){{return {dalName}.Insert(this);}}");
+                    writer.WriteLine($"\t\tpublic {_classname} Insert() {{ return {dalPath}{dalName}.Insert(this); }}");
                     writer.WriteLine();
                 }
                 writer.WriteLine("\t}");
@@ -109,10 +113,29 @@ namespace MyStaging.App.DAL
             }
         }
 
+        private string CreateName(string schema, string tableName, string separator = "")
+        {
+            string _classname = string.Empty;
+            if (schema == "public")
+            {
+                _classname = separator + tableName.ToUpperPascal();
+            }
+            else
+            {
+                _classname = $"{schema.ToUpperPascal()}{separator}{tableName.ToUpperPascal()}";
+            }
+
+            return _classname;
+        }
+        private string CreateName()
+        {
+            return CreateName(this.schemaName, this.table.name);
+        }
+
         protected void CreateDal()
         {
-            string _model_classname = $"{this.schemaName.ToUpperPascal()}_{this.table.name}Model";
-            string _classname = $"{this.schemaName.ToUpperPascal()}_{this.table.name}";
+            string _classname = CreateName();
+            string _model_classname = _classname + "Model";
             string _fileName = $"{dalpath}/{_classname}.cs";
             using (StreamWriter writer = new StreamWriter(File.Create(_fileName)))
             {
@@ -129,7 +152,7 @@ namespace MyStaging.App.DAL
                 writer.WriteLine();
                 writer.WriteLine($"namespace {projectName}.DAL");
                 writer.WriteLine("{");
-                writer.WriteLine($"\tpublic partial class {_classname}: QueryContext<{_model_classname}>");
+                writer.WriteLine($"\tpublic partial class {_classname} : QueryContext<{_model_classname}>");
                 writer.WriteLine("\t{");
 
                 StringBuilder sb_field = new StringBuilder();
@@ -149,7 +172,7 @@ namespace MyStaging.App.DAL
                 }
 
                 string insert_sql = $"INSERT INTO \\\"{this.schemaName}\\\".\\\"{this.table.name}\\\"({sb_field.ToString()}) VALUES({sb_param.ToString()}) RETURNING {sb_field.ToString()};";
-                writer.WriteLine($"\t\tconst string insertCmdText=\"{insert_sql}\";");
+                writer.WriteLine($"\t\tconst string insertCmdText = \"{insert_sql}\";");
 
                 StringBuilder sb_primarykey = new StringBuilder();
                 for (int i = 0; i < pkList.Count; i++)
@@ -161,8 +184,8 @@ namespace MyStaging.App.DAL
                 }
                 string pkString = sb_primarykey.ToString();
 
-                writer.WriteLine($"\t\tconst string deleteCmdText=\"DELETE FROM \\\"{this.schemaName}\\\".\\\"{this.table.name}\\\" WHERE {pkString}\";");
-                writer.WriteLine($"\t\tpublic static {_classname} Context{{get{{return new {_classname}();}}}}");
+                writer.WriteLine($"\t\tconst string deleteCmdText = \"DELETE FROM \\\"{this.schemaName}\\\".\\\"{this.table.name}\\\" WHERE {pkString}\";");
+                writer.WriteLine($"\t\tpublic static {_classname} Context {{ get {{ return new {_classname}(); }} }}");
                 writer.WriteLine();
 
                 foreach (var item in fieldList)
@@ -207,7 +230,7 @@ namespace MyStaging.App.DAL
                 if (item.Is_identity) continue;
                 string specificType = GetspecificType(item);
                 string ap = item.Is_array ? " | NpgsqlDbType.Array" : "";
-                writer.WriteLine($"\t\t\t{_cn}.AddParameter(\"{ item.Field}\", NpgsqlDbType.{item.PgDbType}{ap}, model.{item.Field.ToUpperPascal()},{item.Length},{specificType});");
+                writer.WriteLine($"\t\t\t{_cn}.AddParameter(\"{ item.Field}\", NpgsqlDbType.{item.PgDbType}{ap}, model.{item.Field.ToUpperPascal()}, {item.Length}, {specificType});");
             }
             writer.WriteLine();
             writer.WriteLine($"\t\t\treturn {_cn}.InsertOnReader(insertCmdText);");
@@ -224,21 +247,21 @@ namespace MyStaging.App.DAL
                 d_key.Add(fs.RelType + " " + fs.Field);
                 d_key_fields.Add(fs.Field);
             }
-            string updateName = $"{this.table.name.ToUpperPascal()}UpdateBuilder";
+            string updateName = CreateName() + "UpdateBuilder";
             if (d_key.Count > 0)
             {
                 writer.WriteLine($"\t\tpublic static {updateName} Update({string.Join(",", d_key)})");
                 writer.WriteLine("\t\t{");
-                writer.WriteLine($"\t\t\t return new {updateName}({string.Join(",", d_key_fields)});");
+                writer.WriteLine($"\t\t\treturn new {updateName}({string.Join(",", d_key_fields)});");
                 writer.WriteLine("\t\t}");
                 writer.WriteLine();
             }
 
-            writer.WriteLine($"\t\tpublic static {updateName} UpdateBuilder{{get{{return new {updateName}();}}}}");
+            writer.WriteLine($"\t\tpublic static {updateName} UpdateBuilder {{ get {{ return new {updateName}(); }} }}");
             writer.WriteLine();
 
 
-            writer.WriteLine($"\t\tpublic class {updateName}:UpdateBuilder<{class_model.ToUpperPascal()}>");
+            writer.WriteLine($"\t\tpublic class {updateName} : UpdateBuilder<{class_model.ToUpperPascal()}>");
             writer.WriteLine("\t\t{");
             writer.WriteLine($"\t\t\tpublic {updateName}({string.Join(",", d_key)})");
             writer.WriteLine("\t\t\t{");
@@ -261,7 +284,7 @@ namespace MyStaging.App.DAL
             if (d_key.Count > 0)
             {
                 writer.WriteLine();
-                writer.WriteLine($"\t\t\tpublic {updateName}(){{}}");
+                writer.WriteLine($"\t\t\tpublic {updateName}() {{ }}");
                 writer.WriteLine();
             }
 
@@ -281,19 +304,19 @@ namespace MyStaging.App.DAL
                 writer.WriteLine("\t\t\t{");
                 string specificType = GetspecificType(item);
                 string ap = item.Is_array ? " | NpgsqlDbType.Array" : "";
-                writer.WriteLine($"\t\t\t\treturn base.SetField(\"{ item.Field}\", NpgsqlDbType.{_dbtype}{ap}, {item.Field},{item.Length},{specificType}) as {updateName};");
+                writer.WriteLine($"\t\t\t\treturn base.SetField(\"{ item.Field}\", NpgsqlDbType.{_dbtype}{ap}, {item.Field}, {item.Length}, {specificType}) as {updateName};");
                 writer.WriteLine("\t\t\t}");
 
                 if (item.Is_array)
                 {
                     writer.WriteLine($"\t\t\tpublic {updateName} Set{item.Field.ToUpperPascal()}Append({item.CsType} {item.Field})");
                     writer.WriteLine("\t\t\t{");
-                    writer.WriteLine($"\t\t\t\treturn base.SetArrayAppend(\"{ item.Field}\", NpgsqlDbType.{_dbtype}, {item.Field},{item.Length},{specificType}) as {updateName};");
+                    writer.WriteLine($"\t\t\t\treturn base.SetArrayAppend(\"{ item.Field}\", NpgsqlDbType.{_dbtype}, {item.Field}, {item.Length}, {specificType}) as {updateName};");
                     writer.WriteLine("\t\t\t}");
 
                     writer.WriteLine($"\t\t\tpublic {updateName} Set{item.Field.ToUpperPascal()}Remove({item.CsType} {item.Field})");
                     writer.WriteLine("\t\t\t{");
-                    writer.WriteLine($"\t\t\t\treturn base.SetArrayRemove(\"{ item.Field}\", NpgsqlDbType.{_dbtype}, {item.Field},{item.Length},{specificType}) as {updateName};");
+                    writer.WriteLine($"\t\t\t\treturn base.SetArrayRemove(\"{ item.Field}\", NpgsqlDbType.{_dbtype}, {item.Field}, {item.Length}, {specificType}) as {updateName};");
                     writer.WriteLine("\t\t\t}");
                 }
 
@@ -322,13 +345,13 @@ namespace MyStaging.App.DAL
                     FieldInfo fi = fieldList.FirstOrDefault(f => f.Field == item.Field);
                     string specificType = GetspecificType(fi);
                     string ap = fi.Is_array ? " | NpgsqlDbType.Array" : "";
-                    writer.WriteLine($"\t\t\t{_cn}.AddParameter(\"{ item.Field}\", NpgsqlDbType.{fi.PgDbType}{ap}, {item.Field},{fi.Length},{specificType});");
+                    writer.WriteLine($"\t\t\t{_cn}.AddParameter(\"{ item.Field}\", NpgsqlDbType.{fi.PgDbType}{ap}, {item.Field}, {fi.Length}, {specificType});");
                 }
                 writer.WriteLine($"\t\t\treturn {_cn}.ExecuteNonQuery(deleteCmdText);");
                 writer.WriteLine("\t\t}");
             }
             string deletebuilder = $"DeleteBuilder<{class_model}>";
-            writer.WriteLine($"\t\tpublic static {deletebuilder} DeleteBuilder{{get{{return new {deletebuilder}();}}}}");
+            writer.WriteLine($"\t\tpublic static {deletebuilder} DeleteBuilder {{ get {{ return new {deletebuilder}(); }} }}");
         }
 
         #region primary key / constraint
