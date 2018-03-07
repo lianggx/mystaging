@@ -65,7 +65,7 @@
 
         ```
         private UserModel user=null;
-        [ForeignKeyMapping,JsonIgnore]public UserModel User { get{ if(user==null)_User= User.Context.Where(f=>f.Id==this.User_id).ToOne();  return user;} }
+        [ForeignKeyMapping,JsonIgnore]public UserModel User { get{ if(user==null) user= User.Context.Where(f=>f.Id==this.User_id).ToOne();  return user;} }
         ```
         *以上代码还应用了特性：JsonIgnore ，表示，该外键在对象进行 json 序列化的时候选择忽略该属性*
 
