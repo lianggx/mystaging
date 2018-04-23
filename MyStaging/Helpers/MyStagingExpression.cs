@@ -127,6 +127,10 @@ namespace MyStaging.Helpers
             {
                 InvokeExpression(selector, parent_type);
             }
+            else if (selector is NewExpression)
+            {
+                InvokeExpression(selector, parent_type);
+            }
         }
 
         protected void In_Not_Parameter(Expression exp, string method)

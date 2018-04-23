@@ -61,7 +61,7 @@
         
 
 * **ForeignKeyMappingAttribute**
-        应用该该特性类到属性上，表示这个是一个外键引用的属性，如
+        应用该特性类到属性上，表示这个是一个外键引用的属性，如
 
         ```
         private UserModel user=null;
@@ -72,7 +72,7 @@
 
 
 * **NonDbColumnMappingAttribute**
-        应用该该特性类到属性上，表示这个是一个自定义的属性，在进行数据库查询的时候将忽略该属性，如
+        应用该特性类到属性上，表示这个是一个自定义的属性，在进行数据库查询的时候将忽略该属性，如
 
         ```
         [NonDbColumnMappingAttribute,JsonIgnore] public  User.UpdateBuilder UpdateBuilder{get{return new User.UpdateBuilder(this.Id);}}

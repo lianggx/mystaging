@@ -6,6 +6,7 @@ using System.Reflection;
 using System.Reflection.Emit;
 using System.Data;
 using System.Collections.Concurrent;
+using Newtonsoft.Json.Linq;
 
 namespace MyStaging.Mapping
 {
@@ -93,6 +94,10 @@ namespace MyStaging.Mapping
                     else if (unboxType == typeof(char))
                     {
                         generator.Emit(OpCodes.Call, typeof(Convert).GetMethod("ToChar", new Type[] { typeof(object) }));
+                    }
+                    else if (unboxType == typeof(JToken))
+                    {
+                        generator.Emit(OpCodes.Call, typeof(JToken).GetMethod("Parse", new Type[] { typeof(string) }));
                     }
                     else
                     {

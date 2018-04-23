@@ -69,9 +69,6 @@ namespace MyStaging.App
                 writer.WriteLine("\t</PropertyGroup>");
                 writer.WriteLine();
                 writer.WriteLine("\t<ItemGroup>");
-                writer.WriteLine("\t\t<PackageReference Include=\"Microsoft.AspNetCore.All\" Version=\"2.0.0\" />");
-                writer.WriteLine("\t</ItemGroup>");
-                writer.WriteLine("\t<ItemGroup>");
                 writer.WriteLine("\t\t<ProjectReference Include=\"..\\MyStaging\\MyStaging.csproj\" />");
                 writer.WriteLine("\t</ItemGroup>");
                 writer.WriteLine("</Project>");

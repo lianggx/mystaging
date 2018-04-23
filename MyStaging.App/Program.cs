@@ -14,6 +14,10 @@ using MyStaging;
 //using gmall.Model;
 //using gmall.DAL;
 using System.IO.Compression;
+using System.Net.Http;
+using System.IO;
+using System.Threading.Tasks;
+using Newtonsoft.Json.Linq;
 
 namespace MyStaging.App
 {
@@ -50,8 +54,5 @@ namespace MyStaging.App
         }
     }
 }
-
-
-
 
 
