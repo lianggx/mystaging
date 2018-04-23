@@ -45,23 +45,19 @@ namespace MyStaging.Helpers
             }
             else if (selector is MemberExpression)
             {
-                MemberExpression me = ((MemberExpression)selector);
-                if (me.Expression == null || me.Expression is ConstantExpression || ((me.Expression as MemberExpression)?.Expression is ConstantExpression))
+                if (!selector.ToString().StartsWith("value("))
                 {
-                    InvokeExpression(selector, parent_type);
-                }
-                else if (me.Expression != null && (me.Expression.NodeType == ExpressionType.MemberAccess || me.Expression.NodeType != ExpressionType.Parameter))
-                {
-                    ExpressionCapture(me.Expression, parent_type);
-                }
-                else
-                {
+                    MemberExpression me = ((MemberExpression)selector);
                     string tableName = me.Member.DeclaringType == MasterType ? Master_AlisName : Union_AlisName;
                     if (!string.IsNullOrEmpty(tableName))
                     {
                         tableName = tableName + ".";
                     }
                     CommandText.Append($"{tableName}{me.Member.Name}");
+                }
+                else
+                {
+                    InvokeExpression(selector, parent_type);
                 }
             }
             else if (selector is NewArrayExpression)

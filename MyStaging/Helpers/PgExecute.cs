@@ -199,23 +199,21 @@ namespace MyStaging.Helpers
 
         public void CommitTransaction(bool iscommit)
         {
-            int tid = Thread.CurrentThread.ManagedThreadId;
-
             NpgsqlTransaction tran = CurrentThreadTransaction;
-            if (tran != null)
-            {
-                if (iscommit)
-                    tran.Commit();
-                else
-                    tran.Rollback();
+            if (tran == null || tran.Connection == null) return;
 
-                tran.Dispose();
-                lock (_trans_lock)
-                {
-                    _trans.Remove(tid);
-                }
+            lock (_trans_lock)
+            {
+                int tid = Thread.CurrentThread.ManagedThreadId;
+                _trans.Remove(tid);
             }
-            this.Pool.FreeConnection(tran?.Connection);
+            NpgsqlConnection conn = tran.Connection;
+            if (iscommit)
+                tran.Commit();
+            else
+                tran.Rollback();
+
+            this.Pool.FreeConnection(conn);
         }
 
         public void RollBackTransaction()
