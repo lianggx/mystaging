@@ -13,6 +13,8 @@ namespace MyStaging.Helpers
 {
     public class PgSqlExpression
     {
+        public Expression Left { get; set; }
+        public Expression Right { get; set; }
         public Type MasterType { get; set; }
         public string Master_AlisName { get; set; }
         public string Union_AlisName { get; set; }
@@ -112,7 +114,14 @@ namespace MyStaging.Helpers
             else if (selector is ConstantExpression)
             {
                 ConstantExpression ce = ((ConstantExpression)selector);
-                SetValue(ce.Value, ce.NodeType);
+                Type type = ((UnaryExpression)this.Left).Operand.Type;
+                if (type.BaseType.Name == "Enum")
+                {
+                    object val = Enum.Parse(type, ce.Value.ToString());
+                    SetValue(val, ce.NodeType, type);
+                }
+                else
+                    SetValue(ce.Value, ce.NodeType);
             }
             else if (selector is UnaryExpression)
             {
@@ -154,7 +163,7 @@ namespace MyStaging.Helpers
             SetValue(_value, parent_type);
         }
 
-        protected void SetValue(object val, ExpressionType type)
+        protected void SetValue(object val, ExpressionType type, Type specificType = null)
         {
             if (val == null)
             {
@@ -167,7 +176,15 @@ namespace MyStaging.Helpers
             else
             {
                 string p_key = Guid.NewGuid().ToString("N");
-                NpgsqlParameter parameter = new NpgsqlParameter(p_key, val);
+                NpgsqlParameter parameter = null;
+                if (specificType != null)
+                {
+                    parameter = new NpgsqlParameter(p_key, NpgsqlDbType.Enum);
+                    parameter.SpecificType = specificType;
+                    parameter.Value = val;
+                }
+                else
+                    parameter = new NpgsqlParameter(p_key, val);
                 Parameters.Add(parameter);
                 CommandText.Append($"@{p_key}");
             }
