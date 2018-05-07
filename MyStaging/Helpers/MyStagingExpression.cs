@@ -22,6 +22,8 @@ namespace MyStaging.Helpers
         public List<NpgsqlParameter> Parameters { get; set; } = new List<NpgsqlParameter>();
         protected void ExpressionProvider(Expression left, Expression right, ExpressionType type)
         {
+            this.Left = left;
+            this.Right = right;
             CommandText.Append("(");
             // left
             ExpressionCapture(left, type);
@@ -114,14 +116,19 @@ namespace MyStaging.Helpers
             else if (selector is ConstantExpression)
             {
                 ConstantExpression ce = ((ConstantExpression)selector);
-                Type type = ((UnaryExpression)this.Left).Operand.Type;
-                if (type.BaseType.Name == "Enum")
+                if (this.Left is UnaryExpression)
                 {
-                    object val = Enum.Parse(type, ce.Value.ToString());
-                    SetValue(val, ce.NodeType, type);
+                    Type type = ((UnaryExpression)this.Left).Operand.Type;
+                    if (type.BaseType.Name == "Enum")
+                    {
+                        object val = Enum.Parse(type, ce.Value.ToString());
+                        SetValue(val, parent_type, type);
+                    }
+                    else
+                        SetValue(ce.Value, parent_type);
                 }
                 else
-                    SetValue(ce.Value, ce.NodeType);
+                    SetValue(ce.Value, parent_type);
             }
             else if (selector is UnaryExpression)
             {
