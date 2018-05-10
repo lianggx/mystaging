@@ -83,12 +83,12 @@ namespace MyStaging.Helpers
 
         public int Count()
         {
-            return ToScalar<int>("COUNT(1)");
+            return ToScalar<int>("COALESCE(COUNT(1),0)");
         }
 
         public TResult Max<TResult>(string field)
         {
-            return ToScalar<TResult>($"MAX({field})");
+            return ToScalar<TResult>($"COALESCE(MAX({field}),0)");
         }
 
         public TResult Max<TResult>(Expression<Func<T, TResult>> selector)
@@ -99,12 +99,12 @@ namespace MyStaging.Helpers
         public TResult Max<TSource, TResult>(Expression<Func<TSource, TResult>> selector)
         {
             MemberExpression exp = (MemberExpression)selector.Body;
-            return ToScalar<TResult>($"MAX({exp.Member.Name})");
+            return ToScalar<TResult>($"COALESCE(MAX({exp.Member.Name}),0)");
         }
 
         public TResult Min<TResult>(string field)
         {
-            return ToScalar<TResult>($"MIN({field})");
+            return ToScalar<TResult>($"COALESCE(MIN({field}),0)");
         }
 
         public TResult Min<TResult>(Expression<Func<TResult, string>> selector)
@@ -115,12 +115,12 @@ namespace MyStaging.Helpers
         public TResult Min<TSource, TResult>(Expression<Func<TSource, TResult>> selector)
         {
             MemberExpression exp = (MemberExpression)selector.Body;
-            return ToScalar<TResult>($"MIN({exp.Member.Name})");
+            return ToScalar<TResult>($"COALESCE(MIN({exp.Member.Name}),0)");
         }
 
         public TResult Sum<TResult>(string field)
         {
-            return ToScalar<TResult>($"SUM({field})");
+            return ToScalar<TResult>($"COALESCE(SUM({field}),0)");
         }
 
         public TResult Sum<TResult>(Expression<Func<T, TResult>> selector)
@@ -131,18 +131,18 @@ namespace MyStaging.Helpers
         public TResult Sum<TSource, TResult>(Expression<Func<TSource, TResult>> selector)
         {
             MemberExpression exp = (MemberExpression)selector.Body;
-            return ToScalar<TResult>($"SUM({exp.Member.Name})");
+            return ToScalar<TResult>($"COALESCE(SUM({exp.Member.Name}),0)");
         }
 
         public TResult Avg<TResult>(string field)
         {
-            return ToScalar<TResult>($"AVG({field})");
+            return ToScalar<TResult>($"COALESCE(AVG({field}),0)");
         }
 
         public TResult Avg<TSource, TResult>(Expression<Func<TSource, TResult>> selector)
         {
             MemberExpression exp = (MemberExpression)selector.Body;
-            return ToScalar<TResult>($"AVG({exp.Member.Name})");
+            return ToScalar<TResult>($"COALESCE(AVG({exp.Member.Name}),0)");
         }
 
         public TResult ToScalar<TResult>(params string[] fields)
