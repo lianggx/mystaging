@@ -9,6 +9,7 @@ namespace MyStaging.Common
     {
         public string AlisName { get; set; }
         public Type Model { get; set; }
+        public Type MasterType { get; set; }
         public Expression Body { get; set; }
         public UnionType UnionType { get; set; }
     }

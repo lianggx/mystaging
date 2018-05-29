@@ -81,14 +81,14 @@ namespace MyStaging.Helpers
             return this;
         }
 
-        public int Count()
+        public long Count()
         {
-            return ToScalar<int>("COALESCE(COUNT(1),0)");
+            return ToScalar<long>("COUNT(1)");
         }
 
         public TResult Max<TResult>(string field)
         {
-            return ToScalar<TResult>($"COALESCE(MAX({field}),0)");
+            return ToScalar<TResult>($"MAX({field})");
         }
 
         public TResult Max<TResult>(Expression<Func<T, TResult>> selector)
@@ -99,12 +99,12 @@ namespace MyStaging.Helpers
         public TResult Max<TSource, TResult>(Expression<Func<TSource, TResult>> selector)
         {
             MemberExpression exp = (MemberExpression)selector.Body;
-            return ToScalar<TResult>($"COALESCE(MAX({exp.Member.Name}),0)");
+            return ToScalar<TResult>($"MAX({exp.Member.Name})");
         }
 
         public TResult Min<TResult>(string field)
         {
-            return ToScalar<TResult>($"COALESCE(MIN({field}),0)");
+            return ToScalar<TResult>($"MIN({field})");
         }
 
         public TResult Min<TResult>(Expression<Func<TResult, string>> selector)
@@ -115,12 +115,12 @@ namespace MyStaging.Helpers
         public TResult Min<TSource, TResult>(Expression<Func<TSource, TResult>> selector)
         {
             MemberExpression exp = (MemberExpression)selector.Body;
-            return ToScalar<TResult>($"COALESCE(MIN({exp.Member.Name}),0)");
+            return ToScalar<TResult>($"MIN({exp.Member.Name})");
         }
 
         public TResult Sum<TResult>(string field)
         {
-            return ToScalar<TResult>($"COALESCE(SUM({field}),0)");
+            return ToScalar<TResult>($"SUM({field})");
         }
 
         public TResult Sum<TResult>(Expression<Func<T, TResult>> selector)
@@ -131,18 +131,18 @@ namespace MyStaging.Helpers
         public TResult Sum<TSource, TResult>(Expression<Func<TSource, TResult>> selector)
         {
             MemberExpression exp = (MemberExpression)selector.Body;
-            return ToScalar<TResult>($"COALESCE(SUM({exp.Member.Name}),0)");
+            return ToScalar<TResult>($"SUM({exp.Member.Name})");
         }
 
         public TResult Avg<TResult>(string field)
         {
-            return ToScalar<TResult>($"COALESCE(AVG({field}),0)");
+            return ToScalar<TResult>($"AVG({field})");
         }
 
         public TResult Avg<TSource, TResult>(Expression<Func<TSource, TResult>> selector)
         {
             MemberExpression exp = (MemberExpression)selector.Body;
-            return ToScalar<TResult>($"COALESCE(AVG({exp.Member.Name}),0)");
+            return ToScalar<TResult>($"AVG({exp.Member.Name})");
         }
 
         public TResult ToScalar<TResult>(params string[] fields)
@@ -209,12 +209,39 @@ namespace MyStaging.Helpers
 
             PgSqlHelper.ExecuteDataReader(dr =>
             {
-                TResult obj = DynamicBuilder<TResult>.CreateBuilder(dr).Build(dr);
+                TResult obj = default(TResult);
+                Type objType = typeof(TResult);
+                bool isTuple = objType.Namespace == "System" && objType.Name.StartsWith("ValueTuple`");
+                if (isTuple)
+                {
+                    obj = (TResult)GetValueTuple(objType, dr);
+                }
+                else
+                {
+                    obj = DynamicBuilder<TResult>.CreateBuilder(dr).Build(dr);
+                }
                 list.Add(obj);
 
             }, CommandType.Text, this.commandtext, this.ParamList.ToArray());
 
             return list;
+        }
+
+        protected object GetValueTuple(Type objType, IDataReader dr)
+        {
+            FieldInfo[] fs = objType.GetFields();
+            Type[] types = new Type[fs.Length];
+            object[] parameters = new object[fs.Length];
+            for (int i = 0; i < fs.Length; i++)
+            {
+                types[i] = fs[i].FieldType;
+                object dbValue = dr[i];
+                parameters[i] = dbValue is DBNull ? null : dbValue;
+            }
+            ConstructorInfo info = objType.GetConstructor(types);
+            object obj = info.Invoke(parameters);
+
+            return obj;
         }
 
         protected T InsertOnReader(string cmdText)
@@ -283,12 +310,18 @@ namespace MyStaging.Helpers
 
         public QueryContext<T> Union<TModel1, TModel2>(string alisName, UnionType unionType, Expression<Func<TModel1, TModel2, bool>> predicate)
         {
-            ExpressionUnionModel us = new ExpressionUnionModel();
-            us.Model = typeof(TModel2);
-            us.Body = predicate.Body;
-            us.UnionType = unionType;
-            us.AlisName = alisName;
-            UnionList.Add(us);
+            Type type = typeof(TModel2);
+            var last = UnionList.Where(f => f.Model.Equals(type)).FirstOrDefault();
+            if (last == null)
+            {
+                ExpressionUnionModel us = new ExpressionUnionModel();
+                us.Model = type;
+                us.MasterType = typeof(TModel1);
+                us.Body = predicate.Body;
+                us.UnionType = unionType;
+                us.AlisName = alisName;
+                UnionList.Add(us);
+            }
             return this;
         }
 
@@ -304,10 +337,11 @@ namespace MyStaging.Helpers
             int _index = 2;
             foreach (var item in UnionList)
             {
+                var prevMaster = UnionList.Where(f => f.Model.Equals(item.MasterType)).FirstOrDefault();
                 PgSqlExpression expression = new PgSqlExpression();
-                expression.MasterType = mastertype;
+                expression.MasterType = prevMaster == null ? mastertype : item.MasterType;
                 if (UnionList.Count > 0)
-                    expression.Master_AlisName = masterAlisName;
+                    expression.Master_AlisName = prevMaster == null ? masterAlisName : prevMaster.AlisName;
                 expression.Union_AlisName = item.AlisName;
                 expression.ExpressionCapture(item.Body);
                 string unionTableName = MyStagingUtils.GetMapping(item.Model);
