@@ -21,7 +21,7 @@ namespace MyStaging.Helpers
         /// <param name="field"></param>
         /// <param name="value"></param>
         /// <returns></returns>
-        public UpdateBuilder<T> SetIncrement(string field, int value)
+        public UpdateBuilder<T> SetIncrement(string field, double value)
         {
             setList.Add($"{field}={field} + {value}");
             return this;
