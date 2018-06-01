@@ -22,3 +22,4 @@
 /MyStaging/bin/Debug/netcoreapp2.0
 /.vs/MyStaging/v15/sqlite3
 /.vs/MyStaging/v15/Server/sqlite3
+*.dtbcache

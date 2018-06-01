@@ -10,6 +10,7 @@ using System.Reflection;
 using System.Text;
 using System.Linq;
 using System.Text.RegularExpressions;
+using Newtonsoft.Json.Linq;
 
 namespace MyStaging.Helpers
 {
@@ -216,6 +217,14 @@ namespace MyStaging.Helpers
                 {
                     obj = (TResult)GetValueTuple(objType, dr);
                 }
+                else if (IsValueType(objType))
+                {
+                    obj = (TResult)GetValueType(objType, dr);
+                }
+                else if (objType.Namespace.StartsWith("Newtonsoft"))
+                {
+                    obj = (TResult)GetJToken(dr);
+                }
                 else
                 {
                     obj = DynamicBuilder<TResult>.CreateBuilder(dr).Build(dr);
@@ -225,6 +234,11 @@ namespace MyStaging.Helpers
             }, CommandType.Text, this.commandtext, this.ParamList.ToArray());
 
             return list;
+        }
+
+        protected bool IsValueType(Type type)
+        {
+            return (type.Namespace == "System" && type.Name.StartsWith("String`")) || (type.BaseType == typeof(ValueType));
         }
 
         protected object GetValueTuple(Type objType, IDataReader dr)
@@ -242,6 +256,24 @@ namespace MyStaging.Helpers
             object obj = info.Invoke(parameters);
 
             return obj;
+        }
+
+        protected object GetValueType(Type objType, IDataReader dr)
+        {
+            object dbValue = dr[0];
+            dbValue = dbValue is DBNull ? null : dbValue;
+            dbValue = Convert.ChangeType(dbValue, objType);
+
+            return dbValue;
+        }
+
+        protected object GetJToken(IDataReader dr)
+        {
+            object dbValue = dr[0];
+            if (dbValue is DBNull)
+                return null;
+            else
+                return JToken.Parse(dbValue.ToString());
         }
 
         protected T InsertOnReader(string cmdText)
