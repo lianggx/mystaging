@@ -23,3 +23,7 @@
 /.vs/MyStaging/v15/sqlite3
 /.vs/MyStaging/v15/Server/sqlite3
 *.dtbcache
+/MyStaging.xUnitTest/bin/Debug
+/MyStaging.xUnitTest/obj
+/MyStaging.xUnitTest.db/obj
+/MyStaging.xUnitTest.db/bin/Debug/netcoreapp2.0

@@ -238,7 +238,7 @@ namespace MyStaging.Helpers
 
         protected bool IsValueType(Type type)
         {
-            return (type.Namespace == "System" && type.Name.StartsWith("String`")) || (type.BaseType == typeof(ValueType));
+            return (type.Namespace == "System" && type.Name.StartsWith("String")) || (type.BaseType == typeof(ValueType));
         }
 
         protected object GetValueTuple(Type objType, IDataReader dr)
