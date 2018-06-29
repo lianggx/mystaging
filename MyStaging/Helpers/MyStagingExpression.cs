@@ -49,7 +49,7 @@ namespace MyStaging.Helpers
             }
             else if (selector is MemberExpression)
             {
-                if (!selector.ToString().StartsWith("value("))
+                if (!selector.ToString().StartsWith("value(") && selector.Type != typeof(DateTime))
                 {
                     MemberExpression me = ((MemberExpression)selector);
                     string tableName = me.Member.DeclaringType == MasterType ? Master_AlisName : Union_AlisName;
