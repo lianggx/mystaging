@@ -36,7 +36,7 @@ where a.typtype = 'e' order by oid asc";
             }, System.Data.CommandType.Text, _sqltext);
 
             string _fileName = Path.Combine(modelpath, "_Enums.cs");
-            using (StreamWriter writer = new StreamWriter(File.Create(_fileName)))
+            using (StreamWriter writer = new StreamWriter(File.Create(_fileName), System.Text.Encoding.UTF8))
             {
                 writer.WriteLine("using System;");
                 writer.WriteLine();
@@ -65,7 +65,7 @@ where a.typtype = 'e' order by oid asc";
         public static void GenerateMapping(List<EnumTypeInfo> list)
         {
             string _fileName = Path.Combine(rootPath, "_startup.cs");
-            using (StreamWriter writer = new StreamWriter(File.Create(_fileName)))
+            using (StreamWriter writer = new StreamWriter(File.Create(_fileName), System.Text.Encoding.UTF8))
             {
                 writer.WriteLine($"using {projectName}.Model;");
                 writer.WriteLine("using System;");

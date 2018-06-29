@@ -59,7 +59,7 @@ namespace MyStaging.App
             if (File.Exists(csproj))
                 return;
 
-            using (StreamWriter writer = new StreamWriter(File.Create(csproj)))
+            using (StreamWriter writer = new StreamWriter(File.Create(csproj), System.Text.Encoding.UTF8))
             {
                 writer.WriteLine("<Project Sdk=\"Microsoft.NET.Sdk\">");
                 writer.WriteLine("\t<PropertyGroup>");
@@ -86,7 +86,7 @@ namespace MyStaging.App
             string sln_file = Path.Combine(outputDir, projectName, $"{projectName}.sln");
             if (!File.Exists(sln_file))
             {
-                using (StreamWriter writer = new StreamWriter(File.Create(sln_file)))
+                using (StreamWriter writer = new StreamWriter(File.Create(sln_file), System.Text.Encoding.UTF8))
                 {
                     writer.WriteLine("Microsoft Visual Studio Solution File, Format Version 12.00");
                     writer.WriteLine("# Visual Studio 15>");

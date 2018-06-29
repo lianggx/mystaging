@@ -42,7 +42,7 @@ namespace MyStaging.App.DAL
             string _classname = CreateName() + "Model";
 
             string _fileName = $"{modelpath}/{_classname}.cs";
-            using (StreamWriter writer = new StreamWriter(File.Create(_fileName)))
+            using (StreamWriter writer = new StreamWriter(File.Create(_fileName), System.Text.Encoding.UTF8))
             {
                 writer.WriteLine("using System;");
                 writer.WriteLine("using System.Linq;");
@@ -137,7 +137,7 @@ namespace MyStaging.App.DAL
             string _classname = CreateName();
             string _model_classname = _classname + "Model";
             string _fileName = $"{dalpath}/{_classname}.cs";
-            using (StreamWriter writer = new StreamWriter(File.Create(_fileName)))
+            using (StreamWriter writer = new StreamWriter(File.Create(_fileName), System.Text.Encoding.UTF8))
             {
                 writer.WriteLine("using System;");
                 writer.WriteLine("using System.Linq;");
