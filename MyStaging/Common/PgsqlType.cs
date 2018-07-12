@@ -50,7 +50,7 @@ namespace MyStaging.Common
                 case "timestamp": return "DateTime";
                 case "json": return "JToken";
                 case "jsonb": return "JToken";
-                case "geometry": return "string";
+                case "geometry": return "object";
                 case "path": return "NpgsqlPath";
                 case "line": return "NpgsqlLine";
                 case "polygon": return "NpgsqlPolygon";

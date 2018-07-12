@@ -84,7 +84,7 @@ namespace MyStaging.App.DAL
                             propertyName += "By" + item.conname.ToUpperPascal();
                         }
 
-                        
+
                         string tmp_var = propertyName.ToLowerPascal();
                         writer.WriteLine($"\t\tprivate {f_dalName}Model {tmp_var} = null;");
                         writer.WriteLine($"\t\t[ForeignKeyMapping(name: \"{item.conname}\"), JsonIgnore] public {f_dalName}Model {propertyName} {{ get {{ if ({tmp_var} == null) {tmp_var} = {dalPath}{f_dalName}.Context.Where(f => f.{item.ref_column.ToUpperPascal()} == this.{item.conname.ToUpperPascal()}).ToOne(); return {tmp_var}; }} }}");
@@ -407,6 +407,7 @@ namespace MyStaging.App.DAL
                 && fi.CsType != "System.Net.NetworkInformation.PhysicalAddress"
                 && fi.CsType != "System.Xml.Linq.XDocument"
                 && fi.CsType != "System.Collections.BitArray"
+                && fi.CsType != "object"
                 )
                     _notnull = fi.Is_not_null ? "" : "?";
 
