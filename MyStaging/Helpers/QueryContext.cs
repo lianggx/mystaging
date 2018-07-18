@@ -18,7 +18,7 @@ namespace MyStaging.Helpers
     {
         public QueryContext<T> Page(int page, int size)
         {
-            page = page <= 1 ? 0 : page;
+            page = page <= 1 ? 0 : page - 1;
             string limit = page == 0 ? "" : $"\nOFFSET {page * size}";
             LimitText = $"LIMIT {size}{limit}";
             return this;
