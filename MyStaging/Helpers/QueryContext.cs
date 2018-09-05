@@ -460,6 +460,15 @@ namespace MyStaging.Helpers
             {
                 this.ParamList.Remove(p);
             }
+            if ((dbType == NpgsqlDbType.Json || dbType == NpgsqlDbType.Jsonb) && value != null)
+            {
+                JToken token = value as JToken;
+                if (!token.HasValues)
+                {
+                    value = null;
+                }
+            }
+
             p = new NpgsqlParameter(field, dbType);
             if (specificType != null)
                 p.SpecificType = specificType;
