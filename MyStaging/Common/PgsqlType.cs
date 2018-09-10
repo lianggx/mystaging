@@ -2,6 +2,9 @@
 
 namespace MyStaging.Common
 {
+    /// <summary>
+    /// pgsql 数据库类型转换管理对象
+    /// </summary>
     public class PgsqlType
     {
         /// <summary>
@@ -67,6 +70,12 @@ namespace MyStaging.Common
             }
         }
 
+        /// <summary>
+        ///  转换数据库类型描述为 NpgsqlDbType 类型对象
+        /// </summary>
+        /// <param name="data_type"></param>
+        /// <param name="db_type"></param>
+        /// <returns></returns>
         public static NpgsqlDbType SwitchToSql(string data_type, string db_type)
         {
 

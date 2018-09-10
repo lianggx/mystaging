@@ -11,15 +11,52 @@ using NpgsqlTypes;
 
 namespace MyStaging.Helpers
 {
+    /// <summary>
+    ///  lambda 表达式解析对象
+    /// </summary>
     public class PgSqlExpression
     {
+        /// <summary>
+        ///  获取或者左侧表达式
+        /// </summary>
         public Expression Left { get; set; }
+
+        /// <summary>
+        ///  获取或者设置右侧表达式
+        /// </summary>
         public Expression Right { get; set; }
+
+        /// <summary>
+        /// 获取或者设置当前表达式的主对象类型，用于生成数据库关系对象名称
+        /// </summary>
         public Type MasterType { get; set; }
+
+        /// <summary>
+        /// 获取或者设置当前表达式的主对象类型的别名
+        /// </summary>
         public string Master_AlisName { get; set; }
+
+        /// <summary>
+        ///  获取或者设置当前表达式的连接查询对象类型
+        /// </summary>
         public string Union_AlisName { get; set; }
+
+        /// <summary>
+        ///  获取或者设置输出的 SQL 语句
+        /// </summary>
         public StringBuilder CommandText { get; set; } = new StringBuilder();
+
+        /// <summary>
+        ///  获取或者设置当前表达式生成的数据库参数列表
+        /// </summary>
         public List<NpgsqlParameter> Parameters { get; set; } = new List<NpgsqlParameter>();
+
+        /// <summary>
+        ///  解析表达式提供程序
+        /// </summary>
+        /// <param name="left">左侧表达式</param>
+        /// <param name="right">右侧表达式</param>
+        /// <param name="type">表达式节点类型</param>
         protected void ExpressionProvider(Expression left, Expression right, ExpressionType type)
         {
             this.Left = left;
@@ -35,11 +72,20 @@ namespace MyStaging.Helpers
             CommandText.Append(")");
         }
 
+        /// <summary>
+        ///  表达式解析主入口方法
+        /// </summary>
+        /// <param name="selector"></param>
         public void ExpressionCapture(Expression selector)
         {
             ExpressionCapture(selector, selector.NodeType);
         }
 
+        /// <summary>
+        ///  表达式解析主入口方法，方法重载
+        /// </summary>
+        /// <param name="selector">待解析的表达式</param>
+        /// <param name="parent_type">父级表达式节点类型</param>
         private void ExpressionCapture(Expression selector, ExpressionType parent_type)
         {
             if (selector is BinaryExpression)
@@ -145,6 +191,11 @@ namespace MyStaging.Helpers
             }
         }
 
+        /// <summary>
+        ///  将表达式转换为数据库的 in/not in 数组操作
+        /// </summary>
+        /// <param name="exp"></param>
+        /// <param name="method"></param>
         protected void In_Not_Parameter(Expression exp, string method)
         {
             var f = Expression.Lambda(exp).Compile();
@@ -163,6 +214,11 @@ namespace MyStaging.Helpers
             CommandText.Append($" {method} ({string.Join(",", keys)})");
         }
 
+        /// <summary>
+        ///  动态执行表达式，获得执行后的值
+        /// </summary>
+        /// <param name="exp">待执行的表达式</param>
+        /// <param name="parent_type">父级表达式节点类型</param>
         protected void InvokeExpression(Expression exp, ExpressionType parent_type)
         {
             var f = Expression.Lambda(exp).Compile();
@@ -170,6 +226,12 @@ namespace MyStaging.Helpers
             SetValue(_value, parent_type);
         }
 
+        /// <summary>
+        /// 根据传入的值，创建一个 NpgsqlParameter 对象，并装入属性 Parameters 中
+        /// </summary>
+        /// <param name="val">参数的值</param>
+        /// <param name="type">运算符类型</param>
+        /// <param name="specificType">数据库指定列的类型</param>
         protected void SetValue(object val, ExpressionType type, Type specificType = null)
         {
             if (val == null)
@@ -197,6 +259,11 @@ namespace MyStaging.Helpers
             }
         }
 
+        /// <summary>
+        ///  根据传入的节点类型，返回对应的数据库运算符
+        /// </summary>
+        /// <param name="type">运算符类型</param>
+        /// <returns></returns>
         protected string NodeTypeToString(ExpressionType type)
         {
             switch (type)

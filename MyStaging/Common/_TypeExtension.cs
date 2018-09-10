@@ -6,26 +6,67 @@ using System.Linq.Expressions;
 
 namespace MyStaging.Common
 {
+    /// <summary>
+    ///  扩展方法对象
+    /// </summary>
     public static class _TypeExtension
     {
+        /// <summary>
+        /// 转换为数据库查询 in 查询
+        /// </summary>
+        /// <typeparam name="T">in 查询的字段类型</typeparam>
+        /// <param name="sender"></param>
+        /// <param name="_vals">in 查询的值列表</param>
+        /// <returns></returns>
         public static bool In<T>(this T sender, params T[] _vals)
         {
             return true;
         }
 
+        /// <summary>
+        /// 转换为数据库查询 not in 查询
+        /// </summary>
+        /// <typeparam name="T">not in 查询的字段类型</typeparam>
+        /// <param name="sender"></param>
+        /// <param name="_vals">not in 查询的值列表</param>
+        /// <returns></returns>
         public static bool NotIn<T>(this T sender, params T[] _vals)
         {
             return true;
         }
+
+        /// <summary>
+        /// 转换为数据库查询 like 查询
+        /// </summary>
+        /// <typeparam name="T">like 查询的字段类型</typeparam>
+        /// <param name="sender"></param>
+        /// <param name="_vals">like 查询的值列表</param>
+        /// <returns></returns>
         public static bool Like<T>(this T sender, T _val)
         {
             return true;
         }
+
+        /// <summary>
+        /// 转换为数据库查询 not like 查询
+        /// </summary>
+        /// <typeparam name="T">not like 查询的字段类型</typeparam>
+        /// <param name="sender"></param>
+        /// <param name="_vals">not like 查询的值列表</param>
+        /// <returns></returns>
         public static bool NotLike<T>(this T sender, T vals)
         {
             return true;
         }
 
+        /// <summary>
+        ///  将扩展对象输出为指定格式数据
+        /// </summary>
+        /// <typeparam name="TTarget">输出源</typeparam>
+        /// <typeparam name="TResult">输出结果</typeparam>
+        /// <param name="list">来源对象</param>
+        /// <param name="selector">格式选择器</param>
+        /// <returns></returns>
         public static List<TResult> ToBson<TTarget, TResult>(this IEnumerable<TTarget> list, Expression<Func<TTarget, TResult>> selector)
         {
             List<TResult> result = new List<TResult>();

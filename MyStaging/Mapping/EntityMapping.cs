@@ -7,28 +7,51 @@ using System.Text;
 
 namespace MyStaging.Mapping
 {
+    /// <summary>
+    ///  数据关系映射对象
+    /// </summary>
     [AttributeUsage(AttributeTargets.Property | AttributeTargets.Class, Inherited = true)]
     public class EntityMappingAttribute : TableAttribute
     {
-        public EntityMappingAttribute(string name) : base(name) {
-           
+        public EntityMappingAttribute(string name) : base(name)
+        {
         }
     }
 
+    /// <summary>
+    ///  属性关系映射对象
+    /// </summary>
     [AttributeUsage(AttributeTargets.Property | AttributeTargets.Class, Inherited = true)]
     public class PropertyMappingAttribute : ColumnAttribute
     {
+        /// <summary>
+        ///  获取或者设置字段名称
+        /// </summary>
         public string FieldName { get; set; }
+
+        /// <summary>
+        ///  获取或者设置字段类型
+        /// </summary>
         public NpgsqlDbType DbType { get; set; }
+
+        /// <summary>
+        ///  获取或者设置字段长度
+        /// </summary>
         public int Length { get; set; }
     }
 
+    /// <summary>
+    ///  外键关系映射对象
+    /// </summary>
     [AttributeUsage(AttributeTargets.Property, Inherited = true)]
     public class ForeignKeyMappingAttribute : ForeignKeyAttribute
     {
         public ForeignKeyMappingAttribute(string name) : base(name) { }
     }
 
+    /// <summary>
+    ///  无关系映射对象
+    /// </summary>
     [AttributeUsage(AttributeTargets.Property, Inherited = true)]
     public class NonDbColumnMappingAttribute : NotMappedAttribute
     {

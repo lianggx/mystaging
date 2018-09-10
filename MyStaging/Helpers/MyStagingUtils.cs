@@ -6,8 +6,16 @@ using System.Text;
 
 namespace MyStaging.Helpers
 {
+    /// <summary>
+    ///  数据库实体查找对象
+    /// </summary>
     public class MyStagingUtils
     {
+        /// <summary>
+        ///  根据传入的实体对象获得数据库架构级表的映射名称
+        /// </summary>
+        /// <param name="t"></param>
+        /// <returns></returns>
         public static string GetMapping(Type t)
         {
             string tableName = string.Empty;
