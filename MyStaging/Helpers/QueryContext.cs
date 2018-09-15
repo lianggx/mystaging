@@ -376,7 +376,7 @@ namespace MyStaging.Helpers
         /// </summary>
         /// <typeparam name="TResult">接受查询结果对象类型</typeparam>
         /// <returns></returns>
-        protected List<TResult> ExecuteReader<TResult>()
+        public List<TResult> ExecuteReader<TResult>()
         {
             ToString();
             return ExecuteReader<TResult>(this.commandtext);
@@ -387,7 +387,7 @@ namespace MyStaging.Helpers
         /// </summary>
         /// <typeparam name="TResult">接受查询结果对象类型</typeparam>
         /// <returns></returns>
-        protected List<TResult> ExecuteReader<TResult>(string cmdText)
+        public List<TResult> ExecuteReader<TResult>(string cmdText)
         {
             List<TResult> list = new List<TResult>();
             DynamicBuilder<TResult> builder = null;

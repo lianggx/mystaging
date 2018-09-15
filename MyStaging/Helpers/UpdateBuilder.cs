@@ -104,7 +104,7 @@ namespace MyStaging.Helpers
             {
                 cmdText += " RETURNING *;";
 
-                var objList = base.ExecuteReader<T>(cmdText);
+                var objList = base.ByMaster().ExecuteReader<T>(cmdText);
                 affrows = objList.Count;
                 if (affrows > 0 && this.OnChanged != null)
                 {
