@@ -903,7 +903,7 @@ namespace MyStaging.Helpers
         /// <summary>
         ///  获取或者设置查询语句，设置该属性将覆盖所有的查询条件
         /// </summary>
-        protected string CommandText { get { return commandtext; } set { this.commandtext = value; } }
+        public string CommandText { get { return commandtext; } set { this.commandtext = value; } }
 
         /// <summary>
         ///  获取或者设置从从库数据源中执行查询，默认值为 false （true 仅从主数据源中读取数据）

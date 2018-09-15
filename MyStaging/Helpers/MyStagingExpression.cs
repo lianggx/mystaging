@@ -88,16 +88,21 @@ namespace MyStaging.Helpers
         /// <param name="parent_type">父级表达式节点类型</param>
         private void ExpressionCapture(Expression selector, ExpressionType parent_type)
         {
-            if (selector is BinaryExpression)
+            if (selector is BinaryExpression be)
             {
-                BinaryExpression be = ((BinaryExpression)selector);
                 ExpressionProvider(be.Left, be.Right, be.NodeType);
             }
-            else if (selector is MemberExpression)
+            else if (selector is MemberExpression me)
             {
-                if (!selector.ToString().StartsWith("value(") && selector.Type != typeof(DateTime))
+                if (!selector.ToString().StartsWith("value(")
+                    && selector.Type != typeof(DateTime)
+                    ||
+                    (
+                    me.Expression.NodeType == ExpressionType.Parameter
+                    && !me.ToString().StartsWith("value(")
+                    && me.Type == typeof(DateTime)
+                    ))
                 {
-                    MemberExpression me = ((MemberExpression)selector);
                     string tableName = me.Member.DeclaringType == MasterType ? Master_AlisName : Union_AlisName;
                     if (!string.IsNullOrEmpty(tableName))
                     {
@@ -110,9 +115,8 @@ namespace MyStaging.Helpers
                     InvokeExpression(selector, parent_type);
                 }
             }
-            else if (selector is NewArrayExpression)
+            else if (selector is NewArrayExpression ae)
             {
-                NewArrayExpression ae = ((NewArrayExpression)selector);
                 foreach (Expression ex in ae.Expressions)
                 {
                     ExpressionCapture(ex, parent_type);
@@ -120,9 +124,8 @@ namespace MyStaging.Helpers
                 }
                 CommandText.Remove(CommandText.Length - 1, 1);
             }
-            else if (selector is MethodCallExpression)
+            else if (selector is MethodCallExpression callExp)
             {
-                MethodCallExpression callExp = (MethodCallExpression)selector;
                 CommandText.Append("(");
                 switch (callExp.Method.Name)
                 {
@@ -159,9 +162,8 @@ namespace MyStaging.Helpers
                 }
                 CommandText.Append(")");
             }
-            else if (selector is ConstantExpression)
+            else if (selector is ConstantExpression ce)
             {
-                ConstantExpression ce = ((ConstantExpression)selector);
                 if (this.Left is UnaryExpression)
                 {
                     Type type = ((UnaryExpression)this.Left).Operand.Type;
@@ -176,9 +178,8 @@ namespace MyStaging.Helpers
                 else
                     SetValue(ce.Value, parent_type);
             }
-            else if (selector is UnaryExpression)
+            else if (selector is UnaryExpression ue)
             {
-                UnaryExpression ue = ((UnaryExpression)selector);
                 ExpressionCapture(ue.Operand, parent_type);
             }
             else if (selector is ParameterExpression)

@@ -100,7 +100,8 @@ namespace MyStaging.App.DAL
                     }
                     string dalName = CreateName();
                     string updateName = $"{dalPath}{dalName}.{dalName}UpdateBuilder";
-                    writer.WriteLine($"\t\t[NonDbColumnMapping, JsonIgnore] public {updateName} UpdateBuilder {{ get {{ return new {updateName}(model =>{{MyStaging.Helpers.MyStagingUtils.CopyProperty<{_classname}>(this, model);}},{ string.Join(",", d_key)}); }} }}");
+                    string dkString = d_key.Count > 0 ? $", { string.Join(",", d_key)}" : "";
+                    writer.WriteLine($"\t\t[NonDbColumnMapping, JsonIgnore] public {updateName} UpdateBuilder {{ get {{ return new {updateName}(model =>{{MyStaging.Helpers.MyStagingUtils.CopyProperty<{_classname}>(this, model);}}{dkString}); }} }}");
                     writer.WriteLine();
                     writer.WriteLine($"\t\tpublic {_classname} Insert() {{ return {dalPath}{dalName}.Insert(this); }}");
                     writer.WriteLine();
@@ -260,26 +261,37 @@ namespace MyStaging.App.DAL
             writer.WriteLine($"\t\tpublic static {updateName} UpdateBuilder {{ get {{ return new {updateName}(); }} }}");
             writer.WriteLine();
 
+            string dkString = d_key.Count > 0 ? $"{ string.Join(",", d_key)}" : "";
             var modelUpper = class_model.ToUpperPascal();
             writer.WriteLine($"\t\tpublic class {updateName} : UpdateBuilder<{modelUpper}>");
             writer.WriteLine("\t\t{");
-            writer.WriteLine($"\t\t\tpublic {updateName}(Action<{modelUpper}> onChanged, {string.Join(",", d_key)}) : base(onChanged)");
-            writer.WriteLine("\t\t\t{");
-            if (pkList.Count > 0)
+
+            void CreateConstructor(string paramString, string onChange = null)
             {
-                writer.Write($"\t\t\t\tbase.Where(f => ");
-                for (int i = 0; i < pkList.Count; i++)
+                var baseT = onChange == null ? "" : " : base(onChanged)";
+                writer.WriteLine($"\t\t\tpublic {updateName}({onChange}{dkString}){baseT}");
+                writer.WriteLine("\t\t\t{");
+                if (pkList.Count > 0)
                 {
-                    var item = pkList[i];
-                    writer.Write($"f.{item.Field.ToUpperPascal()} == {item.Field}");
-                    if (i + 1 < pkList.Count)
+                    writer.Write($"\t\t\t\tbase.Where(f => ");
+                    for (int i = 0; i < pkList.Count; i++)
                     {
-                        writer.Write(" && ");
+                        var item = pkList[i];
+                        writer.Write($"f.{item.Field.ToUpperPascal()} == {item.Field}");
+                        if (i + 1 < pkList.Count)
+                        {
+                            writer.Write(" && ");
+                        }
                     }
+                    writer.Write(");\n");
                 }
-                writer.Write(");\n");
+                writer.WriteLine("\t\t\t}");
             }
-            writer.WriteLine("\t\t\t}");
+            // 默认构造函数
+            CreateConstructor(dkString);
+            // 重载构造函数
+            var separator = d_key.Count > 0 ? ", " : "";
+            CreateConstructor(dkString, $"Action<{modelUpper}> onChanged" + separator);
 
             if (d_key.Count > 0)
             {
@@ -458,7 +470,7 @@ WHERE conrelid in
 SELECT a.oid FROM pg_class a 
 inner join pg_namespace b on a.relnamespace=b.oid
 WHERE b.nspname='{0}' and a.relname='{1}');"
-, this.schemaName, this.table.name);
+        , this.schemaName, this.table.name);
 
 
             PgSqlHelper.ExecuteDataReader(dr =>

@@ -16,7 +16,21 @@ namespace MyStaging.App.DAL
         public static List<string> Get_List()
         {
             List<string> schemaList = new List<string>();
-            string sql = @"SELECT schema_name FROM information_schema.schemata WHERE SCHEMA_NAME NOT IN('pg_toast','pg_temp_1','pg_toast_temp_1','pg_catalog','information_schema') ORDER BY SCHEMA_NAME; ";
+            string[] notin = {
+               "'geometry_columns'",
+               "'raster_columns'",
+               "'spatial_ref_sys'",
+               "'raster_overviews'",
+               "'us_gaz'",
+               "'topology'",
+               "'zip_lookup_all'",
+               "'pg_toast'",
+               "'pg_temp_1'",
+               "'pg_toast_temp_1'",
+               "'pg_catalog'",
+               "'information_schema'"
+            };
+            string sql = $@"SELECT schema_name FROM information_schema.schemata WHERE SCHEMA_NAME NOT IN({string.Join(",", notin)}) ORDER BY SCHEMA_NAME; ";
             PgSqlHelper.ExecuteDataReader(dr =>
             {
                 schemaList.Add(dr[0].ToString());
