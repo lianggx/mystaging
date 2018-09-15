@@ -379,8 +379,18 @@ namespace MyStaging.Helpers
         protected List<TResult> ExecuteReader<TResult>()
         {
             ToString();
-            List<TResult> list = new List<TResult>();
+            return ExecuteReader<TResult>(this.commandtext);
+        }
 
+        /// <summary>
+        ///  执行查询并返回结果集
+        /// </summary>
+        /// <typeparam name="TResult">接受查询结果对象类型</typeparam>
+        /// <returns></returns>
+        protected List<TResult> ExecuteReader<TResult>(string cmdText)
+        {
+            List<TResult> list = new List<TResult>();
+            DynamicBuilder<TResult> builder = null;
             Action<NpgsqlDataReader> action = (dr) =>
             {
                 TResult obj = default(TResult);
@@ -400,20 +410,24 @@ namespace MyStaging.Helpers
                 }
                 else
                 {
-                    obj = DynamicBuilder<TResult>.CreateBuilder(dr).Build(dr);
+                    if (builder == null)
+                    {
+                        builder = DynamicBuilder<TResult>.CreateBuilder(dr);
+                    }
+                    obj = builder.Build(dr);
                 }
                 list.Add(obj);
             };
 
+
             if (PgSqlHelper.InstanceSlave != null && !Master)
             {
-                PgSqlHelper.ExecuteDataReaderSlave(action, CommandType.Text, this.commandtext, this.ParamList.ToArray());
+                PgSqlHelper.ExecuteDataReaderSlave(action, CommandType.Text, cmdText, this.ParamList.ToArray());
             }
             else
             {
-                PgSqlHelper.ExecuteDataReader(action, CommandType.Text, this.commandtext, this.ParamList.ToArray());
+                PgSqlHelper.ExecuteDataReader(action, CommandType.Text, cmdText, this.ParamList.ToArray());
             }
-
             return list;
         }
 

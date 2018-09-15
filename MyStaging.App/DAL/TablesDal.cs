@@ -100,7 +100,7 @@ namespace MyStaging.App.DAL
                     }
                     string dalName = CreateName();
                     string updateName = $"{dalPath}{dalName}.{dalName}UpdateBuilder";
-                    writer.WriteLine($"\t\t[NonDbColumnMapping, JsonIgnore] public {updateName} UpdateBuilder {{ get {{ return new {updateName}({string.Join(",", d_key)}); }} }}");
+                    writer.WriteLine($"\t\t[NonDbColumnMapping, JsonIgnore] public {updateName} UpdateBuilder {{ get {{ return new {updateName}(model =>{{MyStaging.Helpers.MyStagingUtils.CopyProperty<{_classname}>(this, model);}},{ string.Join(",", d_key)}); }} }}");
                     writer.WriteLine();
                     writer.WriteLine($"\t\tpublic {_classname} Insert() {{ return {dalPath}{dalName}.Insert(this); }}");
                     writer.WriteLine();
@@ -252,7 +252,7 @@ namespace MyStaging.App.DAL
             {
                 writer.WriteLine($"\t\tpublic static {updateName} Update({string.Join(",", d_key)})");
                 writer.WriteLine("\t\t{");
-                writer.WriteLine($"\t\t\treturn new {updateName}({string.Join(",", d_key_fields)});");
+                writer.WriteLine($"\t\t\treturn new {updateName}(null, {string.Join(",", d_key_fields)});");
                 writer.WriteLine("\t\t}");
                 writer.WriteLine();
             }
@@ -260,10 +260,10 @@ namespace MyStaging.App.DAL
             writer.WriteLine($"\t\tpublic static {updateName} UpdateBuilder {{ get {{ return new {updateName}(); }} }}");
             writer.WriteLine();
 
-
-            writer.WriteLine($"\t\tpublic class {updateName} : UpdateBuilder<{class_model.ToUpperPascal()}>");
+            var modelUpper = class_model.ToUpperPascal();
+            writer.WriteLine($"\t\tpublic class {updateName} : UpdateBuilder<{modelUpper}>");
             writer.WriteLine("\t\t{");
-            writer.WriteLine($"\t\t\tpublic {updateName}({string.Join(",", d_key)})");
+            writer.WriteLine($"\t\t\tpublic {updateName}(Action<{modelUpper}> onChanged, {string.Join(",", d_key)}) : base(onChanged)");
             writer.WriteLine("\t\t\t{");
             if (pkList.Count > 0)
             {

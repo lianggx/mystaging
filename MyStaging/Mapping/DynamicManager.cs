@@ -16,7 +16,6 @@ namespace MyStaging.Mapping
     /// <typeparam name="T"></typeparam>
     public class DynamicBuilder<T>
     {
-        private static IDictionary<Type, Type> types = new Dictionary<Type, Type>();
         private static readonly MethodInfo getValueMethod = typeof(IDataRecord).GetMethod("get_Item", new Type[] { typeof(int) });
         private static readonly MethodInfo isDBNullMethod = typeof(IDataRecord).GetMethod("IsDBNull", new Type[] { typeof(int) });
         private delegate T Load(IDataRecord dataRecord);
@@ -32,16 +31,6 @@ namespace MyStaging.Mapping
         /// </summary>
         static DynamicBuilder()
         {
-            types.Add(typeof(bool), typeof(Nullable<bool>));
-            types.Add(typeof(byte), typeof(Nullable<byte>));
-            types.Add(typeof(DateTime), typeof(Nullable<DateTime>));
-            types.Add(typeof(decimal), typeof(Nullable<decimal>));
-            types.Add(typeof(double), typeof(Nullable<double>));
-            types.Add(typeof(float), typeof(Nullable<float>));
-            types.Add(typeof(Guid), typeof(Nullable<Guid>));
-            types.Add(typeof(Int16), typeof(Nullable<Int16>));
-            types.Add(typeof(Int32), typeof(Nullable<Int32>));
-            types.Add(typeof(Int64), typeof(Nullable<Int64>));
         }
 
         /// <summary>

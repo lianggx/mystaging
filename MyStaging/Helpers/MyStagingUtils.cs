@@ -34,5 +34,25 @@ namespace MyStaging.Helpers
 
             return tableName;
         }
+
+
+        /// <summary>
+        ///  复制两个对象的属性值
+        /// </summary>
+        /// <typeparam name="T">对象类型</typeparam>
+        /// <param name="targetObj">待赋值的目标对象</param>
+        /// <param name="sourceObj">复制的源对象</param>
+        /// <param name="flags">指定属性搜索范围</param>
+        public static void CopyProperty<T>(T targetObj, T sourceObj, BindingFlags flags = BindingFlags.GetProperty | BindingFlags.Instance | BindingFlags.Default | BindingFlags.Public)
+        {
+            PropertyInfo[] properties = sourceObj.GetType().GetProperties(flags);
+
+            for (int i = 0; i < properties.Length; i++)
+            {
+                PropertyInfo pi = properties[i];
+                if (pi.CanWrite)
+                    pi.SetValue(targetObj, pi.GetValue(sourceObj, null), null);
+            }
+        }
     }
 }

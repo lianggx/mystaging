@@ -11,7 +11,16 @@ namespace MyStaging.Helpers
     /// <typeparam name="T"></typeparam>
     public class UpdateBuilder<T> : QueryContext<T> where T : class, new()
     {
+        public Action<T> OnChanged = null;
         private List<string> setList = new List<string>();
+
+        public UpdateBuilder() { }
+
+        public UpdateBuilder(Action<T> onChanged)
+        {
+            this.OnChanged = onChanged;
+        }
+
         /// <summary>
         ///  设置字段值
         /// </summary>
@@ -90,7 +99,22 @@ namespace MyStaging.Helpers
                 }
             }
             string cmdText = $"UPDATE {tableName} SET {string.Join(",", this.setList)} {"WHERE " + string.Join("\nAND ", WhereList)}";
-            return base.ExecuteNonQuery(cmdText);
+            int affrows = 0;
+            if (OnChanged != null)
+            {
+                cmdText += " RETURNING *;";
+
+                var objList = base.ExecuteReader<T>(cmdText);
+                affrows = objList.Count;
+                if (affrows > 0 && this.OnChanged != null)
+                {
+                    OnChanged(objList[0]);
+                }
+            }
+            else
+                base.ExecuteNonQuery(cmdText);
+
+            return affrows;
         }
 
     }
