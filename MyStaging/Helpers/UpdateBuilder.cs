@@ -112,7 +112,7 @@ namespace MyStaging.Helpers
                 }
             }
             else
-                base.ExecuteNonQuery(cmdText);
+                affrows = base.ExecuteNonQuery(cmdText);
 
             return affrows;
         }
