@@ -586,6 +586,8 @@ namespace MyStaging.Helpers
             return this;
         }
 
+        #region 连接查询
+
         /// <summary>
         ///  执行表连接查询
         /// </summary>
@@ -642,6 +644,98 @@ namespace MyStaging.Helpers
 
             return this;
         }
+
+        /// <summary>
+        ///  执行内连接查询
+        /// </summary>
+        /// <typeparam name="TModel">要连接的数据库实体对象</typeparam>
+        /// <param name="alisName">连接的别名</param>
+        /// <param name="predicate">On 的查询表达式</param>
+        /// <returns></returns>
+        public QueryContext<T> InnerJoin<TModel>(string alisName, Expression<Func<T, TModel, bool>> predicate) => Union<T, TModel>("a", alisName, UnionType.INNER_JOIN, predicate);
+
+        /// <summary>
+        ///  执行内连接查询
+        /// </summary>
+        /// <typeparam name="TModel">要连接的数据库实体对象</typeparam>
+        /// <param name="alisName">连接的别名</param>
+        /// <param name="predicate">On 的查询表达式</param>
+        /// <returns></returns>
+        public QueryContext<T> InnerJoin<TModel1, TModel2>(string alisName, string unionAlisName, Expression<Func<TModel1, TModel2, bool>> predicate) => Union<TModel1, TModel2>(alisName, unionAlisName, UnionType.INNER_JOIN, predicate);
+
+        /// <summary>
+        ///  执行左连接查询
+        /// </summary>
+        /// <typeparam name="TModel">要连接的数据库实体对象</typeparam>
+        /// <param name="alisName">连接的别名</param>
+        /// <param name="predicate">On 的查询表达式</param>
+        /// <returns></returns>
+        public QueryContext<T> LeftJoin<TModel>(string alisName, Expression<Func<T, TModel, bool>> predicate) => Union<T, TModel>("a", alisName, UnionType.LEFT_JOIN, predicate);
+
+        /// <summary>
+        ///  执行左连接查询
+        /// </summary>
+        /// <typeparam name="TModel">要连接的数据库实体对象</typeparam>
+        /// <param name="alisName">连接的别名</param>
+        /// <param name="predicate">On 的查询表达式</param>
+        /// <returns></returns>
+        public QueryContext<T> LeftJoin<TModel1, TModel2>(string alisName, string unionAlisName, Expression<Func<TModel1, TModel2, bool>> predicate) => Union<TModel1, TModel2>(alisName, unionAlisName, UnionType.LEFT_JOIN, predicate);
+
+        /// <summary>
+        ///  执行左外连接查询
+        /// </summary>
+        /// <typeparam name="TModel">要连接的数据库实体对象</typeparam>
+        /// <param name="alisName">连接的别名</param>
+        /// <param name="predicate">On 的查询表达式</param>
+        /// <returns></returns>
+        public QueryContext<T> LeftOuterJoin<TModel>(string alisName, Expression<Func<T, TModel, bool>> predicate) => Union<T, TModel>("a", alisName, UnionType.LEFT_OUTER_JOIN, predicate);
+
+        /// <summary>
+        ///  执行左外连接查询
+        /// </summary>
+        /// <typeparam name="TModel">要连接的数据库实体对象</typeparam>
+        /// <param name="alisName">连接的别名</param>
+        /// <param name="predicate">On 的查询表达式</param>
+        /// <returns></returns>
+        public QueryContext<T> LeftOuterJoin<TModel1, TModel2>(string alisName, string unionAlisName, Expression<Func<TModel1, TModel2, bool>> predicate) => Union<TModel1, TModel2>(alisName, unionAlisName, UnionType.LEFT_OUTER_JOIN, predicate);
+
+        /// <summary>
+        ///  执行右连接查询
+        /// </summary>
+        /// <typeparam name="TModel">要连接的数据库实体对象</typeparam>
+        /// <param name="alisName">连接的别名</param>
+        /// <param name="predicate">On 的查询表达式</param>
+        /// <returns></returns>
+        public QueryContext<T> RightJoin<TModel>(string alisName, Expression<Func<T, TModel, bool>> predicate) => Union<T, TModel>("a", alisName, UnionType.RIGHT_JOIN, predicate);
+
+        /// <summary>
+        ///  执行右连接查询
+        /// </summary>
+        /// <typeparam name="TModel">要连接的数据库实体对象</typeparam>
+        /// <param name="alisName">连接的别名</param>
+        /// <param name="predicate">On 的查询表达式</param>
+        /// <returns></returns>
+        public QueryContext<T> RightJoin<TModel1, TModel2>(string alisName, string unionAlisName, Expression<Func<TModel1, TModel2, bool>> predicate) => Union<TModel1, TModel2>(alisName, unionAlisName, UnionType.RIGHT_JOIN, predicate);
+
+        /// <summary>
+        ///  执行右外连接查询
+        /// </summary>
+        /// <typeparam name="TModel">要连接的数据库实体对象</typeparam>
+        /// <param name="alisName">连接的别名</param>
+        /// <param name="predicate">On 的查询表达式</param>
+        /// <returns></returns>
+        public QueryContext<T> RightOuterJoin<TModel>(string alisName, Expression<Func<T, TModel, bool>> predicate) => Union<T, TModel>("a", alisName, UnionType.RIGHT_OUTER_JOIN, predicate);
+
+        /// <summary>
+        ///  执行右外连接查询
+        /// </summary>
+        /// <typeparam name="TModel">要连接的数据库实体对象</typeparam>
+        /// <param name="alisName">连接的别名</param>
+        /// <param name="predicate">On 的查询表达式</param>
+        /// <returns></returns>
+        public QueryContext<T> RightOuterJoin<TModel1, TModel2>(string alisName, string unionAlisName, Expression<Func<TModel1, TModel2, bool>> predicate) => Union<TModel1, TModel2>(alisName, unionAlisName, UnionType.RIGHT_OUTER_JOIN, predicate);
+
+        #endregion
 
         /// <summary>
         ///  将查询命令和条件转换为 SQL 语句
