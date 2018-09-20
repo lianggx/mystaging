@@ -533,9 +533,6 @@ namespace MyStaging.Helpers
         public QueryContext<T> Where(string formatCommad, params object[] pValue)
         {
             if (pValue == null || pValue.Length == 0) throw new ArgumentNullException("必须传递参数 pValue");
-            Regex regx = new Regex("{\\d}");
-            MatchCollection matchs = regx.Matches(formatCommad);
-            if (matchs.Count != pValue.Length) throw new ArgumentException("参数 formatCommad 中的格式化参数（{..}）个数必须和 pValue 参数的个数匹配");
             List<object> nameList = new List<object>();
             foreach (var item in pValue)
             {
