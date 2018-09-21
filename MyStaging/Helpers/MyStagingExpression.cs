@@ -98,7 +98,8 @@ namespace MyStaging.Helpers
                     && selector.Type != typeof(DateTime)
                     ||
                     (
-                    me.Expression.NodeType == ExpressionType.Parameter
+                    me.Expression != null
+                    && me.Expression.NodeType == ExpressionType.Parameter
                     && !me.ToString().StartsWith("value(")
                     && me.Type == typeof(DateTime)
                     ))
