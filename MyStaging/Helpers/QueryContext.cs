@@ -299,7 +299,13 @@ namespace MyStaging.Helpers
             Fields.Clear();
             Fields.Add(field);
             string cmdText = ToString();
-            object _val = PgSqlHelper.ExecuteScalar(CommandType.Text, cmdText, this.ParamList.ToArray());
+            object _val = null;
+            if (PgSqlHelper.InstanceSlave != null && !this.Master)
+            {
+                _val = PgSqlHelper.ExecuteScalarSlave(CommandType.Text, cmdText, this.ParamList.ToArray());
+            }
+            else
+                _val = PgSqlHelper.ExecuteScalar(CommandType.Text, cmdText, this.ParamList.ToArray());
 
             return (TResult)_val;
         }

@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlClient;
+using System.Net.Sockets;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -19,7 +20,7 @@ namespace MyStaging.Helpers
         /// <summary>
         ///  获取或者设置数据库连接池对象
         /// </summary>
-        public ConnectionPool Pool { get; set; }
+        public virtual ConnectionPool Pool { get; set; }
 
         /// <summary>
         ///  日志输出对象
@@ -62,7 +63,7 @@ namespace MyStaging.Helpers
         /// <summary>
         ///  获取当前线程产生的数据库事务
         /// </summary>
-        private NpgsqlTransaction CurrentThreadTransaction
+        protected virtual NpgsqlTransaction CurrentThreadTransaction
         {
             get
             {
@@ -78,7 +79,7 @@ namespace MyStaging.Helpers
         /// </summary>
         /// <param name="command">NpgsqlCommand 对象</param>
         /// <param name="commandParameters">NpgsqlParameter 数组</param>
-        protected void AttachParameters(NpgsqlCommand command, NpgsqlParameter[] commandParameters)
+        protected virtual void AttachParameters(NpgsqlCommand command, NpgsqlParameter[] commandParameters)
         {
             if (command == null) throw new ArgumentNullException("command");
             if (commandParameters == null) return;
@@ -101,7 +102,7 @@ namespace MyStaging.Helpers
         /// <param name="commandType">CommandType 类型</param>
         /// <param name="commandText">待执行的 SQL 语句</param>
         /// <param name="commandParameters">NpgsqlCommand 对象的参数列表</param>
-        protected void PrepareCommand(NpgsqlCommand command, CommandType commandType, string commandText, NpgsqlParameter[] commandParameters)
+        protected virtual void PrepareCommand(NpgsqlCommand command, CommandType commandType, string commandText, NpgsqlParameter[] commandParameters)
         {
             if (commandText == null || commandText.Length == 0) throw new ArgumentNullException("commandText");
             if (CurrentThreadTransaction != null)
@@ -128,8 +129,9 @@ namespace MyStaging.Helpers
         /// <param name="commandText">待执行的 SQL 语句</param>
         /// <param name="commandParameters">NpgsqlCommand 对象的参数列表</param>
         /// <returns></returns>
-        public object ExecuteScalar(CommandType commandType, string commandText, params NpgsqlParameter[] commandParameters)
+        public virtual object ExecuteScalar(CommandType commandType, string commandText, params NpgsqlParameter[] commandParameters)
         {
+            bool connected = true;
             object retval = null;
             NpgsqlCommand cmd = new NpgsqlCommand();
             try
@@ -137,16 +139,27 @@ namespace MyStaging.Helpers
                 PrepareCommand(cmd, commandType, commandText, commandParameters);
                 if (cmd.Connection.State == ConnectionState.Closed)
                     cmd.Connection.Open();
+
                 retval = cmd.ExecuteScalar();
+            }
+            catch (SocketException se)
+            {
+                connected = false;
+                se.Data["host"] = cmd.Connection.Host;
+                se.Data["port"] = cmd.Connection.Port;
+                ExceptionOutPut(cmd, se);
+                throw se;
             }
             catch (Exception ex)
             {
+                ex.Data["host"] = cmd.Connection.Host;
+                ex.Data["port"] = cmd.Connection.Port;
                 ExceptionOutPut(cmd, ex);
                 throw ex;
             }
             finally
             {
-                if (this.CurrentThreadTransaction == null)
+                if (connected && this.CurrentThreadTransaction == null)
                 {
                     this.Pool.FreeConnection(cmd.Connection);
                 }
@@ -163,7 +176,7 @@ namespace MyStaging.Helpers
         /// <param name="commandText">待执行的 SQL 语句</param>
         /// <param name="commandParameters">NpgsqlCommand 对象的参数列表</param>
         /// <returns></returns>
-        public int ExecuteNonQuery(CommandType commandType, string commandText, params NpgsqlParameter[] commandParameters)
+        public virtual int ExecuteNonQuery(CommandType commandType, string commandText, params NpgsqlParameter[] commandParameters)
         {
             int retval = 0;
             NpgsqlCommand cmd = new NpgsqlCommand();
@@ -197,7 +210,7 @@ namespace MyStaging.Helpers
         /// <param name="commandType">CommandType 类型</param>
         /// <param name="commandText">待执行的 SQL 语句</param>
         /// <param name="commandParameters">NpgsqlCommand 对象的参数列表</param>
-        public void ExecuteDataReader(Action<NpgsqlDataReader> action, CommandType commandType, string commandText, params NpgsqlParameter[] commandParameters)
+        public virtual void ExecuteDataReader(Action<NpgsqlDataReader> action, CommandType commandType, string commandText, params NpgsqlParameter[] commandParameters)
         {
             NpgsqlCommand cmd = new NpgsqlCommand();
             NpgsqlDataReader reader = null;
@@ -235,30 +248,30 @@ namespace MyStaging.Helpers
         /// </summary>
         /// <param name="cmd">NpgsqlCommand 对象</param>
         /// <param name="ex">异常信息</param>
-        protected async void ExceptionOutPut(NpgsqlCommand cmd, Exception ex)
+        protected virtual void ExceptionOutPut(NpgsqlCommand cmd, Exception ex)
         {
-            await Task.Run(() =>
-            {
-                string ps = string.Empty;
-                if (cmd.Parameters != null)
-                    for (int i = 0; i < cmd.Parameters.Count; i++)
-                    {
-                        var item = cmd.Parameters[i];
-                        ps += $"{ item.ParameterName}:{item.Value},";
-                    }
-                string sql = cmd.CommandText;
-                for (int i = 0; i < cmd.Parameters.Count; i++)
+            NpgsqlParameterCollection coll = cmd.Parameters;
+
+            string ps = string.Empty;
+            if (coll != null)
+                for (int i = 0; i < coll.Count; i++)
                 {
-                    var para = cmd.Parameters[i];
-                    var isString = IsString(para.NpgsqlDbType);
-                    var val = string.Format("{0}{1}{0}", isString ? "'" : "", para.Value.ToString());
-                    sql = sql.Replace("@" + para.ParameterName, val);
+                    var item = coll[i];
+                    ps += $"{ item.ParameterName}:{item.Value},";
                 }
-                if (_logger != null)
-                    _logger.LogError(new EventId(111111), ex, "数据库执行出错：===== \n {0}\n{1}\n{2}", sql, cmd.Parameters, ps);
-                else
-                    Console.WriteLine("数据库执行出错：===== \n {0}\n{1}\n{2}", sql, cmd.Parameters, ps);
-            });
+            string sql = cmd.CommandText;
+            for (int i = 0; i < coll.Count; i++)
+            {
+                var para = coll[i];
+                var isString = IsString(para.NpgsqlDbType);
+                var val = string.Format("{0}{1}{0}", isString ? "'" : "", para.Value.ToString());
+                sql = sql.Replace("@" + para.ParameterName, val);
+            }
+            if (_logger != null)
+                _logger.LogError(new EventId(111111), ex, "数据库执行出错：===== \n {0}\n{1}\n{2}", sql, coll, ps);
+            else
+                Console.WriteLine("数据库执行出错：===== \n {0}\n{1}\n{2}", sql, coll, ps);
+
         }
 
         /// <summary>
@@ -281,7 +294,7 @@ namespace MyStaging.Helpers
         /// <summary>
         ///  在当前线程上开始执行事务
         /// </summary>
-        public void BeginTransaction()
+        public virtual void BeginTransaction()
         {
             if (CurrentThreadTransaction != null)
                 CommitTransaction(true);
@@ -303,7 +316,7 @@ namespace MyStaging.Helpers
         /// <summary>
         ///  提交当前线程上执行的事务
         /// </summary>
-        public void CommitTransaction()
+        public virtual void CommitTransaction()
         {
             CommitTransaction(true);
         }
@@ -312,7 +325,7 @@ namespace MyStaging.Helpers
         ///  可控制的事务提交
         /// </summary>
         /// <param name="iscommit">true=提交事务，false=回滚事务</param>
-        public void CommitTransaction(bool iscommit)
+        public virtual void CommitTransaction(bool iscommit)
         {
             NpgsqlTransaction tran = CurrentThreadTransaction;
             if (tran == null || tran.Connection == null) return;
@@ -334,7 +347,7 @@ namespace MyStaging.Helpers
         /// <summary>
         ///  将当前线程上的事务进行回滚
         /// </summary>
-        public void RollBackTransaction()
+        public virtual void RollBackTransaction()
         {
             NpgsqlTransaction tran = CurrentThreadTransaction;
             if (tran != null && !tran.IsCompleted)
