@@ -14,6 +14,7 @@ namespace MyStaging.Helpers
     /// <summary>
     ///  lambda 表达式解析对象
     /// </summary>
+    [Obsolete("此类已过时，请使用 DbExpressionVisitor 类")]
     public class PgSqlExpression
     {
         /// <summary>

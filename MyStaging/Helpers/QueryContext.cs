@@ -756,14 +756,14 @@ namespace MyStaging.Helpers
             int _index = 2;
             foreach (var item in UnionList)
             {
-                PgSqlExpression expression = new PgSqlExpression();
-                expression.MasterType = item.MasterType;
-                expression.Master_AlisName = item.AlisName;
-                expression.Union_AlisName = item.UnionAlisName;
-                expression.ExpressionCapture(item.Body);
+                DbExpressionVisitor expression = new DbExpressionVisitor();
+                expression.TypeMaster = item.MasterType;
+                expression.AliasMaster = item.AlisName;
+                expression.AliasUnion = item.UnionAlisName;
+                expression.Visit(item.Body);
                 string unionTableName = MyStagingUtils.GetMapping(item.Model);
-                sqlText.AppendLine(item.UnionType.ToString().Replace("_", " ") + " " + unionTableName + " " + expression.Union_AlisName + " ON " + expression.CommandText.ToString());
-                ParamList.AddRange(expression.Parameters);
+                sqlText.AppendLine(item.UnionType.ToString().Replace("_", " ") + " " + unionTableName + " " + expression.AliasUnion + " ON " + expression.SqlText.Builder.ToString());
+                ParamList.AddRange(expression.SqlText.Parameters);
                 _index++;
             }
             // condition
@@ -771,10 +771,10 @@ namespace MyStaging.Helpers
             {
                 foreach (var item in WhereExpressionList)
                 {
-                    PgSqlExpression expression = new PgSqlExpression();
+                    DbExpressionVisitor expression = new DbExpressionVisitor();
                     if (UnionList.Count == 0)
                     {
-                        expression.MasterType = item.Model;
+                        expression.TypeMaster = item.Model;
                     }
                     else
                     {
@@ -786,22 +786,22 @@ namespace MyStaging.Helpers
 
                         if (union == null && typeof(T) == item.Model)
                         {
-                            expression.MasterType = item.Model;
-                            expression.Master_AlisName = masterAlisName;
+                            expression.TypeMaster = item.Model;
+                            expression.AliasMaster = masterAlisName;
                         }
                         else if (union != null)
                         {
-                            expression.Master_AlisName = union.AlisName;
-                            expression.Union_AlisName = union.UnionAlisName;
+                            expression.AliasMaster = union.AlisName;
+                            expression.AliasUnion = union.UnionAlisName;
                         }
                         else
                         {
                             throw new NotSupportedException($"找不到 where {item.Body.ToString()}条件的表，不支持的表查询条件");
                         }
                     }
-                    expression.ExpressionCapture(item.Body);
-                    WhereList.Add(expression.CommandText.ToString().ToLower());
-                    ParamList.AddRange(expression.Parameters);
+                    expression.Visit(item.Body);
+                    WhereList.Add(expression.SqlText.Builder.ToString().ToLower());
+                    ParamList.AddRange(expression.SqlText.Parameters);
                 }
             }
 
@@ -930,6 +930,7 @@ namespace MyStaging.Helpers
             return sb.ToString();
         }
 
+
         /// <summary>
         ///  执行查询，并返回受影响的行数
         /// </summary>
@@ -1022,6 +1023,7 @@ namespace MyStaging.Helpers
                                                     NpgsqlDbType.TimestampTZ,
                                                     NpgsqlDbType.TimeTZ,
                                                     NpgsqlDbType.Uuid,
+                                                    NpgsqlDbType.Unknown,
                                                     NpgsqlDbType.Enum,
                                                     NpgsqlDbType.Json,
                                                     NpgsqlDbType.Jsonb,

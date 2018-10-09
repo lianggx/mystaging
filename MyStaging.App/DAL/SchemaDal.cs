@@ -28,7 +28,9 @@ namespace MyStaging.App.DAL
                "'pg_temp_1'",
                "'pg_toast_temp_1'",
                "'pg_catalog'",
-               "'information_schema'"
+               "'information_schema'",
+               "'tiger'",
+               "'tiger_data'"
             };
             string sql = $@"SELECT schema_name FROM information_schema.schemata WHERE SCHEMA_NAME NOT IN({string.Join(",", notin)}) ORDER BY SCHEMA_NAME; ";
             PgSqlHelper.ExecuteDataReader(dr =>

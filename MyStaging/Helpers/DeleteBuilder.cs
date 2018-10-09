@@ -30,10 +30,15 @@ namespace MyStaging.Helpers
             {
                 foreach (var item in WhereExpressionList)
                 {
-                    PgSqlExpression expression = new PgSqlExpression();
-                    expression.ExpressionCapture(item.Body);
-                    WhereList.Add(expression.CommandText.ToString().ToLower());
-                    ParamList.AddRange(expression.Parameters);
+                    //PgSqlExpression expression = new PgSqlExpression();
+                    //expression.ExpressionCapture(item.Body);
+                    //WhereList.Add(expression.CommandText.ToString().ToLower());
+                    //ParamList.AddRange(expression.Parameters);
+
+                    DbExpressionVisitor expression = new DbExpressionVisitor();
+                    expression.Visit(item.Body);
+                    WhereList.Add(expression.SqlText.Builder.ToString().ToLower());
+                    ParamList.AddRange(expression.SqlText.Parameters);
                 }
             }
             string cmdText = $"DELETE FROM {tableName} {"WHERE " + string.Join("\nAND ", WhereList)}";
