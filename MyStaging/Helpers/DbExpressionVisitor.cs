@@ -39,6 +39,16 @@ namespace MyStaging.Helpers
         public Type TypeMaster { get; set; }
 
         /// <summary>
+        ///  获取或者左侧表达式
+        /// </summary>
+        private Expression Left { get; set; }
+
+        /// <summary>
+        ///  获取或者设置右侧表达式
+        /// </summary>
+        private Expression Right { get; set; }
+
+        /// <summary>
         /// 表达式操作符转换集
         /// </summary>
         protected static Dictionary<ExpressionType, string> OPERATOR_SET = new Dictionary<ExpressionType, string>()
@@ -91,6 +101,8 @@ namespace MyStaging.Helpers
         /// <returns></returns>
         protected override Expression VisitBinary(BinaryExpression node)
         {
+            this.Left = node.Left;
+            this.Right = node.Right;
             SqlText.LastNodeType = node.NodeType;
             if (node.NodeType == ExpressionType.ArrayIndex)
             {
@@ -187,8 +199,19 @@ namespace MyStaging.Helpers
         /// <returns></returns>
         protected override Expression VisitConstant(ConstantExpression node)
         {
-            string ptext = ParameterGenerated(out NpgsqlParameter p, node.Value, node.NodeType);
-            this.SqlText.Builder.Append(ptext);
+            if (this.Left is UnaryExpression)
+            {
+                Type type = ((UnaryExpression)this.Left).Operand.Type;
+                if (type.GenericTypeArguments.Length > 0)
+                    type = type.GenericTypeArguments[0];
+                if (type.BaseType.Name == "Enum")
+                {
+                    object objEnum = Enum.Parse(type, node.Value.ToString());
+                    Evaluate(type, objEnum, node.NodeType);
+                }
+            }
+            else
+                Evaluate(node.Type, node.Value, node.NodeType);
             return node;
         }
 
@@ -267,6 +290,11 @@ namespace MyStaging.Helpers
         {
             Type specificType = null;
             NpgsqlDbType? dbType = null;
+            if (type.IsEnum)
+            {
+                specificType = type;
+                dbType = NpgsqlDbType.Enum;
+            }
             if (type.IsArray)
             {
                 if (PG_TYPES.ContainsKey(type)) dbType = PG_TYPES[type];
