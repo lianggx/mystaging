@@ -82,7 +82,7 @@ namespace MyStaging.Common
             NpgsqlDbType _dbtype;
             if (data_type == "e")
                 _dbtype = NpgsqlDbType.Enum;  //   _dbtype = item.Db_type.ToUpperPascal();
-            if (db_type == "int2" || db_type == "int4")
+            else if (db_type == "int2" || db_type == "int4")
             {
                 _dbtype = NpgsqlDbType.Integer;
             }
