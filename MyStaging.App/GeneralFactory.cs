@@ -63,7 +63,7 @@ namespace MyStaging.App
             {
                 writer.WriteLine("<Project Sdk=\"Microsoft.NET.Sdk\">");
                 writer.WriteLine("\t<PropertyGroup>");
-                writer.WriteLine($"\t\t<TargetFramework>netcoreapp2.0</TargetFramework>");
+                writer.WriteLine($"\t\t<TargetFramework>netstandard2.0</TargetFramework>");
                 writer.WriteLine($"\t\t<Authors></Authors>");
                 writer.WriteLine($"\t\t <Company></Company>");
                 writer.WriteLine("\t</PropertyGroup>");
