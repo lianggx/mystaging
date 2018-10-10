@@ -201,14 +201,15 @@ namespace MyStaging.Helpers
         {
             if (this.Left is UnaryExpression)
             {
+                var value = node.Value;
                 Type type = ((UnaryExpression)this.Left).Operand.Type;
                 if (type.GenericTypeArguments.Length > 0)
                     type = type.GenericTypeArguments[0];
                 if (type.BaseType.Name == "Enum")
                 {
-                    object objEnum = Enum.Parse(type, node.Value.ToString());
-                    Evaluate(type, objEnum, node.NodeType);
+                    value = Enum.Parse(type, node.Value.ToString());
                 }
+                Evaluate(type, value, node.NodeType);
             }
             else
                 Evaluate(node.Type, node.Value, node.NodeType);
