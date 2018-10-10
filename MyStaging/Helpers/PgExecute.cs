@@ -4,7 +4,7 @@ using NpgsqlTypes;
 using System;
 using System.Collections.Generic;
 using System.Data;
-using System.Data.SqlClient;
+//using System.Data.SqlClient;
 using System.Net.Sockets;
 using System.Threading;
 using System.Threading.Tasks;

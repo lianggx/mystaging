@@ -1,4 +1,5 @@
 ﻿using NpgsqlTypes;
+using System.Collections.Generic;
 
 namespace MyStaging.Common
 {
@@ -105,7 +106,7 @@ namespace MyStaging.Common
             else if (db_type == "path" || db_type == "line" || db_type == "polygon" || db_type == "circle" || db_type == "point" || db_type == "box" || db_type == "lseg")
             {
                 if (db_type == "lseg") db_type = "LSeg";
-                _dbtype = System.Enum.Parse<NpgsqlDbType>($"{db_type.ToUpperPascal()}");
+                System.Enum.TryParse<NpgsqlDbType>(db_type.ToUpperPascal(), out _dbtype);
             }
             else if (db_type == "interval")
             {
@@ -117,7 +118,7 @@ namespace MyStaging.Common
             }
             else
             {
-                _dbtype = System.Enum.Parse<NpgsqlDbType>(db_type.ToUpperPascal());
+                System.Enum.TryParse<NpgsqlDbType>(db_type.ToUpperPascal(), out _dbtype);
             }
 
             return _dbtype;
