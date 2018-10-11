@@ -256,6 +256,18 @@ namespace MyStaging.Helpers
         }
 
         /// <summary>
+        ///  重写父级 ExpressionVisitor.VisitNew 方法
+        /// </summary>
+        /// <param name="node">运算表达式</param>
+        /// <returns></returns>
+        protected override Expression VisitNew(NewExpression node)
+        {
+            var value = Expression.Lambda<Func<object>>(Expression.Convert(node, typeof(object))).Compile().Invoke();
+            Evaluate(node.Type, value, node.NodeType);
+            return node;
+        }
+
+        /// <summary>
         ///  根据运算表达式提取属性值
         /// </summary>
         /// <param name="node">运算表达式</param>
