@@ -404,7 +404,8 @@ namespace MyStaging.Helpers
                 bool isTuple = objType.Namespace == "System" && objType.Name.StartsWith("ValueTuple`");
                 if (isTuple)
                 {
-                    obj = (TResult)GetValueTuple(objType, dr);
+                    int columnIndex = -1;
+                    obj = (TResult)GetValueTuple(objType, dr, ref columnIndex);
                 }
                 else if (IsValueType(objType))
                 {
@@ -452,22 +453,29 @@ namespace MyStaging.Helpers
         /// </summary>
         /// <param name="objType">元组类型</param>
         /// <param name="dr">查询流</param>
+        /// <param name="columnIndex">dr index</param>
         /// <returns></returns>
-        protected object GetValueTuple(Type objType, IDataReader dr)
+        protected object GetValueTuple(Type objType, IDataReader dr, ref int columnIndex)
         {
-            FieldInfo[] fs = objType.GetFields();
-            Type[] types = new Type[fs.Length];
-            object[] parameters = new object[fs.Length];
-            for (int i = 0; i < fs.Length; i++)
+            bool isTuple = objType.Namespace == "System" && objType.Name.StartsWith("ValueTuple`");
+            if (isTuple)
             {
-                types[i] = fs[i].FieldType;
-                object dbValue = dr[i];
-                parameters[i] = dbValue is DBNull ? null : dbValue;
+                FieldInfo[] fs = objType.GetFields();
+                Type[] types = new Type[fs.Length];
+                object[] parameters = new object[fs.Length];
+                for (int i = 0; i < fs.Length; i++)
+                {
+                    types[i] = fs[i].FieldType;
+                    parameters[i] = GetValueTuple(types[i], dr, ref columnIndex);
+                }
+                ConstructorInfo info = objType.GetConstructor(types);
+                return info.Invoke(parameters);
             }
-            ConstructorInfo info = objType.GetConstructor(types);
-            object obj = info.Invoke(parameters);
+            ++columnIndex;
+            object dbValue = dr[columnIndex];
+            dbValue = dbValue is DBNull ? null : dbValue;
 
-            return obj;
+            return dbValue;
         }
 
         /// <summary>
