@@ -48,6 +48,7 @@ namespace MyStaging.Common
                 case "bytea": return "byte[]";
                 case "bit": return "byte";
                 case "timetz": return "DateTimeOffset";
+                case "time":
                 case "interval": return "TimeSpan";
                 case "date":
                 case "timestamptz":
