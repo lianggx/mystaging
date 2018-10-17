@@ -413,6 +413,7 @@ namespace MyStaging.App.DAL
                 string _notnull = "";
                 if (
                 fi.CsType != "string"
+                && fi.CsType != "byte[]"
                 && fi.CsType != "JToken"
                 && !fi.Is_array
                 && fi.CsType != "System.Net.IPAddress"
