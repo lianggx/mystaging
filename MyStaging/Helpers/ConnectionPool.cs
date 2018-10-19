@@ -29,7 +29,7 @@ namespace MyStaging.Helpers
         public ConnectionPool(List<ConnectionStringConfiguration> connS, int poolSize = 32)
         {
             this.ConnectionList = connS;
-            this.PoolSize = poolSize;
+            this.PoolSize = poolSize <= 0 ? 32 : poolSize;
         }
 
         /// <summary>
