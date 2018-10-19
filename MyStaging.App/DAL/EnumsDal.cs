@@ -77,9 +77,9 @@ where a.typtype = 'e' order by oid asc";
                 writer.WriteLine("{");
                 writer.WriteLine("\tpublic class _startup");
                 writer.WriteLine("\t{");
-                writer.WriteLine("\t\tpublic static void Init(ILogger logger, string connectionMaster, string[] connectionSlaves = null)");
+                writer.WriteLine("\t\tpublic static void Init(ILogger logger, string connectionMaster, string[] connectionSlaves = null, int slavesMaxPool = -1)");
                 writer.WriteLine("\t\t{");
-                writer.WriteLine("\t\t\tPgSqlHelper.InitConnection(logger, connectionMaster, connectionSlaves);");
+                writer.WriteLine("\t\t\tPgSqlHelper.InitConnection(logger, connectionMaster, connectionSlaves, slavesMaxPool);");
 
                 if (list.Count > 0)
                 {

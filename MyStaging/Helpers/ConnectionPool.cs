@@ -4,6 +4,8 @@ using System.Collections.Generic;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
+using System.Linq;
+using MyStaging.Common;
 
 namespace MyStaging.Helpers
 {
@@ -12,7 +14,6 @@ namespace MyStaging.Helpers
     /// </summary>
     public partial class ConnectionPool
     {
-        public int PoolSize = 32;
         private object _lock = new object();
         private object _lock_getconnection = new object();
         public List<NpgsqlConnection> All_Connection = new List<NpgsqlConnection>();
@@ -25,13 +26,10 @@ namespace MyStaging.Helpers
         /// </summary>
         /// <param name="connectionList">数据库连接字符串</param>
         /// <param name="poolSize">连接池大小</param>
-        public ConnectionPool(string[] connectionList, int poolSize = 32)
+        public ConnectionPool(List<ConnectionStringConfiguration> connS, int poolSize = 32)
         {
-            this.ConnectionList.AddRange(connectionList);
-            if (poolSize > 32)
-            {
-                PoolSize = poolSize;
-            }
+            this.ConnectionList = connS;
+            this.PoolSize = poolSize;
         }
 
         /// <summary>
@@ -45,13 +43,13 @@ namespace MyStaging.Helpers
                 lock (_lock)
                     if (Free.Count > 0)
                         conn = Free.Dequeue();
-            if (conn == null && All_Connection.Count < PoolSize)
+            if (conn == null && All_Connection.Count < this.PoolSize)
             {
                 lock (_lock)
-                    if (All_Connection.Count < PoolSize)
+                    if (All_Connection.Count < this.PoolSize)
                     {
-                        string connectionString = RandomConnectionString();
-                        conn = new NpgsqlConnection(connectionString);
+                        var connS = RandomConnectionString();
+                        conn = new NpgsqlConnection(connS.ConnectionString);
                         All_Connection.Add(conn);
                     }
             }
@@ -93,11 +91,11 @@ namespace MyStaging.Helpers
         ///  获取随机的连接
         /// </summary>
         /// <returns></returns>
-        private string RandomConnectionString()
+        private ConnectionStringConfiguration RandomConnectionString()
         {
             if (ConnectionList.Count == 0)
             {
-                throw new NoSlaveConnection("从库连接数量为 0 ，无法创建连接");
+                throw new NoSlaveConnection("数据库连接数量为 0 ，无法创建连接");
             }
             if (ConnectionList.Count == 1)
             {
@@ -105,8 +103,12 @@ namespace MyStaging.Helpers
             }
             else
             {
-                int index = connRandom.Next(0, ConnectionList.Count - 1);
-                return ConnectionList[index];
+                var connS = ConnectionList.Where(f => f.MaxConnection > f.Used).OrderBy(f => f.Used).First();
+                if (connS == null)
+                    throw new NoSlaveConnection("已无可用的数据库连接");
+
+                connS.Used++;
+                return connS;
             }
         }
 
@@ -118,12 +120,12 @@ namespace MyStaging.Helpers
         {
             for (int i = 0; i < this.ConnectionList.Count; i++)
             {
-                var connStr = this.ConnectionList[i];
-                NpgsqlConnection conn = new NpgsqlConnection(connStr);
+                var connS = this.ConnectionList[i];
+                NpgsqlConnection conn = new NpgsqlConnection(connS.ConnectionString);
                 if (conn.Host == host && conn.Port == port)
                 {
                     this.ConnectionList.RemoveAt(i);
-                    Monitor(connStr);
+                    Monitor(connS);
                     break;
                 }
             }
@@ -133,9 +135,9 @@ namespace MyStaging.Helpers
         ///  启动连接监控
         /// </summary>
         /// <param name="connectionString"></param>
-        private void Monitor(string connectionString)
+        private void Monitor(ConnectionStringConfiguration connS)
         {
-            ErrorList.Add(connectionString);
+            ErrorList.Add(connS);
             if (timer == null)
             {
                 timer = new Timer(OnTick, this, 10 * 1000, 60 * 1000);
@@ -154,20 +156,26 @@ namespace MyStaging.Helpers
 
             for (int i = 0; i < ErrorList.Count; i++)
             {
-                var connStr = ErrorList[i];
+                var connS = ErrorList[i];
                 try
                 {
-                    NpgsqlConnection conn = new NpgsqlConnection(connStr);
+                    ErrorList[i].Error++;
+                    NpgsqlConnection conn = new NpgsqlConnection(connS.ConnectionString);
                     conn.Open();
                     conn.Close();
                     ErrorList.RemoveAt(i);
-                    ConnectionList.Add(connStr);
+                    ConnectionList.Add(connS);
 
-                    Console.WriteLine("连接正常，重新放入连接池：[{0}]", connStr);
+                    Console.WriteLine("连接正常，重新放入连接池：[{0}]", connS.ConnectionString);
                 }
                 catch { }
             }
         }
+
+        /// <summary>
+        ///  获取连接池大小
+        /// </summary>
+        public int PoolSize { get; } = 32;
 
         /// <summary>
         ///  获取闲置的连接
@@ -177,12 +185,12 @@ namespace MyStaging.Helpers
         /// <summary>
         ///  获取或者设置数据库连接字符串
         /// </summary>
-        public List<string> ConnectionList { get; set; } = new List<string>();
+        public List<ConnectionStringConfiguration> ConnectionList { get; private set; } = new List<ConnectionStringConfiguration>();
 
         /// <summary>
         ///  获取或者设置连接异常的数据库连接
         /// </summary>
-        public List<string> ErrorList { get; set; } = new List<string>();
+        public List<ConnectionStringConfiguration> ErrorList { get; private set; } = new List<ConnectionStringConfiguration>();
     }
 
     /// <summary>

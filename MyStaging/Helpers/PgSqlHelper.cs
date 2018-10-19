@@ -6,6 +6,7 @@ using System.Data;
 using System.Text.RegularExpressions;
 using System.Linq;
 using System.Net.WebSockets;
+using MyStaging.Common;
 
 namespace MyStaging.Helpers
 {
@@ -24,7 +25,7 @@ namespace MyStaging.Helpers
         /// </summary>
         public partial class MasterExecute : PgExecute
         {
-            public MasterExecute(ILogger logger, string connectionString, int poolSize) : base(logger, connectionString, poolSize) { }
+            public MasterExecute(ILogger logger, ConnectionStringConfiguration connectionString) : base(logger, connectionString) { }
         }
 
         /// <summary>
@@ -32,7 +33,7 @@ namespace MyStaging.Helpers
         /// </summary>
         public partial class SlaveExecute : PgExecute
         {
-            public SlaveExecute(ILogger logger, string[] connectionString, int poolSize) : base(logger, connectionString, poolSize) { }
+            public SlaveExecute(ILogger logger, List<ConnectionStringConfiguration> connectionString, int poolSize) : base(logger, connectionString, poolSize) { }
         }
 
         private static MasterExecute instanceMaster = null;
@@ -65,20 +66,36 @@ namespace MyStaging.Helpers
         /// <param name="logger">日志组件</param>
         /// <param name="connectionMaster">可读写数据库连接</param>
         /// <param name="connectionStringSlave">从库数据库连接</param>
-        public static void InitConnection(ILogger logger, string connectionMaster, string[] connectionSlaves = null)
+        /// <param name="connectionSlaves">从库连接池总大小，如果不指定（默认 -1），则从第一个从库中读取 maximum pool size 设定的值，如果没有设定 maximum pool size 的值，则默认为 32</param>
+        public static void InitConnection(ILogger logger, string connectionMaster, string[] connectionSlaves = null, int slavesMaxPool = -1)
         {
             if (string.IsNullOrEmpty(connectionMaster))
                 throw new ArgumentNullException("connectionString not null");
 
             // 初始化主库连接实例
             int poolsizeMaster = GetPollSize(connectionMaster);
-            instanceMaster = new MasterExecute(logger, connectionMaster, poolsizeMaster);
+            ConnectionStringConfiguration connS = new ConnectionStringConfiguration() { ConnectionString = connectionMaster, MaxConnection = poolsizeMaster };
+            instanceMaster = new MasterExecute(logger, connS);
 
             // 初始化从库连接实例
             if (connectionSlaves != null && connectionSlaves.Length > 0)
             {
                 int pollsizeSlave = GetPollSize(connectionSlaves.First());
-                instanceSlave = new SlaveExecute(logger, connectionSlaves, pollsizeSlave);
+                if (slavesMaxPool != -1)
+                    pollsizeSlave = slavesMaxPool;
+
+                List<ConnectionStringConfiguration> connList = new List<ConnectionStringConfiguration>();
+                for (int i = 0; i < connectionSlaves.Length; i++)
+                {
+                    var item = connectionSlaves[i];
+                    connList.Add(new ConnectionStringConfiguration()
+                    {
+                        ConnectionString = item,
+                        Id = i,
+                        MaxConnection = GetPollSize(item)
+                    });
+                }
+                instanceSlave = new SlaveExecute(logger, connList, pollsizeSlave);
             }
         }
 

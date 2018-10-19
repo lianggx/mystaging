@@ -8,6 +8,7 @@ using System.Data;
 using System.Net.Sockets;
 using System.Threading;
 using System.Threading.Tasks;
+using MyStaging.Common;
 
 namespace MyStaging.Helpers
 {
@@ -41,7 +42,7 @@ namespace MyStaging.Helpers
         /// <param name="logger">日志输出对象</param>
         /// <param name="connectionString">数据库连接字符串</param>
         /// <param name="poolSize">连接池大小</param>
-        public PgExecute(ILogger logger, string connectionMaster, int poolSize) : this(logger, new string[] { connectionMaster }, poolSize)
+        public PgExecute(ILogger logger, ConnectionStringConfiguration connectionString) : this(logger, new List<ConnectionStringConfiguration>() { connectionString }, connectionString.MaxConnection)
         {
         }
 
@@ -51,12 +52,12 @@ namespace MyStaging.Helpers
         /// <param name="logger">日志输出对象</param>
         /// <param name="connectionSalve">数据库连接字符串</param>
         /// <param name="poolSize">连接池大小</param>
-        public PgExecute(ILogger logger, string[] connectionSalve, int poolSize)
+        public PgExecute(ILogger logger, List<ConnectionStringConfiguration> connectionList, int poolSize)
         {
             _logger = logger;
             if (_logger == null)
                 _logger = new LoggerFactory().CreateLogger<PgExecute>();
-            Pool = new ConnectionPool(connectionSalve, poolSize);
+            Pool = new ConnectionPool(connectionList, poolSize);
         }
         #endregion
 
