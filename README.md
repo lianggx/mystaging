@@ -46,9 +46,11 @@
 
 ###### 初始化数据库连接
 * 在生成的 db 项目文件根目录下，找到： _startup.cs 文件，在程序入口 Program.cs 或者  Startup.cs 的适当位置，使用以下代码，传递日志记录对象和数据库连接字符串进行 db 层初始化
-* **初始化示例代码**
-``` C#
 
+* **初始化示例代码**
+
+
+``` C#
 	string connectionString = "Host=127.0.0.1;Port=5432;Username=postgres;Password=123456;Database=database name;Pooling=true;Maximum Pool Size=100";
 	ILogger logger = loggerFactory.CreateLogger<MyStaging.Helpers.PgSqlHelper>();
 	_startup.Init(logger, connectionString, null, -1);
@@ -61,35 +63,36 @@
     
 
  * **EntityMappingAttribute**
-        该特性类接受一个属性：TableName，指明该实体模型映射到数据库中的>模式.表名，如
+ 该特性类接受一个属性：TableName，指明该实体模型映射到数据库中的>模式.表名，如
 
-        ```
-        [EntityMapping(name: "public", Schema = "user")]
-        public partial class UserModel
-        {
-        }
-        ```
+``` C#
+	[EntityMapping(name: "public", Schema = "user")]
+ 	public partial class UserModel
+	{
+	
+	}
+```
         
 
 * **ForeignKeyMappingAttribute**
         应用该特性类到属性上，表示这个是一个外键引用的属性，如
 
-        ```
-        private UserModel user=null;
-        [ForeignKeyMapping,JsonIgnore]public UserModel User { get{ if(user==null) user= User.Context.Where(f=>f.Id==this.User_id).ToOne();  return user;} }
-        ```
-        *以上代码还应用了特性：JsonIgnore ，表示，该外键在对象进行 json 序列化的时候选择忽略该属性*
+``` C#
+	private UserModel user=null;
+	[ForeignKeyMapping,JsonIgnore]public UserModel User { get{ if(user==null) user= User.Context.Where(f=>f.Id==this.User_id).ToOne();  return user;} }
+```
+*以上代码还应用了特性：JsonIgnore ，表示，该外键在对象进行 json 序列化的时候选择忽略该属性*
 
 
 
 * **NonDbColumnMappingAttribute**
-        应用该特性类到属性上，表示这个是一个自定义的属性，在进行数据库查询的时候将忽略该属性，如
+应用该特性类到属性上，表示这个是一个自定义的属性，在进行数据库查询的时候将忽略该属性，如
 
-        ```
-        [NonDbColumnMappingAttribute,JsonIgnore] public  User.UpdateBuilder UpdateBuilder{get{return new User.UpdateBuilder(this.Id);}}
-        ```
+``` C#
+	[NonDbColumnMappingAttribute,JsonIgnore] public  User.UpdateBuilder UpdateBuilder{get{return new User.UpdateBuilder(this.Id);}}
+```
         
-  *以上代码还应用了特性：JsonIgnore ，表示，该外键在对象进行 json 序列化的时候选择忽略该属性*
+*以上代码还应用了特性：JsonIgnore ，表示，该外键在对象进行 json 序列化的时候选择忽略该属性*
 
 
 
