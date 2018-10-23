@@ -28,7 +28,9 @@
 **如何开始？**
 
 ###### 使用构建工具 MyStaging.App
-  1. 将 MyStaging.csproj 项目打包成 MyStaging.zip ，并复制到 MyStaging.App/bin/debug 目录下
+  1. 使用MyStaging.App生成数据库项目，然后在该项目上引用 Mystaging.csproj源码项目，或者，你可以使用 ** nuget ** 命令进行包引用
+    ###### # nuget install mystaging
+
   2. 编辑构建工具下的 @build.bat 文件,配置相关参数，参数配置见*参数说明*
   3. 运行该批处理文件，可以直接生成 proj.db 项目文件
      
@@ -44,10 +46,12 @@
 
 ###### 初始化数据库连接
 * 在生成的 db 项目文件根目录下，找到： _startup.cs 文件，在程序入口 Program.cs 或者  Startup.cs 的适当位置，使用以下代码，传递日志记录对象和数据库连接字符串进行 db 层初始化
+* **初始化示例代码**
 ``` C#
- string connectionString = "Host=127.0.0.1;Port=5432;Username=postgres;Password=123456;Database=your db;Pooling=true;Maximum Pool Size=100";
- ILogger logger = loggerFactory.CreateLogger<MyStaging.Helpers.PgSqlHelper>();
- _startup.Init(logger, connectionString);
+
+	string connectionString = "Host=127.0.0.1;Port=5432;Username=postgres;Password=123456;Database=database name;Pooling=true;Maximum Pool Size=100";
+	ILogger logger = loggerFactory.CreateLogger<MyStaging.Helpers.PgSqlHelper>();
+	_startup.Init(logger, connectionString, null, -1);
 ```
 
 ---

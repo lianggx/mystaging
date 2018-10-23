@@ -69,17 +69,9 @@ namespace MyStaging.App
                 writer.WriteLine("\t</PropertyGroup>");
                 writer.WriteLine();
                 writer.WriteLine("\t<ItemGroup>");
-                writer.WriteLine("\t\t<ProjectReference Include=\"..\\MyStaging\\MyStaging.csproj\" />");
+                writer.WriteLine("\t\t<PackageReference Include=\"MyStaging\" Version=\"1.0.0\" />");
                 writer.WriteLine("\t</ItemGroup>");
                 writer.WriteLine("</Project>");
-            }
-
-            // unzip
-            string mystaging_file = Path.Combine(outputDir, projectName, "MyStaging");
-            string mystaging_zip_file = "MyStaging.zip";
-            if (!Directory.Exists(mystaging_file) && File.Exists(mystaging_zip_file))
-            {
-                System.IO.Compression.ZipFile.ExtractToDirectory(mystaging_zip_file, Path.Combine(outputDir, projectName));
             }
             // sln
 
@@ -96,10 +88,6 @@ namespace MyStaging.App
                     writer.WriteLine($"Project(\"{Guid.NewGuid()}\") = \"{projectName}.db\", \"{projectName}.db\\{projectName}.db.csproj\", \"{ db_guid}\"");
                     writer.WriteLine($"EndProject");
 
-                    Guid staging_guid = Guid.NewGuid();
-                    writer.WriteLine($"Project(\"{Guid.NewGuid()}\") = \"MyStaging\", \"MyStaging\\MyStaging.csproj\", \"{ staging_guid}\"");
-                    writer.WriteLine($"EndProject");
-
                     writer.WriteLine("Global");
                     writer.WriteLine("\tGlobalSection(SolutionConfigurationPlatforms) = preSolution");
                     writer.WriteLine("\t\tDebug|Any CPU = Debug|Any CPU");
@@ -111,10 +99,6 @@ namespace MyStaging.App
                     writer.WriteLine($"\t\t{db_guid}.Debug|Any CPU.Build.0 = Debug|Any CPU");
                     writer.WriteLine($"\t\t{db_guid}.Release|Any CPU.ActiveCfg = Release|Any CPU");
                     writer.WriteLine($"\t\t{db_guid}.Release|Any CPU.Build.0 = Release|Any CPU");
-                    writer.WriteLine($"\t\t{staging_guid}.Debug|Any CPU.ActiveCfg = Debug|Any CPU");
-                    writer.WriteLine($"\t\t{staging_guid}.Debug|Any CPU.Build.0 = Debug|Any CPU");
-                    writer.WriteLine($"\t\t{staging_guid}.Release|Any CPU.ActiveCfg = Release|Any CPU");
-                    writer.WriteLine($"\t\t{staging_guid}.Release|Any CPU.Build.0 = Release|Any CPU");
                     writer.WriteLine("\tEndGlobalSection");
                     writer.WriteLine("\tGlobalSection(SolutionProperties) = preSolution");
                     writer.WriteLine("\t\tHideSolutionNode = FALSE");
