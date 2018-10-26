@@ -146,15 +146,11 @@ namespace MyStaging.Helpers
             catch (SocketException se)
             {
                 connected = false;
-                se.Data["host"] = cmd.Connection.Host;
-                se.Data["port"] = cmd.Connection.Port;
                 ExceptionOutPut(cmd, se);
                 throw se;
             }
             catch (Exception ex)
             {
-                ex.Data["host"] = cmd.Connection.Host;
-                ex.Data["port"] = cmd.Connection.Port;
                 ExceptionOutPut(cmd, ex);
                 throw ex;
             }
@@ -252,7 +248,8 @@ namespace MyStaging.Helpers
         protected virtual void ExceptionOutPut(NpgsqlCommand cmd, Exception ex)
         {
             NpgsqlParameterCollection coll = cmd.Parameters;
-
+            ex.Data["host"] = cmd.Connection.Host;
+            ex.Data["port"] = cmd.Connection.Port;
             string ps = string.Empty;
             if (coll != null)
                 for (int i = 0; i < coll.Count; i++)

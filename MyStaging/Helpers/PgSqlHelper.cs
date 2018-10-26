@@ -66,7 +66,7 @@ namespace MyStaging.Helpers
         /// <param name="logger">日志组件</param>
         /// <param name="connectionMaster">可读写数据库连接</param>
         /// <param name="connectionStringSlave">从库数据库连接</param>
-        /// <param name="connectionSlaves">从库连接池总大小，如果不指定（默认 -1），则从第一个从库中读取 maximum pool size 设定的值，如果没有设定 maximum pool size 的值，则默认为 32</param>
+        /// <param name="connectionSlaves">从库连接池总大小，如果不指定（默认 -1），如果没有设定 maximum pool size 的值,则从库中读取 maximum pool size 设定的值进行累计</param>
         public static void InitConnection(ILogger logger, string connectionMaster, string[] connectionSlaves = null, int slavesMaxPool = -1)
         {
             if (string.IsNullOrEmpty(connectionMaster))
@@ -80,9 +80,7 @@ namespace MyStaging.Helpers
             // 初始化从库连接实例
             if (connectionSlaves != null && connectionSlaves.Length > 0)
             {
-                int pollsizeSlave = GetPollSize(connectionSlaves.First());
-                if (slavesMaxPool != -1)
-                    pollsizeSlave = slavesMaxPool;
+                int pollsizeSlave = 0;
 
                 List<ConnectionStringConfiguration> connList = new List<ConnectionStringConfiguration>();
                 for (int i = 0; i < connectionSlaves.Length; i++)
@@ -94,7 +92,11 @@ namespace MyStaging.Helpers
                         Id = i,
                         MaxConnection = GetPollSize(item)
                     });
+                    pollsizeSlave += connList[i].MaxConnection;
                 }
+                if (slavesMaxPool != -1)
+                    pollsizeSlave = slavesMaxPool;
+
                 instanceSlave = new SlaveExecute(logger, connList, pollsizeSlave);
             }
         }
