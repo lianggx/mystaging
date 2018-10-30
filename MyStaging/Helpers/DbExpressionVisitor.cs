@@ -275,7 +275,8 @@ namespace MyStaging.Helpers
         /// <returns></returns>
         protected void AccessProperty(MemberExpression node, PropertyInfo propertyInfo)
         {
-            var obj = Expression.Lambda<Func<object>>(Expression.Convert(node.Expression, typeof(object))).Compile().Invoke();
+            var expValue = node.Expression == null ? node : node.Expression;
+            var obj = Expression.Lambda<Func<object>>(Expression.Convert(expValue, typeof(object))).Compile().Invoke();
             var value = propertyInfo.GetValue(obj);
             Evaluate(propertyInfo.PropertyType, value, node.NodeType);
         }

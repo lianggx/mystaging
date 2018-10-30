@@ -45,7 +45,7 @@ namespace MyStaging.Helpers
         /// <returns></returns>
         public UpdateBuilder<T> SetIncrement(string field, decimal value)
         {
-            setList.Add($"{field}={field} + {value}");
+            setList.Add($"{field}=COALESCE({field},0) + {value}");
             return this;
         }
 
@@ -92,10 +92,6 @@ namespace MyStaging.Helpers
             {
                 foreach (var item in WhereExpressionList)
                 {
-                    //PgSqlExpression expression = new PgSqlExpression();
-                    //expression.ExpressionCapture(item.Body);
-                    //WhereList.Add(expression.CommandText.ToString().ToLower());
-                    //ParamList.AddRange(expression.Parameters);
                     DbExpressionVisitor expression = new DbExpressionVisitor();
                     expression.Visit(item.Body);
                     WhereList.Add(expression.SqlText.Builder.ToString().ToLower());
