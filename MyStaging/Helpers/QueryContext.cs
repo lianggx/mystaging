@@ -924,6 +924,8 @@ namespace MyStaging.Helpers
         /// <returns></returns>
         public QueryContext<T> AddParameter(NpgsqlParameter[] parameters)
         {
+            if (parameters == null || parameters.Length == 0)
+                throw new ArgumentException("参数不能为空", "parameters");
             ParamList.AddRange(parameters);
             return this;
         }
@@ -933,9 +935,12 @@ namespace MyStaging.Helpers
         /// </summary>
         /// <param name="parameters">输入参数</param>
         /// <returns></returns>
-        public QueryContext<T> AddParameter(NpgsqlParameter parameters)
+        public QueryContext<T> AddParameter(NpgsqlParameter parameter)
         {
-            ParamList.Add(parameters);
+            if (parameter == null)
+                throw new ArgumentException("参数不能为空", "parameter");
+
+            ParamList.Add(parameter);
             return this;
         }
 
