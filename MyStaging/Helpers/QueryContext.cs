@@ -948,19 +948,19 @@ namespace MyStaging.Helpers
         /// <returns></returns>
         protected string JoinTo(System.Collections.ICollection items, NpgsqlDbType dbtype, string enumtype)
         {
-            string s = dbtypes.Contains(dbtype) ? "'" : "";
             string _dbType_text = dbtype == NpgsqlDbType.Enum ? enumtype : dbtype.ToString();
             StringBuilder sb = new StringBuilder();
             int i = 0;
             foreach (var item in items)
             {
-                sb.Append(s + item.ToString() + s + "::" + _dbType_text);
+                string pName = Guid.NewGuid().ToString("N");
+                AddParameter(pName, item.ToString());
+                sb.Append("@" + pName + "::" + _dbType_text);
                 if (i + 1 < items.Count)
                     sb.Append(",");
             }
             return sb.ToString();
         }
-
 
         /// <summary>
         ///  执行查询，并返回受影响的行数

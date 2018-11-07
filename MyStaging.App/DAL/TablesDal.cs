@@ -197,7 +197,7 @@ namespace MyStaging.App.DAL
                         writer.WriteLine("\t\t{");
                         writer.WriteLine($"\t\t\t if ({item.Field} == null || {item.Field}.Length == 0) return this;");
                         writer.WriteLine($"\t\t\t string text = JoinTo({item.Field}, NpgsqlDbType.{item.PgDbType}, \"{item.Db_type}\");");
-                        writer.WriteLine($"\t\t\t base.Where($\"{item.Field} @> array[{{0}}]\", text);");
+                        writer.WriteLine($"\t\t\t base.Where($\"{item.Field} @> array[{{text}}]\");");
                         writer.WriteLine($"\t\t\t return this;");
                         writer.WriteLine("\t\t}");
                         writer.WriteLine();
