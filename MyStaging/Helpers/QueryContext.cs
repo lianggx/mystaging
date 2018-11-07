@@ -20,6 +20,8 @@ namespace MyStaging.Helpers
     /// <typeparam name="T"></typeparam>
     public class QueryContext<T> where T : class, new()
     {
+        private const string masterAlisName = "a";
+
         /// <summary>
         ///  设置当前查询的 limit 和 offset 
         /// </summary>
@@ -122,7 +124,7 @@ namespace MyStaging.Helpers
             }
             else if (string.IsNullOrEmpty(alisname) && UnionList.Count > 0)
             {
-                alisname = "a.";
+                alisname = masterAlisName + ".";
             }
             OrderByText = $"ORDER BY {alisname}{exp.Member.Name} {direction}";
             return this;
@@ -363,8 +365,7 @@ namespace MyStaging.Helpers
                 {
                     if (item.GetCustomAttribute<ForeignKeyMappingAttribute>() != null || item.GetCustomAttribute<NonDbColumnMappingAttribute>() != null)
                         continue;
-                    string alia = UnionList.Count > 0 ? "a." : "";
-                    Fields.Add(alia + item.Name);
+                    Fields.Add(string.Format("{0}.{1}", masterAlisName, item.Name.ToLower()));
                 }
             }
             else
@@ -628,7 +629,7 @@ namespace MyStaging.Helpers
             Type type = typeof(TModel1);
             var last = UnionList.Where(f => f.Model.Equals(type) && f.UnionAlisName == alisName).FirstOrDefault();
 
-            if (alisName != "a" && last == null)
+            if (alisName != masterAlisName && last == null)
             {
                 ExpressionUnionModel u2 = new ExpressionUnionModel
                 {
@@ -758,7 +759,6 @@ namespace MyStaging.Helpers
             string tableName = MyStagingUtils.GetMapping(mastertype);
             // master table
             StringBuilder sqlText = new StringBuilder();
-            string masterAlisName = UnionList.Count > 0 ? "a" : "";
             sqlText.AppendLine($"SELECT {string.Join(",", Fields)} FROM  {tableName} {masterAlisName}");
             // union
             int _index = 2;
@@ -783,6 +783,7 @@ namespace MyStaging.Helpers
                     if (UnionList.Count == 0)
                     {
                         expression.TypeMaster = item.Model;
+                        expression.AliasMaster = masterAlisName;
                     }
                     else
                     {
@@ -913,6 +914,28 @@ namespace MyStaging.Helpers
 
             p.Value = value;
             ParamList.Add(p);
+            return this;
+        }
+
+        /// <summary>
+        /// 增加一组查询参数
+        /// </summary>
+        /// <param name="parameters">输入参数</param>
+        /// <returns></returns>
+        public QueryContext<T> AddParameter(NpgsqlParameter[] parameters)
+        {
+            ParamList.AddRange(parameters);
+            return this;
+        }
+
+        /// <summary>
+        /// 增加一个查询参数
+        /// </summary>
+        /// <param name="parameters">输入参数</param>
+        /// <returns></returns>
+        public QueryContext<T> AddParameter(NpgsqlParameter parameters)
+        {
+            ParamList.Add(parameters);
             return this;
         }
 
