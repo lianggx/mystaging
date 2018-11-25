@@ -1,23 +1,6 @@
-﻿using System;
+﻿using MyStaging.Helpers;
+using System;
 using System.Text;
-using Microsoft.Extensions.Logging;
-using Npgsql;
-using System.Linq;
-using System.Collections.Generic;
-using System.Threading;
-using System.Linq.Expressions;
-using MyStaging.Common;
-using MyStaging.Helpers;
-using System.Text.RegularExpressions;
-using Newtonsoft.Json;
-using MyStaging;
-//using gmall.Model;
-//using gmall.DAL;
-using System.IO.Compression;
-using System.Net.Http;
-using System.IO;
-using System.Threading.Tasks;
-using Newtonsoft.Json.Linq;
 
 namespace MyStaging.App
 {
@@ -25,6 +8,26 @@ namespace MyStaging.App
     {
         static void Main(string[] args)
         {
+            if (args == null || args.Length == 0)
+            {
+                Console.WriteLine("try --help");
+                return;
+            }
+
+            if (args[0] == "--help")
+            {
+                Console.WriteLine("Use the following parameters to create a project using Mystaging.App,The parameter name ignore case");
+                Console.WriteLine("-h [host/ip] required");
+                Console.WriteLine("-p [port]  required");
+                Console.WriteLine("-u [postgresql database access username]  required");
+                Console.WriteLine("-a [postgresql database auth password]  required");
+                Console.WriteLine("-d [postgresql database]  required");
+                Console.WriteLine("-pool [maxinum pool size numbric,default 32] optional");
+                Console.WriteLine("-proj [the project build name]  required");
+                Console.WriteLine("-0 [the project output path]  required");
+                return;
+            }
+
             Console.OutputEncoding = System.Text.Encoding.UTF8;
             string projName = string.Empty, outPutPath = string.Empty;
             StringBuilder connection = new StringBuilder();
@@ -50,7 +53,7 @@ namespace MyStaging.App
             PgSqlHelper.InitConnection(null, connection.ToString());
             GeneralFactory.Build(outPutPath, projName);
 
-            Console.WriteLine("已完成.....");
+            Console.WriteLine("success.....");
         }
     }
 }

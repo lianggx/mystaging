@@ -11,7 +11,7 @@
     <Version>1.0.3</Version>
     <AssemblyVersion>1.0.3.0</AssemblyVersion>
     <FileVersion>1.0.3.0</FileVersion>
-    <PackageReleaseNotes>增加对主表字段的别名应用</PackageReleaseNotes>
+    <PackageReleaseNotes>增加对主表字段的别名应用，增加对数组连接参数化查询，增加对添加自定义SQL语句参数的支持</PackageReleaseNotes>
   </PropertyGroup>
 
   <ItemGroup>
