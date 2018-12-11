@@ -8,10 +8,10 @@
     <Copyright>MIT</Copyright>
     <PackageLicenseUrl>https://github.com/lianggx/mystaging/blob/master/LICENSE</PackageLicenseUrl>
     <PackageProjectUrl>https://github.com/lianggx/mystaging</PackageProjectUrl>
-    <Version>1.0.3</Version>
-    <AssemblyVersion>1.0.3.0</AssemblyVersion>
-    <FileVersion>1.0.3.0</FileVersion>
-    <PackageReleaseNotes>增加对主表字段的别名应用，增加对数组连接参数化查询，增加对添加自定义SQL语句参数的支持</PackageReleaseNotes>
+    <Version>1.0.4</Version>
+    <AssemblyVersion>1.0.4.0</AssemblyVersion>
+    <FileVersion>1.0.4.0</FileVersion>
+    <PackageReleaseNotes>增加 Update 和 Delete 操作的检查，当没有指定更新字段和 Where 条件时，将抛出异常，防止对整表的误操作</PackageReleaseNotes>
   </PropertyGroup>
 
   <ItemGroup>

@@ -30,17 +30,17 @@ namespace MyStaging.Helpers
             {
                 foreach (var item in WhereExpressionList)
                 {
-                    //PgSqlExpression expression = new PgSqlExpression();
-                    //expression.ExpressionCapture(item.Body);
-                    //WhereList.Add(expression.CommandText.ToString().ToLower());
-                    //ParamList.AddRange(expression.Parameters);
-
                     DbExpressionVisitor expression = new DbExpressionVisitor();
                     expression.Visit(item.Body);
                     WhereList.Add(expression.SqlText.Builder.ToString().ToLower());
                     ParamList.AddRange(expression.SqlText.Parameters);
                 }
             }
+
+            if (this.WhereList.Count == 0)
+                throw new ArgumentException("The delete operation must specify where conditions!");
+
+
             string cmdText = $"DELETE FROM {tableName} {"WHERE " + string.Join("\nAND ", WhereList)}";
             return base.ExecuteNonQuery(cmdText);
         }

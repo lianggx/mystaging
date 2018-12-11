@@ -87,6 +87,9 @@ namespace MyStaging.Helpers
         /// <returns></returns>
         public int SaveChange()
         {
+            if (this.setList.Count == 0)
+                throw new ArgumentException("fields to be updated must be provided!");
+
             string tableName = MyStagingUtils.GetMapping(typeof(T));
             if (WhereExpressionList.Count > 0)
             {
@@ -98,6 +101,11 @@ namespace MyStaging.Helpers
                     ParamList.AddRange(expression.SqlText.Parameters);
                 }
             }
+
+            if (this.WhereList.Count == 0)
+                throw new ArgumentException("The update operation must specify where conditions!");
+
+
             string cmdText = $"UPDATE {tableName} SET {string.Join(",", this.setList)} {"WHERE " + string.Join("\nAND ", WhereList)}";
             int affrows = 0;
             if (OnChanged != null)

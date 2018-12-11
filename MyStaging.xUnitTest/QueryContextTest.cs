@@ -15,12 +15,13 @@ namespace MyStaging.xUnitTest
 {
     public class QueryContextTest
     {
-        private void Init()
+        public QueryContextTest()
         {
             LoggerFactory factory = new LoggerFactory();
             var log = factory.CreateLogger<PgSqlHelper>();
             _startup.Init(log, ConstantUtil.CONNECTIONSTRING);
         }
+
         private string Sha256Hash(string text)
         {
             return Convert.ToBase64String(SHA256.Create().ComputeHash(Encoding.UTF8.GetBytes(text)));
@@ -30,7 +31,6 @@ namespace MyStaging.xUnitTest
         [Fact(Skip = "需要手动运行该测试")]
         public void InsertTest()
         {
-            Init();
             for (int i = 0; i < 10; i++)
             {
                 Thread thr = new Thread(new ThreadStart(() =>
@@ -63,11 +63,27 @@ namespace MyStaging.xUnitTest
                 Thread.Sleep(1000);
             }
         }
+        [Fact]
+        public void Insert()
+        {
+            UserModel user = new UserModel()
+            {
+                Age = 18,
+                Createtime = DateTime.Now,
+                Id = "5b1b54bfd86b1b3bb0000009",
+                Loginname = Guid.NewGuid().ToString("N").Substring(0, 8),
+                Money = 0,
+                Nickname = "北极熊",
+                Password = Sha256Hash("123456"),
+                Sex = true
+            };
+            var result = User.Insert(user);
+            Assert.Equal(user.Id, result.Id);
+        }
 
         [Fact]
         public void ToList()
         {
-            Init();
             var list = User.Context.OrderByDescing(f => f.Createtime).Page(1, 10).ToList();
 
             Assert.Equal(10, list.Count);
@@ -76,7 +92,6 @@ namespace MyStaging.xUnitTest
         [Fact]
         public void ToListValueType()
         {
-            Init();
             var list = User.Context.OrderByDescing(f => f.Createtime).Page(1, 10).ToList<string>("id");
 
             Assert.Equal(10, list.Count);
@@ -85,7 +100,6 @@ namespace MyStaging.xUnitTest
         [Fact]
         public void ToListValueTulpe()
         {
-            Init();
             var list = User.Context.OrderByDescing(f => f.Createtime).Page(1, 10).ToList<(string id, string loginname, string nickname)>("id", "loginname", "nickname");
 
             Assert.Equal(10, list.Count);
@@ -94,7 +108,6 @@ namespace MyStaging.xUnitTest
         [Fact]
         public void ToOne()
         {
-            Init();
             string hash = Sha256Hash("123456");
             var user = User.Context.OrderBy(f => f.Createtime).ToOne();
 
@@ -104,7 +117,6 @@ namespace MyStaging.xUnitTest
         [Fact]
         public void ToScalar()
         {
-            Init();
             string hash = Sha256Hash("123456");
             var password = User.Context.Where(f => f.Password == hash).OrderBy(f => f.Createtime).ToScalar<string>("password");
 
@@ -114,7 +126,6 @@ namespace MyStaging.xUnitTest
         [Fact]
         public void Sum()
         {
-            Init();
             int total = 360;
             // 先把数据库任意两条记录修改为 180 
             var age = User.Context.Where(f => f.Age == 180).Sum<long>("age");
@@ -125,7 +136,6 @@ namespace MyStaging.xUnitTest
         [Fact]
         public void Avg()
         {
-            Init();
             decimal avg = 180;
             // 先把数据库任意两条记录的 age 字段修改为 180 
             var age = User.Context.Where(f => f.Age == 180).Avg<decimal>("age");
@@ -136,7 +146,6 @@ namespace MyStaging.xUnitTest
         [Fact]
         public void Count()
         {
-            Init();
             int count = 2;
             // 先把数据库任意两条记录的 age 字段修改为 180 
             var age = User.Context.Where(f => f.Age == 180).Count();
@@ -147,7 +156,6 @@ namespace MyStaging.xUnitTest
         [Fact]
         public void Max()
         {
-            Init();
             int max = 180;
             var age = User.Context.Max<int>("age");
 
@@ -158,34 +166,11 @@ namespace MyStaging.xUnitTest
         [Fact]
         public void Min()
         {
-            Init();
             int min = 18;
             var age = User.Context.Min<int>("age");
 
             /// 上面插入数据库的 age 字段是 18
             Assert.Equal(min, age);
-        }
-
-        [Fact]
-        public void Update()
-        {
-            Init();
-            string userid = "5b1b54bfd86b1b3bb0000009";
-            var rows = User.UpdateBuilder.Where(f => f.Id == userid).SetMoney(2000).SetSex(false).SaveChange();
-
-            /// 上面插入数据库的 age 字段是 18
-            Assert.Equal(1, rows);
-        }
-
-        [Fact]
-        public void Deleted()
-        {
-            Init();
-            string userid = "5b1b54bfd86b1b3bb0000009";
-            var rows = User.DeleteBuilder.Where(f => f.Id == userid).SaveChange();
-
-            /// 上面插入数据库的 age 字段是 18
-            Assert.Equal(1, rows);
         }
     }
 }
