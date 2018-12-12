@@ -961,7 +961,7 @@ namespace MyStaging.Helpers
                 string pName = Guid.NewGuid().ToString("N");
                 AddParameter(pName, item.ToString());
                 sb.Append("@" + pName + "::" + _dbType_text);
-                if (i + 1 < items.Count)
+                if (++i < items.Count)
                     sb.Append(",");
             }
             return sb.ToString();
