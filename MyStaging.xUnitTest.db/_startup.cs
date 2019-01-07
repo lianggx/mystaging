@@ -1,4 +1,4 @@
-using MyStaging.xUnitTest.Model;
+﻿using MyStaging.xUnitTest.Model;
 using System;
 using Microsoft.Extensions.Logging;
 using MyStaging.Helpers;
@@ -8,9 +8,9 @@ namespace MyStaging.xUnitTest
 {
 	public class _startup
 	{
-		public static void Init(ILogger logger, string connectionString)
+		public static void Init(ILogger logger, string connectionMaster, string[] connectionSlaves = null, int slavesMaxPool = -1)
 		{
-			PgSqlHelper.InitConnection(logger, connectionString);
+			PgSqlHelper.InitConnection(logger, connectionMaster, connectionSlaves, slavesMaxPool);
 		}
 	}
 	public partial class NpgsqlNameTranslator : INpgsqlNameTranslator

@@ -8,4 +8,9 @@
 	<ItemGroup>
 		<ProjectReference Include="..\MyStaging\MyStaging.csproj" />
 	</ItemGroup>
+
+	<ItemGroup>
+	  <Folder Include="DAL\Build\" />
+	  <Folder Include="Model\Build\" />
+	</ItemGroup>
 </Project>

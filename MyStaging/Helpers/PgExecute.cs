@@ -1,14 +1,12 @@
 ﻿using Microsoft.Extensions.Logging;
-using Npgsql;
-using NpgsqlTypes;
 using System;
 using System.Collections.Generic;
 using System.Data;
-//using System.Data.SqlClient;
 using System.Net.Sockets;
 using System.Threading;
 using System.Threading.Tasks;
 using MyStaging.Common;
+using System.Data.Common;
 
 namespace MyStaging.Helpers
 {
@@ -28,7 +26,7 @@ namespace MyStaging.Helpers
         /// </summary>
         public ILogger _logger = null;
 
-        private Dictionary<int, NpgsqlTransaction> _trans = new Dictionary<int, NpgsqlTransaction>();
+        private Dictionary<int, DbTransaction> _trans = new Dictionary<int, DbTransaction>();
         private object _trans_lock = new object();
 
         /// <summary>
@@ -64,7 +62,7 @@ namespace MyStaging.Helpers
         /// <summary>
         ///  获取当前线程产生的数据库事务
         /// </summary>
-        protected virtual NpgsqlTransaction CurrentThreadTransaction
+        protected virtual DbTransaction CurrentThreadTransaction
         {
             get
             {
@@ -80,12 +78,12 @@ namespace MyStaging.Helpers
         /// </summary>
         /// <param name="command">NpgsqlCommand 对象</param>
         /// <param name="commandParameters">NpgsqlParameter 数组</param>
-        protected virtual void AttachParameters(NpgsqlCommand command, NpgsqlParameter[] commandParameters)
+        protected virtual void AttachParameters(DbCommand command, DbParameter[] commandParameters)
         {
             if (command == null) throw new ArgumentNullException("command");
             if (commandParameters == null) return;
 
-            foreach (NpgsqlParameter p in commandParameters)
+            foreach (DbParameter p in commandParameters)
             {
                 if (p == null) continue;
                 if ((p.Direction == ParameterDirection.InputOutput || p.Direction == ParameterDirection.Input) && p.Value == null)
@@ -103,17 +101,18 @@ namespace MyStaging.Helpers
         /// <param name="commandType">CommandType 类型</param>
         /// <param name="commandText">待执行的 SQL 语句</param>
         /// <param name="commandParameters">NpgsqlCommand 对象的参数列表</param>
-        protected virtual void PrepareCommand(NpgsqlCommand command, CommandType commandType, string commandText, NpgsqlParameter[] commandParameters)
+        protected virtual DbCommand PrepareCommand(CommandType commandType, string commandText, DbParameter[] commandParameters)
         {
+            DbCommand command;
             if (commandText == null || commandText.Length == 0) throw new ArgumentNullException("commandText");
             if (CurrentThreadTransaction != null)
             {
-                command.Connection = CurrentThreadTransaction.Connection;
+                command = CurrentThreadTransaction.Connection.CreateCommand();
                 command.Transaction = CurrentThreadTransaction;
             }
             else
             {
-                command.Connection = this.Pool.GetConnection();
+                command = this.Pool.GetConnection().CreateCommand();
             }
 
             command.CommandText = commandText;
@@ -121,6 +120,8 @@ namespace MyStaging.Helpers
 
             if (commandParameters != null)
                 AttachParameters(command, commandParameters);
+
+            return command;
         }
 
         /// <summary>
@@ -130,38 +131,65 @@ namespace MyStaging.Helpers
         /// <param name="commandText">待执行的 SQL 语句</param>
         /// <param name="commandParameters">NpgsqlCommand 对象的参数列表</param>
         /// <returns></returns>
-        public virtual object ExecuteScalar(CommandType commandType, string commandText, params NpgsqlParameter[] commandParameters)
+        public virtual object ExecuteScalar(CommandType commandType, string commandText, params DbParameter[] commandParameters)
         {
-            bool connected = true;
             object retval = null;
-            NpgsqlCommand cmd = new NpgsqlCommand();
+            DbCommand command = null;
             try
             {
-                PrepareCommand(cmd, commandType, commandText, commandParameters);
-                if (cmd.Connection.State == ConnectionState.Closed)
-                    cmd.Connection.Open();
+                command = PrepareCommand(commandType, commandText, commandParameters);
+                OpenConnection(command);
 
-                retval = cmd.ExecuteScalar();
+                retval = command.ExecuteScalar();
             }
             catch (SocketException se)
             {
-                connected = false;
-                ExceptionOutPut(cmd, se);
+                ExceptionOutPut(command, se);
                 throw se;
             }
             catch (Exception ex)
             {
-                ExceptionOutPut(cmd, ex);
+                ExceptionOutPut(command, ex);
                 throw ex;
             }
             finally
             {
-                if (connected && this.CurrentThreadTransaction == null)
-                {
-                    this.Pool.FreeConnection(cmd.Connection);
-                }
+                Clear(command);
+            }
+            return retval;
+        }
 
-                cmd.Parameters.Clear();
+        /// <summary>
+        ///  执行查询，并返回第一行数据的第一列的值
+        /// </summary>
+        /// <param name="commandType">CommandType 类型</param>
+        /// <param name="commandText">待执行的 SQL 语句</param>
+        /// <param name="commandParameters">NpgsqlCommand 对象的参数列表</param>
+        /// <returns></returns>
+        public async virtual Task<object> ExecuteScalarAsync(CommandType commandType, string commandText, params DbParameter[] commandParameters)
+        {
+            object retval = null;
+            DbCommand command = null;
+            try
+            {
+                command = PrepareCommand(commandType, commandText, commandParameters);
+                OpenConnection(command);
+
+                retval = await command.ExecuteScalarAsync();
+            }
+            catch (SocketException se)
+            {
+                ExceptionOutPut(command, se);
+                throw se;
+            }
+            catch (Exception ex)
+            {
+                ExceptionOutPut(command, ex);
+                throw ex;
+            }
+            finally
+            {
+                Clear(command);
             }
             return retval;
         }
@@ -173,29 +201,53 @@ namespace MyStaging.Helpers
         /// <param name="commandText">待执行的 SQL 语句</param>
         /// <param name="commandParameters">NpgsqlCommand 对象的参数列表</param>
         /// <returns></returns>
-        public virtual int ExecuteNonQuery(CommandType commandType, string commandText, params NpgsqlParameter[] commandParameters)
+        public virtual int ExecuteNonQuery(CommandType commandType, string commandText, params DbParameter[] commandParameters)
         {
             int retval = 0;
-            NpgsqlCommand cmd = new NpgsqlCommand();
+            DbCommand command = null;
             try
             {
-                PrepareCommand(cmd, commandType, commandText, commandParameters);
-                if (cmd.Connection.State == ConnectionState.Closed)
-                    cmd.Connection.Open();
-                retval = cmd.ExecuteNonQuery();
+                command = PrepareCommand(commandType, commandText, commandParameters);
+                OpenConnection(command);
+                retval = command.ExecuteNonQuery();
             }
             catch (Exception ex)
             {
-                ExceptionOutPut(cmd, ex);
+                ExceptionOutPut(command, ex);
                 throw ex;
             }
             finally
             {
-                if (this.CurrentThreadTransaction == null)
-                {
-                    this.Pool.FreeConnection(cmd.Connection);
-                }
-                cmd.Parameters.Clear();
+                Clear(command);
+            }
+            return retval;
+        }
+
+        /// <summary>
+        ///  执行查询，并返回受影响的行数
+        /// </summary>
+        /// <param name="commandType">CommandType 类型</param>
+        /// <param name="commandText">待执行的 SQL 语句</param>
+        /// <param name="commandParameters">NpgsqlCommand 对象的参数列表</param>
+        /// <returns></returns>
+        public async virtual Task<int> ExecuteNonQueryAsync(CommandType commandType, string commandText, params DbParameter[] commandParameters)
+        {
+            int retval = 0;
+            DbCommand command = null;
+            try
+            {
+                command = PrepareCommand(commandType, commandText, commandParameters);
+                OpenConnection(command);
+                retval = await command.ExecuteNonQueryAsync();
+            }
+            catch (Exception ex)
+            {
+                ExceptionOutPut(command, ex);
+                throw ex;
+            }
+            finally
+            {
+                Clear(command);
             }
             return retval;
         }
@@ -207,17 +259,16 @@ namespace MyStaging.Helpers
         /// <param name="commandType">CommandType 类型</param>
         /// <param name="commandText">待执行的 SQL 语句</param>
         /// <param name="commandParameters">NpgsqlCommand 对象的参数列表</param>
-        public virtual void ExecuteDataReader(Action<NpgsqlDataReader> action, CommandType commandType, string commandText, params NpgsqlParameter[] commandParameters)
+        public virtual void ExecuteDataReader(Action<DbDataReader> action, CommandType commandType, string commandText, params DbParameter[] commandParameters)
         {
-            NpgsqlCommand cmd = new NpgsqlCommand();
-            NpgsqlDataReader reader = null;
+            DbCommand command = null;
+            DbDataReader reader = null;
             try
             {
-                PrepareCommand(cmd, commandType, commandText, commandParameters);
-                if (cmd.Connection.State == ConnectionState.Closed)
-                    cmd.Connection.Open();
+                command = PrepareCommand(commandType, commandText, commandParameters);
+                OpenConnection(command);
 
-                reader = cmd.ExecuteReader();
+                reader = command.ExecuteReader();
                 while (reader.Read())
                 {
                     action?.Invoke(reader);
@@ -225,31 +276,64 @@ namespace MyStaging.Helpers
             }
             catch (Exception ex)
             {
-                ExceptionOutPut(cmd, ex);
+                ExceptionOutPut(command, ex);
                 throw ex;
             }
             finally
             {
-                if (this.CurrentThreadTransaction == null)
-                {
-                    this.Pool.FreeConnection(cmd.Connection);
-                }
                 if (reader != null)
                     reader.Close();
-                cmd.Parameters.Clear();
+                Clear(command);
+            }
+        }
+
+        /// <summary>
+        ///  执行查询，并从返回的流中读取数据，传入委托中
+        /// </summary>
+        /// <param name="action">处理数据的委托函数</param>
+        /// <param name="commandType">CommandType 类型</param>
+        /// <param name="commandText">待执行的 SQL 语句</param>
+        /// <param name="commandParameters">NpgsqlCommand 对象的参数列表</param>
+        public async virtual Task ExecuteDataReaderAsync(Action<DbDataReader> action, CommandType commandType, string commandText, params DbParameter[] commandParameters)
+        {
+            DbCommand command = null;
+            DbDataReader reader = null;
+            try
+            {
+                command = PrepareCommand(commandType, commandText, commandParameters);
+                OpenConnection(command);
+
+                reader = await command.ExecuteReaderAsync();
+                while (reader.Read())
+                {
+                    action?.Invoke(reader);
+                };
+            }
+            catch (Exception ex)
+            {
+                ExceptionOutPut(command, ex);
+                throw ex;
+            }
+            finally
+            {
+                if (reader != null)
+                    reader.Close();
+                Clear(command);
             }
         }
 
         /// <summary>
         ///  输出异常信息
         /// </summary>
-        /// <param name="cmd">NpgsqlCommand 对象</param>
+        /// <param name="command">NpgsqlCommand 对象</param>
         /// <param name="ex">异常信息</param>
-        protected virtual void ExceptionOutPut(NpgsqlCommand cmd, Exception ex)
+        protected virtual void ExceptionOutPut(DbCommand command, Exception ex)
         {
-            NpgsqlParameterCollection coll = cmd.Parameters;
-            ex.Data["host"] = cmd.Connection.Host;
-            ex.Data["port"] = cmd.Connection.Port;
+            if (command == null)
+                return;
+
+            DbParameterCollection coll = command.Parameters;
+            ex.Data["DbConnection"] = command.Connection;
             string ps = string.Empty;
             if (coll != null)
                 for (int i = 0; i < coll.Count; i++)
@@ -257,11 +341,11 @@ namespace MyStaging.Helpers
                     var item = coll[i];
                     ps += $"{ item.ParameterName}:{item.Value},";
                 }
-            string sql = cmd.CommandText;
+            string sql = command.CommandText;
             for (int i = 0; i < coll.Count; i++)
             {
                 var para = coll[i];
-                var isString = IsString(para.NpgsqlDbType);
+                var isString = IsString(para.DbType);
                 var val = string.Format("{0}{1}{0}", isString ? "'" : "", para.Value.ToString());
                 sql = sql.Replace("@" + para.ParameterName, val);
             }
@@ -277,12 +361,24 @@ namespace MyStaging.Helpers
         /// </summary>
         /// <param name="dbType"></param>
         /// <returns></returns>
-        private bool IsString(NpgsqlDbType dbType)
+        private bool IsString(DbType dbType)
         {
+
             switch (dbType)
             {
-                case NpgsqlDbType.Integer:
-                case NpgsqlDbType.Numeric:
+                case DbType.Int16:
+                case DbType.Int32:
+                case DbType.Int64:
+                case DbType.UInt16:
+                case DbType.UInt32:
+                case DbType.UInt64:
+                case DbType.Decimal:
+                case DbType.Double:
+                case DbType.Boolean:
+                case DbType.VarNumeric:
+                case DbType.Currency:
+                case DbType.Byte:
+                case DbType.Single:
                     return false;
                 default:
                     return true;
@@ -297,10 +393,10 @@ namespace MyStaging.Helpers
             if (CurrentThreadTransaction != null)
                 CommitTransaction(true);
 
-            NpgsqlConnection Connection = this.Pool.GetConnection();
+            DbConnection Connection = this.Pool.GetConnection();
             if (Connection.State != ConnectionState.Open)
                 Connection.Open();
-            NpgsqlTransaction tran = Connection.BeginTransaction();
+            DbTransaction tran = Connection.BeginTransaction();
             int tid = Thread.CurrentThread.ManagedThreadId;
             if (_trans.ContainsKey(tid))
                 CommitTransaction();
@@ -325,7 +421,7 @@ namespace MyStaging.Helpers
         /// <param name="iscommit">true=提交事务，false=回滚事务</param>
         public virtual void CommitTransaction(bool iscommit)
         {
-            NpgsqlTransaction tran = CurrentThreadTransaction;
+            DbTransaction tran = CurrentThreadTransaction;
             if (tran == null || tran.Connection == null) return;
 
             lock (_trans_lock)
@@ -333,7 +429,7 @@ namespace MyStaging.Helpers
                 int tid = Thread.CurrentThread.ManagedThreadId;
                 _trans.Remove(tid);
             }
-            NpgsqlConnection conn = tran.Connection;
+            DbConnection conn = tran.Connection;
             if (iscommit)
                 tran.Commit();
             else
@@ -347,11 +443,35 @@ namespace MyStaging.Helpers
         /// </summary>
         public virtual void RollBackTransaction()
         {
-            NpgsqlTransaction tran = CurrentThreadTransaction;
-            if (tran != null && !tran.IsCompleted)
+            DbTransaction tran = CurrentThreadTransaction;
+            if (tran != null)
             {
                 CommitTransaction(false);
             }
+        }
+
+        /// <summary>
+        ///  打开数据库连接
+        /// </summary>
+        /// <param name="cmd"></param>
+        private void OpenConnection(DbCommand cmd)
+        {
+            if (cmd.Connection.State == ConnectionState.Closed)
+                cmd.Connection.Open();
+        }
+
+        /// <summary>
+        ///  释放连接，清理资源
+        /// </summary>
+        /// <param name="cmd"></param>
+        private void Clear(DbCommand cmd)
+        {
+            if (this.CurrentThreadTransaction == null)
+            {
+                this.Pool.FreeConnection(cmd.Connection);
+            }
+
+            cmd.Parameters.Clear();
         }
     }
 }

@@ -1,12 +1,10 @@
 ﻿using Microsoft.Extensions.Logging;
-using Npgsql;
+using MyStaging.Common;
 using System;
 using System.Collections.Generic;
 using System.Data;
+using System.Data.Common;
 using System.Text.RegularExpressions;
-using System.Linq;
-using System.Net.WebSockets;
-using MyStaging.Common;
 
 namespace MyStaging.Helpers
 {
@@ -74,7 +72,7 @@ namespace MyStaging.Helpers
 
             // 初始化主库连接实例
             int poolsizeMaster = GetPollSize(connectionMaster);
-            ConnectionStringConfiguration connS = new ConnectionStringConfiguration() { ConnectionString = connectionMaster, MaxConnection = poolsizeMaster };
+            ConnectionStringConfiguration connS = new ConnectionStringConfiguration() { ConnectionString = connectionMaster, MaxConnection = poolsizeMaster, DbConnection = new Npgsql.NpgsqlConnection(connectionMaster) };
             instanceMaster = new MasterExecute(logger, connS);
 
             // 初始化从库连接实例
@@ -90,7 +88,8 @@ namespace MyStaging.Helpers
                     {
                         ConnectionString = item,
                         Id = i,
-                        MaxConnection = GetPollSize(item)
+                        MaxConnection = GetPollSize(item),
+                        DbConnection = new Npgsql.NpgsqlConnection(connectionMaster)
                     });
                     pollsizeSlave += connList[i].MaxConnection;
                 }
@@ -123,7 +122,7 @@ namespace MyStaging.Helpers
         ///  此函数只能在读写数据库连接中进行
         /// </summary>
         /// <param name="action"></param>
-        public static object ExecuteScalar(CommandType commandType, string commandText, params NpgsqlParameter[] commandParameters)
+        public static object ExecuteScalar(CommandType commandType, string commandText, params DbParameter[] commandParameters)
         {
             return InstanceMaster.ExecuteScalar(commandType, commandText, commandParameters);
         }
@@ -132,7 +131,7 @@ namespace MyStaging.Helpers
         ///  此函数只能在读写数据库连接中进行
         /// </summary>
         /// <param name="action"></param>
-        public static int ExecuteNonQuery(CommandType commandType, string commandText, params NpgsqlParameter[] commandParameters)
+        public static int ExecuteNonQuery(CommandType commandType, string commandText, params DbParameter[] commandParameters)
         {
             return InstanceMaster.ExecuteNonQuery(commandType, commandText, commandParameters);
         }
@@ -141,7 +140,7 @@ namespace MyStaging.Helpers
         ///  此函数只能在读写数据库连接中进行
         /// </summary>
         /// <param name="action"></param>
-        public static void ExecuteDataReader(Action<NpgsqlDataReader> action, CommandType commandType, string commandText, params NpgsqlParameter[] commandParameters)
+        public static void ExecuteDataReader(Action<DbDataReader> action, CommandType commandType, string commandText, params DbParameter[] commandParameters)
         {
             InstanceMaster.ExecuteDataReader(action, commandType, commandText, commandParameters);
         }
@@ -150,7 +149,7 @@ namespace MyStaging.Helpers
         ///  此函数只能在从库数据库连接中进行
         /// </summary>
         /// <param name="action"></param>
-        public static object ExecuteScalarSlave(CommandType commandType, string commandText, params NpgsqlParameter[] commandParameters)
+        public static object ExecuteScalarSlave(CommandType commandType, string commandText, params DbParameter[] commandParameters)
         {
             object result = null;
             void Transfer(Exception ex)
@@ -192,7 +191,7 @@ namespace MyStaging.Helpers
         ///  此函数只能在从库数据库连接中进行
         /// </summary>
         /// <param name="action"></param>
-        public static void ExecuteDataReaderSlave(Action<NpgsqlDataReader> action, CommandType commandType, string commandText, params NpgsqlParameter[] commandParameters)
+        public static void ExecuteDataReaderSlave(Action<DbDataReader> action, CommandType commandType, string commandText, params DbParameter[] commandParameters)
         {
             void Transfer(Exception ex)
             {
@@ -234,11 +233,10 @@ namespace MyStaging.Helpers
         /// <param name="ex"></param>
         private static void RemoveConnection(object sender, Exception ex)
         {
-            var host = ex.Data["host"].ToString();
-            var port = Convert.ToInt32(ex.Data["port"]);
-            string message = string.Format("The database slave[{0}:{1}] connection refused，transfer slave the others.{2}", host, port, ex.StackTrace);
+            var dbConnection = (DbConnection)ex.Data["DbConnection"];
+            string message = string.Format("The database slave[{0}] connection refused，transfer slave the others.{1}", dbConnection.ConnectionString, ex.StackTrace);
             WriteLog(message);
-            instanceSlave.Pool.RemoveConnection(host, port);
+            instanceSlave.Pool.RemoveConnection(dbConnection);
             // 传递异常
             OnException?.Invoke(sender, ex);
         }

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Data.Common;
 using System.Text;
 
 namespace MyStaging.Common
@@ -17,6 +18,7 @@ namespace MyStaging.Common
         ///  数据库连接字符串
         /// </summary>
         public string ConnectionString { get; set; }
+        public DbConnection DbConnection { get; set; }
         /// <summary>
         ///  获取使用次数
         /// </summary>

@@ -11,6 +11,7 @@ using System.Text;
 using System.Linq;
 using System.Text.RegularExpressions;
 using Newtonsoft.Json.Linq;
+using System.Data.Common;
 
 namespace MyStaging.Helpers
 {
@@ -398,7 +399,7 @@ namespace MyStaging.Helpers
         {
             List<TResult> list = new List<TResult>();
             DynamicBuilder<TResult> builder = null;
-            Action<NpgsqlDataReader> action = (dr) =>
+            Action<DbDataReader> action = (dr) =>
             {
                 TResult obj = default(TResult);
                 Type objType = typeof(TResult);

@@ -163,7 +163,7 @@ namespace MyStaging.App.DAL
                 {
                     var item = fieldList[i];
                     if (item.Is_identity) continue;
-                    sb_field.Append($"{item.Field}");
+                    sb_field.Append($"\\\"{item.Field}\\\"");
                     sb_param.Append($"@{item.Field}");
                     if (fieldList.Count > i + 1)
                     {
@@ -179,7 +179,7 @@ namespace MyStaging.App.DAL
                 for (int i = 0; i < pkList.Count; i++)
                 {
                     var item = pkList[i];
-                    sb_primarykey.Append($"{item.Field}=@{item.Field}");
+                    sb_primarykey.Append($"\\\"{item.Field}\\\"=@{item.Field}");
                     if (pkList.Count > i + 1)
                         sb_primarykey.Append(" and ");
                 }
@@ -289,6 +289,7 @@ namespace MyStaging.App.DAL
             }
             // 默认构造函数
             CreateConstructor(dkString);
+            writer.WriteLine();
             // 重载构造函数
             var separator = d_key.Count > 0 ? ", " : "";
             CreateConstructor(dkString, $"Action<{modelUpper}> onChanged" + separator);
@@ -303,6 +304,13 @@ namespace MyStaging.App.DAL
             writer.WriteLine($"\t\t\tpublic new {updateName} Where(Expression<Func<{class_model.ToUpperPascal()}, bool>> predicate)");
             writer.WriteLine("\t\t\t{");
             writer.WriteLine($"\t\t\t\t base.Where(predicate);");
+            writer.WriteLine($"\t\t\t\t return this;");
+            writer.WriteLine("\t\t\t}");
+            writer.WriteLine();
+
+            writer.WriteLine($"\t\t\tpublic new {updateName} Where(string formatCommad, params object[] pValue)");
+            writer.WriteLine("\t\t\t{");
+            writer.WriteLine($"\t\t\t\t base.Where(formatCommad,pValue);");
             writer.WriteLine($"\t\t\t\t return this;");
             writer.WriteLine("\t\t\t}");
             writer.WriteLine();
@@ -331,7 +339,7 @@ namespace MyStaging.App.DAL
                     writer.WriteLine($"\t\t\t\treturn base.SetArrayRemove(\"{ item.Field}\", NpgsqlDbType.{_dbtype}, {item.Field}, {item.Length}, {specificType}) as {updateName};");
                     writer.WriteLine("\t\t\t}");
                 }
-
+                writer.WriteLine();
             }
             writer.WriteLine("\t\t}");
         }
@@ -361,6 +369,7 @@ namespace MyStaging.App.DAL
                 }
                 writer.WriteLine($"\t\t\treturn {_cn}.ExecuteNonQuery(deleteCmdText);");
                 writer.WriteLine("\t\t}");
+                writer.WriteLine();
             }
             string deletebuilder = $"DeleteBuilder<{class_model}>";
             writer.WriteLine($"\t\tpublic static {deletebuilder} DeleteBuilder {{ get {{ return new {deletebuilder}(); }} }}");

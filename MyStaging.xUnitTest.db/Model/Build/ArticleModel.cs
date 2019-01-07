@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Linq;
 using MyStaging.xUnitTest.DAL;
 using Newtonsoft.Json;
@@ -21,7 +21,7 @@ namespace MyStaging.xUnitTest.Model
 
 		public DateTime Createtime { get; set; }
 
-		[NonDbColumnMapping, JsonIgnore] public MyStaging.xUnitTest.DAL.Article.ArticleUpdateBuilder UpdateBuilder { get { return new MyStaging.xUnitTest.DAL.Article.ArticleUpdateBuilder(this.Id); } }
+		[NonDbColumnMapping, JsonIgnore] public MyStaging.xUnitTest.DAL.Article.ArticleUpdateBuilder UpdateBuilder { get { return new MyStaging.xUnitTest.DAL.Article.ArticleUpdateBuilder(model =>{MyStaging.Helpers.MyStagingUtils.CopyProperty<ArticleModel>(this, model);}, this.Id); } }
 
 		public ArticleModel Insert() { return MyStaging.xUnitTest.DAL.Article.Insert(this); }
 

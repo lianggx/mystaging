@@ -1,11 +1,13 @@
-﻿using Npgsql;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Linq;
 using MyStaging.Common;
+using System.Data.Common;
+using System.Data;
+using Npgsql;
 
 namespace MyStaging.Helpers
 {
@@ -16,7 +18,7 @@ namespace MyStaging.Helpers
     {
         private object _lock = new object();
         private object _lock_getconnection = new object();
-        public List<NpgsqlConnection> All_Connection = new List<NpgsqlConnection>();
+        public List<DbConnection> All_Connection = new List<DbConnection>();
         private Queue<ManualResetEvent> GetConnectionQueue = new Queue<ManualResetEvent>();
         private Random connRandom = new Random();
         private Timer timer = null;
@@ -33,12 +35,12 @@ namespace MyStaging.Helpers
         }
 
         /// <summary>
-        ///  从连接池中获取可用的数据库连接，如果无法获取，将可能返回 null 
+        ///  从连接池中获取可用的数据库连接，如果无法获取，将抛出异常
         /// </summary>
         /// <returns></returns>
-        public NpgsqlConnection GetConnection()
+        public DbConnection GetConnection()
         {
-            NpgsqlConnection conn = null;
+            DbConnection conn = null;
             if (Free.Count > 0)
                 lock (_lock)
                     if (Free.Count > 0)
@@ -50,6 +52,7 @@ namespace MyStaging.Helpers
                     {
                         var connS = RandomConnectionString();
                         conn = new NpgsqlConnection(connS.ConnectionString);
+
                         All_Connection.Add(conn);
                     }
             }
@@ -61,7 +64,7 @@ namespace MyStaging.Helpers
                     GetConnectionQueue.Enqueue(wait);
                 if (wait.WaitOne(TimeSpan.FromSeconds(10)))
                     return GetConnection();
-                return null;
+                throw new TimeoutException("从连接池中获取数据库连接超时，可能已无可用连接");
             }
 
             return conn;
@@ -71,7 +74,7 @@ namespace MyStaging.Helpers
         ///  将数据库连接关闭，并放入当前连接池中
         /// </summary>
         /// <param name="conn"></param>
-        public void FreeConnection(NpgsqlConnection conn)
+        public void FreeConnection(DbConnection conn)
         {
             conn.Close();
             lock (_lock)
@@ -116,16 +119,17 @@ namespace MyStaging.Helpers
         ///  移除异常的数据库连接
         /// </summary>
         /// <param name="connectionString"></param>
-        public void RemoveConnection(string host, int port)
+        public void RemoveConnection(DbConnection dbConnection)
         {
             for (int i = 0; i < this.ConnectionList.Count; i++)
             {
-                var connS = this.ConnectionList[i];
-                NpgsqlConnection conn = new NpgsqlConnection(connS.ConnectionString);
-                if (conn.Host == host && conn.Port == port)
+                var sourceConfig = this.ConnectionList[i];
+                var assert = sourceConfig.DbConnection.DataSource == dbConnection.DataSource
+                            && sourceConfig.DbConnection.Database == dbConnection.Database;
+                if (assert)
                 {
                     this.ConnectionList.RemoveAt(i);
-                    Monitor(connS);
+                    Monitor(sourceConfig);
                     break;
                 }
             }
@@ -180,7 +184,7 @@ namespace MyStaging.Helpers
         /// <summary>
         ///  获取闲置的连接
         /// </summary>
-        public Queue<NpgsqlConnection> Free { get; } = new Queue<NpgsqlConnection>();
+        public Queue<DbConnection> Free { get; } = new Queue<DbConnection>();
 
         /// <summary>
         ///  获取或者设置数据库连接字符串

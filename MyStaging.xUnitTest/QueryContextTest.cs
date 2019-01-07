@@ -70,7 +70,7 @@ namespace MyStaging.xUnitTest
             {
                 Age = 18,
                 Createtime = DateTime.Now,
-                Id = "5b1b54bfd86b1b3bb0000009",
+                Id = ObjectId.NewId().ToString(),
                 Loginname = Guid.NewGuid().ToString("N").Substring(0, 8),
                 Money = 0,
                 Nickname = "±±¼«ÐÜ",

@@ -24,7 +24,7 @@ namespace MyStaging.App
 
             CreateDir();
             CreateCsproj();
-            EnumsDal.Generate(Path.Combine(outputdir, projName, projName + ".db"), modelPath, GeneralFactory.projectName);
+            EnumsDal.Generate(Path.Combine(outputdir, projName + ".db"), modelPath, GeneralFactory.projectName);
 
             List<string> schemaList = SchemaDal.Get_List();
             foreach (var schemaName in schemaList)
@@ -33,6 +33,7 @@ namespace MyStaging.App
                 List<TableViewModel> tableList = GetTables(schemaName);
                 foreach (var item in tableList)
                 {
+                    Console.WriteLine("{0}:{1}", item.type, item.name);
                     TablesDal td = new TablesDal(GeneralFactory.projectName, modelPath, dalPath, schemaName, item);
                     td.Generate();
                 }
@@ -41,8 +42,8 @@ namespace MyStaging.App
 
         private static void CreateDir()
         {
-            modelPath = Path.Combine(outputDir, projectName, projectName + ".db", "Model", "Build");
-            dalPath = Path.Combine(outputDir, projectName, projectName + ".db", "DAL", "Build");
+            modelPath = Path.Combine(outputDir, projectName + ".db", "Model", "Build");
+            dalPath = Path.Combine(outputDir, projectName + ".db", "DAL", "Build");
             string[] ps = { modelPath, dalPath };
             for (int i = 0; i < ps.Length; i++)
             {
@@ -53,7 +54,7 @@ namespace MyStaging.App
 
         private static void CreateCsproj()
         {
-            string path = Path.Combine(outputDir, projectName, $"{projectName}.db");
+            string path = Path.Combine(outputDir, $"{projectName}.db");
 
             string csproj = Path.Combine(path, $"{projectName}.db.csproj");
             if (File.Exists(csproj))

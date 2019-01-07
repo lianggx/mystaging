@@ -33,7 +33,7 @@ namespace MyStaging.Helpers
         protected UpdateBuilder<T> SetField(string field, NpgsqlDbType dbType, object value, int size, Type specificType = null)
         {
             base.AddParameter(field, dbType, value, size, specificType);
-            setList.Add($"{field}=@{field}");
+            setList.Add($"\"{field}\"=@{field}");
             return this;
         }
 
@@ -45,7 +45,7 @@ namespace MyStaging.Helpers
         /// <returns></returns>
         public UpdateBuilder<T> SetIncrement(string field, decimal value)
         {
-            setList.Add($"{field}=COALESCE({field},0) + {value}");
+            setList.Add($"\"{field}\"=COALESCE({field},0) + {value}");
             return this;
         }
 
@@ -61,7 +61,7 @@ namespace MyStaging.Helpers
         protected UpdateBuilder<T> SetArrayAppend(string field, NpgsqlDbType dbType, object value, int size, Type specificType = null)
         {
             base.AddParameter(field, dbType, value, size, specificType);
-            setList.Add($"{field}=array_append({field},@{field})");
+            setList.Add($"\"{field}\"=array_append({field},@{field})");
             return this;
         }
 
@@ -77,7 +77,7 @@ namespace MyStaging.Helpers
         protected UpdateBuilder<T> SetArrayRemove(string field, NpgsqlDbType dbType, object value, int size, Type specificType = null)
         {
             base.AddParameter(field, dbType, value, size, specificType);
-            setList.Add($"{field} = array_remove({field},@{field})");
+            setList.Add($"\"{field}\" = array_remove({field},@{field})");
             return this;
         }
 

@@ -28,7 +28,6 @@ namespace MyStaging.App
                 return;
             }
 
-            Console.OutputEncoding = System.Text.Encoding.UTF8;
             string projName = string.Empty, outPutPath = string.Empty;
             StringBuilder connection = new StringBuilder();
             for (int i = 0; i < args.Length; i++)
@@ -47,9 +46,9 @@ namespace MyStaging.App
                 }
                 i++;
             }
-            //outPutPath = @"E:\my\";
-            //projName = "Crmmt";
-            //PgSqlHelper.InitConnection(null, "Host=127.0.0.1;Port=5432;Username=postgres;Password=postgres;Database=crmmt;Pooling=true;Maximum Pool Size=100");
+            //outPutPath = @"D:\TestProjects\mystaging";
+            //projName = "MyStaging.xUnitTest";
+            //PgSqlHelper.InitConnection(null, "Host=127.0.0.1;Port=5432;Username=postgres;Password=postgres;Database=mystaging;Pooling=true;Maximum Pool Size=100");
             PgSqlHelper.InitConnection(null, connection.ToString());
             GeneralFactory.Build(outPutPath, projName);
 
