@@ -128,7 +128,7 @@ namespace MyStaging.xUnitTest
         {
             int total = 360;
             // 先把数据库任意两条记录修改为 180 
-            var age = User.Context.Where(f => f.Age == 180).Sum<long>("age");
+            var age = User.Context.Where(f => f.Age == 180).Sum<long>(f => f.Age);
 
             Assert.Equal(total, age);
         }
@@ -138,7 +138,7 @@ namespace MyStaging.xUnitTest
         {
             decimal avg = 180;
             // 先把数据库任意两条记录的 age 字段修改为 180 
-            var age = User.Context.Where(f => f.Age == 180).Avg<decimal>("age");
+            var age = User.Context.Where(f => f.Age == 180).Avg<decimal>(f => f.Age);
 
             Assert.Equal(avg, age);
         }
@@ -157,7 +157,7 @@ namespace MyStaging.xUnitTest
         public void Max()
         {
             int max = 180;
-            var age = User.Context.Max<int>("age");
+            var age = User.Context.Max<int>(f => f.Age);
 
             /// 上面插入数据库的 age 字段是 180
             Assert.Equal(max, age);
@@ -167,7 +167,7 @@ namespace MyStaging.xUnitTest
         public void Min()
         {
             int min = 18;
-            var age = User.Context.Min<int>("age");
+            var age = User.Context.Min<int>(f => f.Age);
 
             /// 上面插入数据库的 age 字段是 18
             Assert.Equal(min, age);

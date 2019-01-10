@@ -65,10 +65,7 @@ namespace MyStaging.Helpers
         /// <typeparam name="TKey">字段</typeparam>
         /// <param name="keySelector">字段选择器</param>
         /// <returns></returns>
-        public QueryContext<T> OrderBy<TKey>(Expression<Func<T, TKey>> keySelector)
-        {
-            return OrderTransafer(keySelector);
-        }
+        public QueryContext<T> OrderBy<TKey>(Expression<Func<T, TKey>> keySelector) => OrderTransafer(keySelector);
 
         /// <summary>
         ///  设置查询的排序条件，该方法将根据表达式自动推导出排序的字段，排序方向为 ASC
@@ -77,10 +74,7 @@ namespace MyStaging.Helpers
         /// <typeparam name="TKey">字段</typeparam>
         /// <param name="keySelector">字段选择器</param>
         /// <returns></returns>
-        public QueryContext<T> OrderBy<TSource, TKey>(Expression<Func<TSource, TKey>> keySelector)
-        {
-            return OrderTransafer(keySelector);
-        }
+        public QueryContext<T> OrderBy<TSource, TKey>(Expression<Func<TSource, TKey>> keySelector) => OrderTransafer(keySelector);
 
         /// <summary>
         ///  设置查询的排序条件，该方法将根据表达式自动推导出排序的字段，排序方向为 DESC
@@ -88,10 +82,7 @@ namespace MyStaging.Helpers
         /// <typeparam name="TKey">字段</typeparam>
         /// <param name="keySelector">字段选择器</param>
         /// <returns></returns>
-        public QueryContext<T> OrderByDescing<TKey>(Expression<Func<T, TKey>> keySelector)
-        {
-            return OrderTransafer(keySelector.Body, "DESC");
-        }
+        public QueryContext<T> OrderByDescing<TKey>(Expression<Func<T, TKey>> keySelector) => OrderTransafer(keySelector.Body, "DESC");
 
         /// <summary>
         ///  设置查询的排序条件，该方法将根据表达式自动推导出排序的字段，排序方向为 DESC
@@ -100,10 +91,7 @@ namespace MyStaging.Helpers
         /// <typeparam name="TKey">字段</typeparam>
         /// <param name="keySelector">字段选择器</param>
         /// <returns></returns>
-        public QueryContext<T> OrderByDescing<TSource, TKey>(Expression<Func<TSource, TKey>> keySelector)
-        {
-            return OrderTransafer(keySelector.Body, "DESC");
-        }
+        public QueryContext<T> OrderByDescing<TSource, TKey>(Expression<Func<TSource, TKey>> keySelector) => OrderTransafer(keySelector.Body, "DESC");
 
         /// <summary>
         ///  设置查询排序条件和方向
@@ -146,10 +134,7 @@ namespace MyStaging.Helpers
         ///  查询的结果总行数
         /// </summary>
         /// <returns></returns>
-        public long Count()
-        {
-            return ToScalar<long>("COALESCE(COUNT(1),0)");
-        }
+        public long Count() => ToScalar<long>("COALESCE(COUNT(1),0)");
 
         /// <summary>
         /// 查询的结果最大值
@@ -157,10 +142,7 @@ namespace MyStaging.Helpers
         /// <typeparam name="TResult">接受查询结果类型</typeparam>
         /// <param name="field">筛选字段名</param>
         /// <returns></returns>
-        public TResult Max<TResult>(string field)
-        {
-            return ToScalar<TResult>($"COALESCE(MAX({field}),0)");
-        }
+        public TResult Max<TResult>(string field) => ToScalar<TResult>($"COALESCE(MAX({field}),0)");
 
         /// <summary>
         /// 查询的结果最大值
@@ -168,10 +150,7 @@ namespace MyStaging.Helpers
         /// <param name="selector">字段选择器</param>
         /// <typeparam name="TResult">接受查询结果类型</typeparam>
         /// <returns></returns>
-        public TResult Max<TResult>(Expression<Func<T, TResult>> selector)
-        {
-            return Max<T, TResult>(selector);
-        }
+        public TResult Max<TResult>(Expression<Func<T, TResult>> selector) => Max<T, TResult>(selector);
 
         /// <summary>
         /// 查询的结果最大值
@@ -180,11 +159,7 @@ namespace MyStaging.Helpers
         /// <typeparam name="TSource">查询目标对象</typeparam>
         /// <typeparam name="TResult">接受查询结果类型</typeparam>
         /// <returns></returns>
-        public TResult Max<TSource, TResult>(Expression<Func<TSource, TResult>> selector)
-        {
-            MemberExpression exp = (MemberExpression)selector.Body;
-            return Max<TResult>(exp.Member.Name);
-        }
+        public TResult Max<TSource, TResult>(Expression<Func<TSource, TResult>> selector) => Max<TResult>(GetMemberName(selector));
 
         /// <summary>
         /// 查询的结果最小值
@@ -192,10 +167,7 @@ namespace MyStaging.Helpers
         /// <typeparam name="TResult">接受查询结果类型</typeparam>
         /// <param name="field">筛选字段名</param>
         /// <returns></returns>
-        public TResult Min<TResult>(string field)
-        {
-            return ToScalar<TResult>($"COALESCE(MIN({field}),0)");
-        }
+        public TResult Min<TResult>(string field) => ToScalar<TResult>($"COALESCE(MIN({field}),0)");
 
         /// <summary>
         /// 查询的结果最小值
@@ -203,10 +175,7 @@ namespace MyStaging.Helpers
         /// <param name="selector">字段选择器</param>
         /// <typeparam name="TResult">接受查询结果类型</typeparam>
         /// <returns></returns>
-        public TResult Min<TResult>(Expression<Func<TResult, string>> selector)
-        {
-            return Min(selector);
-        }
+        public TResult Min<TResult>(Expression<Func<T, TResult>> selector) => Min<T, TResult>(selector);
 
         /// <summary>
         /// 查询的结果最小值
@@ -215,11 +184,7 @@ namespace MyStaging.Helpers
         /// <typeparam name="TSource">查询目标对象</typeparam>
         /// <typeparam name="TResult">接受查询结果类型</typeparam>
         /// <returns></returns>
-        public TResult Min<TSource, TResult>(Expression<Func<TSource, TResult>> selector)
-        {
-            MemberExpression exp = (MemberExpression)selector.Body;
-            return Min<TResult>(exp.Member.Name);
-        }
+        public TResult Min<TSource, TResult>(Expression<Func<TSource, TResult>> selector) => Min<TResult>(GetMemberName(selector));
 
         /// <summary>
         /// 对查询进行求和
@@ -227,10 +192,7 @@ namespace MyStaging.Helpers
         /// <typeparam name="TResult">接受查询结果类型</typeparam>
         /// <param name="field">筛选字段名</param>
         /// <returns></returns>
-        public TResult Sum<TResult>(string field)
-        {
-            return ToScalar<TResult>($"COALESCE(SUM({field}),0)");
-        }
+        public TResult Sum<TResult>(string field) => ToScalar<TResult>($"COALESCE(SUM({field}),0)");
 
         /// <summary>
         /// 对查询进行求和
@@ -238,10 +200,7 @@ namespace MyStaging.Helpers
         /// <param name="selector">字段选择器</param>
         /// <typeparam name="TResult">接受查询结果类型</typeparam>
         /// <returns></returns>
-        public TResult Sum<TResult>(Expression<Func<T, TResult>> selector)
-        {
-            return Sum<T, TResult>(selector);
-        }
+        public TResult Sum<TResult>(Expression<Func<T, TResult>> selector) => Sum<T, TResult>(selector);
 
         /// <summary>
         /// 对查询进行求和
@@ -250,10 +209,26 @@ namespace MyStaging.Helpers
         /// <typeparam name="TSource">查询目标对象</typeparam>
         /// <typeparam name="TResult">接受查询结果类型</typeparam>
         /// <returns></returns>
-        public TResult Sum<TSource, TResult>(Expression<Func<TSource, TResult>> selector)
+        public TResult Sum<TSource, TResult>(Expression<Func<TSource, TResult>> selector) => Sum<TResult>(GetMemberName(selector));
+
+        /// <summary>
+        ///  获取表达式成员名称
+        /// </summary>
+        /// <typeparam name="TSource"></typeparam>
+        /// <typeparam name="TResult"></typeparam>
+        /// <param name="selector"></param>
+        /// <returns></returns>
+        private string GetMemberName<TSource, TResult>(Expression<Func<TSource, TResult>> selector)
         {
-            MemberExpression exp = (MemberExpression)selector.Body;
-            return Sum<TResult>(exp.Member.Name);
+            MemberExpression exp = null;
+            if (selector.Body.NodeType == ExpressionType.Convert)
+            {
+                exp = (MemberExpression)((UnaryExpression)selector.Body).Operand;
+            }
+            else
+                exp = (MemberExpression)selector.Body;
+
+            return exp.Member.Name;
         }
 
         /// <summary>
@@ -262,10 +237,7 @@ namespace MyStaging.Helpers
         /// <typeparam name="TResult">接受查询结果类型</typeparam>
         /// <param name="field">筛选字段名</param>
         /// <returns></returns>
-        public TResult Avg<TResult>(string field)
-        {
-            return ToScalar<TResult>($"COALESCE(AVG({field}),0)");
-        }
+        public TResult Avg<TResult>(string field) => ToScalar<TResult>($"COALESCE(AVG({field}),0)");
 
         /// <summary>
         /// 对查询进行求平均值
@@ -273,10 +245,7 @@ namespace MyStaging.Helpers
         /// <param name="selector">字段选择器</param>
         /// <typeparam name="TResult">接受查询结果类型</typeparam>
         /// <returns></returns>
-        public TResult Avg<TResult>(Expression<Func<T, TResult>> selector)
-        {
-            return Avg<T, TResult>(selector);
-        }
+        public TResult Avg<TResult>(Expression<Func<T, TResult>> selector) => Avg<T, TResult>(selector);
 
         /// <summary>
         /// 对查询进行求平均值
@@ -285,11 +254,7 @@ namespace MyStaging.Helpers
         /// <typeparam name="TSource">查询目标对象</typeparam>
         /// <typeparam name="TResult">接受查询结果类型</typeparam>
         /// <returns></returns>
-        public TResult Avg<TSource, TResult>(Expression<Func<TSource, TResult>> selector)
-        {
-            MemberExpression exp = (MemberExpression)selector.Body;
-            return Avg<TResult>(exp.Member.Name);
-        }
+        public TResult Avg<TSource, TResult>(Expression<Func<TSource, TResult>> selector) => Avg<TResult>(GetMemberName(selector));
 
         /// <summary>
         ///  查询返回第一行第一列字段的值
@@ -335,20 +300,14 @@ namespace MyStaging.Helpers
         /// <typeparam name="TResult">接受查询结果对象类型</typeparam>
         /// <param name="fields">指定查询的字段</param>
         /// <returns></returns>
-        public T ToOne(params string[] fields)
-        {
-            return this.ToOne<T>(fields);
-        }
+        public T ToOne(params string[] fields) => this.ToOne<T>(fields);
 
         /// <summary>
         ///  查询返回一个结果集
         /// </summary>
         /// <param name="fields">指定查询的字段</param>
         /// <returns></returns>
-        public List<T> ToList(params string[] fields)
-        {
-            return ToList<T>(fields);
-        }
+        public List<T> ToList(params string[] fields) => ToList<T>(fields);
 
         /// <summary>
         ///  查询返回一个结果集
@@ -566,10 +525,7 @@ namespace MyStaging.Helpers
         /// </summary>
         /// <param name="predicate">查询表达式</param>
         /// <returns></returns>
-        public QueryContext<T> Where(Expression<Func<T, bool>> predicate)
-        {
-            return Where<T>(predicate);
-        }
+        public QueryContext<T> Where(Expression<Func<T, bool>> predicate) => Where<T>(predicate);
 
         /// <summary>
         ///  增加查询条件
@@ -577,11 +533,7 @@ namespace MyStaging.Helpers
         /// <typeparam name="TResult">查询表达式的对象</typeparam>
         /// <param name="predicate">查询表达式</param>
         /// <returns></returns>
-        public QueryContext<T> Where<TResult>(Expression<Func<TResult, bool>> predicate)
-        {
-            this.Where<TResult>(null, predicate);
-            return this;
-        }
+        public QueryContext<T> Where<TResult>(Expression<Func<TResult, bool>> predicate) => this.Where<TResult>(null, predicate);
 
         /// <summary>
         ///  增加查询条件
@@ -609,11 +561,7 @@ namespace MyStaging.Helpers
         /// <param name="unionType">连接类型</param>
         /// <param name="predicate">On 的查询表达式</param>
         /// <returns></returns>
-        public QueryContext<T> Union<TModel>(string alisName, UnionType unionType, Expression<Func<T, TModel, bool>> predicate)
-        {
-            Union<T, TModel>("a", alisName, unionType, predicate);
-            return this;
-        }
+        public QueryContext<T> Union<TModel>(string alisName, UnionType unionType, Expression<Func<T, TModel, bool>> predicate) => Union<T, TModel>("a", alisName, unionType, predicate);
 
         /// <summary>
         ///  执行表连接查询，该方法可连接两个不同的表
@@ -851,10 +799,7 @@ namespace MyStaging.Helpers
         /// <param name="dbType">字段类型</param>
         /// <param name="value">字段指定的值</param>
         /// <returns></returns>
-        public QueryContext<T> AddParameter(string field, NpgsqlDbType dbType, object value)
-        {
-            return this.AddParameter(field, dbType, value, -1, null);
-        }
+        public QueryContext<T> AddParameter(string field, NpgsqlDbType dbType, object value) => AddParameter(field, dbType, value, -1, null);
 
         /// <summary>
         ///  增加一个查询参数
@@ -864,10 +809,7 @@ namespace MyStaging.Helpers
         /// <param name="value">字段指定的值</param>
         /// <param name="specificType">指定类型，通常枚举类型时需提供该参数的值</param>
         /// <returns></returns>
-        public QueryContext<T> AddParameter(string field, NpgsqlDbType dbType, object value, Type specificType)
-        {
-            return this.AddParameter(field, dbType, value, -1, specificType);
-        }
+        public QueryContext<T> AddParameter(string field, NpgsqlDbType dbType, object value, Type specificType) => AddParameter(field, dbType, value, -1, specificType);
 
         /// <summary>
         ///  增加一个查询参数
@@ -877,10 +819,7 @@ namespace MyStaging.Helpers
         /// <param name="value">字段指定的值</param>
         /// <param name="size">字段长度</param>
         /// <returns></returns>
-        public QueryContext<T> AddParameter(string field, NpgsqlDbType dbType, object value, int size)
-        {
-            return this.AddParameter(field, dbType, value, size, null);
-        }
+        public QueryContext<T> AddParameter(string field, NpgsqlDbType dbType, object value, int size) => AddParameter(field, dbType, value, size, null);
 
         /// <summary>
         ///  增加一个查询参数
@@ -973,10 +912,7 @@ namespace MyStaging.Helpers
         /// </summary>
         /// <param name="cmdText"></param>
         /// <returns></returns>
-        public int ExecuteNonQuery(string cmdText)
-        {
-            return PgSqlHelper.ExecuteNonQuery(CommandType.Text, cmdText, ParamList.ToArray());
-        }
+        public int ExecuteNonQuery(string cmdText) => PgSqlHelper.ExecuteNonQuery(CommandType.Text, cmdText, ParamList.ToArray());
 
         /// <summary>
         ///  添加仅从已配置的主数据源中查询数据的约束
