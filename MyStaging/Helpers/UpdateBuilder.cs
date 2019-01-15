@@ -87,10 +87,6 @@ namespace MyStaging.Helpers
         /// <returns></returns>
         public int SaveChange()
         {
-            if (this.setList.Count == 0)
-                throw new ArgumentException("fields to be updated must be provided!");
-
-            string tableName = MyStagingUtils.GetMapping(typeof(T));
             if (WhereExpressionList.Count > 0)
             {
                 foreach (var item in WhereExpressionList)
@@ -102,17 +98,20 @@ namespace MyStaging.Helpers
                 }
             }
 
+            if (this.setList.Count == 0)
+                throw new ArgumentException("fields to be updated must be provided!");
+
             if (this.WhereList.Count == 0)
                 throw new ArgumentException("The update operation must specify where conditions!");
 
+            this.ToString();
 
-            string cmdText = $"UPDATE {tableName} SET {string.Join(",", this.setList)} {"WHERE " + string.Join("\nAND ", WhereList)}";
             int affrows = 0;
             if (OnChanged != null)
             {
-                cmdText += " RETURNING *;";
+                this.CommandText += " RETURNING *;";
 
-                var objList = base.ByMaster().ExecuteReader<T>(cmdText);
+                var objList = base.ByMaster().ExecuteReader<T>(this.CommandText);
                 affrows = objList.Count;
                 if (affrows > 0 && this.OnChanged != null)
                 {
@@ -120,9 +119,21 @@ namespace MyStaging.Helpers
                 }
             }
             else
-                affrows = base.ExecuteNonQuery(cmdText);
+                affrows = base.ExecuteNonQuery(this.CommandText);
 
             return affrows;
+        }
+
+        /// <summary>
+        ///  重写方法
+        /// </summary>
+        /// <returns></returns>
+        public override string ToString()
+        {
+            string tableName = MyStagingUtils.GetMapping(typeof(T));
+            this.CommandText = $"UPDATE {tableName} a SET {string.Join(",", this.setList)} {"WHERE " + string.Join("\nAND ", WhereList)}";
+
+            return this.CommandText;
         }
 
     }

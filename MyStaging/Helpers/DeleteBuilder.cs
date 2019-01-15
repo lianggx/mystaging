@@ -25,7 +25,6 @@ namespace MyStaging.Helpers
         /// <returns></returns>
         public int SaveChange()
         {
-            string tableName = MyStagingUtils.GetMapping(typeof(T));
             if (WhereExpressionList.Count > 0)
             {
                 foreach (var item in WhereExpressionList)
@@ -40,9 +39,21 @@ namespace MyStaging.Helpers
             if (this.WhereList.Count == 0)
                 throw new ArgumentException("The delete operation must specify where conditions!");
 
+            this.ToString();
 
-            string cmdText = $"DELETE FROM {tableName} {"WHERE " + string.Join("\nAND ", WhereList)}";
-            return base.ExecuteNonQuery(cmdText);
+            return base.ExecuteNonQuery(this.CommandText);
+        }
+
+        /// <summary>
+        ///  重写方法
+        /// </summary>
+        /// <returns></returns>
+        public override string ToString()
+        {
+            string tableName = MyStagingUtils.GetMapping(typeof(T));
+            this.CommandText = $"DELETE FROM {tableName} a {"WHERE " + string.Join("\nAND ", WhereList)}";
+
+            return this.CommandText;
         }
     }
 }

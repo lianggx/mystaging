@@ -21,6 +21,12 @@ namespace MyStaging.xUnitTest
         public void Update()
         {
             string userid = "5b1b54bfd86b1b3bb0000009";
+            var user = User.Context.Where(f => f.Id == userid).ToOne();
+            var builder = user.UpdateBuilder;            
+            builder.SetMoney(2000);
+            var sql = builder.ToString();
+            builder.SaveChange();
+           
             var rows = User.UpdateBuilder.Where(f => f.Id == userid).SetMoney(2000).SetSex(false).SaveChange();
 
             Assert.Equal(1, rows);
