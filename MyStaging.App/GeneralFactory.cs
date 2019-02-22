@@ -10,6 +10,7 @@ namespace MyStaging.App
 {
     public class GeneralFactory
     {
+        private static string schemaPath = string.Empty;
         private static string modelPath = string.Empty;
         private static string dalPath = string.Empty;
         private static string projectName = string.Empty;
@@ -34,8 +35,8 @@ namespace MyStaging.App
                 foreach (var item in tableList)
                 {
                     Console.WriteLine("{0}:{1}", item.type, item.name);
-                    TablesDal td = new TablesDal(GeneralFactory.projectName, modelPath, dalPath, schemaName, item);
-                    td.Generate();
+                    TablesDal td = new TablesDal(GeneralFactory.projectName, modelPath, schemaPath, dalPath, schemaName, item);
+                    td.Create();
                 }
             }
         }
@@ -43,6 +44,7 @@ namespace MyStaging.App
         private static void CreateDir()
         {
             modelPath = Path.Combine(outputDir, projectName + ".db", "Model", "Build");
+            schemaPath = Path.Combine(outputDir, projectName + ".db", "Model", "Schemas");
             dalPath = Path.Combine(outputDir, projectName + ".db", "DAL", "Build");
             string[] ps = { modelPath, dalPath };
             for (int i = 0; i < ps.Length; i++)

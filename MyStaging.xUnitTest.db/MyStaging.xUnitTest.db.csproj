@@ -12,5 +12,6 @@
 	<ItemGroup>
 	  <Folder Include="DAL\Build\" />
 	  <Folder Include="Model\Build\" />
+	  <Folder Include="Model\Schemas\" />
 	</ItemGroup>
 </Project>

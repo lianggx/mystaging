@@ -21,7 +21,7 @@ namespace MyStaging.xUnitTest.Model
 
 		public DateTime Createtime { get; set; }
 
-		[NonDbColumnMapping, JsonIgnore] public MyStaging.xUnitTest.DAL.Article.ArticleUpdateBuilder UpdateBuilder { get { return new MyStaging.xUnitTest.DAL.Article.ArticleUpdateBuilder(model =>{MyStaging.Helpers.MyStagingUtils.CopyProperty<ArticleModel>(this, model);}, this.Id); } }
+		[NonDbColumnMapping, JsonIgnore] public MyStaging.xUnitTest.DAL.Article.ArticleUpdateBuilder UpdateBuilder { get { return new MyStaging.xUnitTest.DAL.Article.ArticleUpdateBuilder(model =>{MyStaging.Helpers.MyStagingUtils.CopyProperty<ArticleModel>(this, model);}, this.Id,this.Userid); } }
 
 		public ArticleModel Insert() { return MyStaging.xUnitTest.DAL.Article.Insert(this); }
 

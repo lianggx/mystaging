@@ -358,7 +358,7 @@ namespace MyStaging.Helpers
         {
             List<TResult> list = new List<TResult>();
             DynamicBuilder<TResult> builder = null;
-            Action<DbDataReader> action = (dr) =>
+            void action(DbDataReader dr)
             {
                 TResult obj = default(TResult);
                 Type objType = typeof(TResult);
@@ -385,7 +385,7 @@ namespace MyStaging.Helpers
                     obj = builder.Build(dr);
                 }
                 list.Add(obj);
-            };
+            }
 
 
             if (PgSqlHelper.InstanceSlave != null && !Master)
@@ -543,10 +543,12 @@ namespace MyStaging.Helpers
         /// <returns></returns>
         public QueryContext<T> Where<TResult>(string alisName, Expression<Func<TResult, bool>> predicate)
         {
-            ExpressionModel em = new ExpressionModel();
-            em.Body = predicate.Body;
-            em.Model = typeof(TResult);
-            em.UnionAlisName = alisName;
+            ExpressionModel em = new ExpressionModel
+            {
+                Body = predicate.Body,
+                Model = typeof(TResult),
+                UnionAlisName = alisName
+            };
             WhereExpressionList.Add(em);
             return this;
         }
@@ -713,10 +715,12 @@ namespace MyStaging.Helpers
             int _index = 2;
             foreach (var item in UnionList)
             {
-                DbExpressionVisitor expression = new DbExpressionVisitor();
-                expression.TypeMaster = item.MasterType;
-                expression.AliasMaster = item.AlisName;
-                expression.AliasUnion = item.UnionAlisName;
+                DbExpressionVisitor expression = new DbExpressionVisitor
+                {
+                    TypeMaster = item.MasterType,
+                    AliasMaster = item.AlisName,
+                    AliasUnion = item.UnionAlisName
+                };
                 expression.Visit(item.Body);
                 string unionTableName = MyStagingUtils.GetMapping(item.Model);
                 sqlText.AppendLine(item.UnionType.ToString().Replace("_", " ") + " " + unionTableName + " " + expression.AliasUnion + " ON " + expression.SqlText.Builder.ToString());

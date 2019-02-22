@@ -15,7 +15,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MyStaging.xUnitTest.db", "M
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "SQL", "SQL", "{E6893126-9B22-4541-8C78-D66A2EDAC18D}"
 	ProjectSection(SolutionItems) = preProject
-		C:\Users\Administrator\Desktop\mystaging.sql = C:\Users\Administrator\Desktop\mystaging.sql
+		mystaging.sql = mystaging.sql
 	EndProjectSection
 EndProject
 Global
