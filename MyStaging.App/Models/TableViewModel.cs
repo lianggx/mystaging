@@ -4,9 +4,9 @@ using System.Text;
 
 namespace MyStaging.App.Models
 {
-   public class TableViewModel
+    public class TableViewModel
     {
-        public string name { get; set; }
-        public string type { get; set; }
+        public string Name { get; set; }
+        public string Type { get; set; }
     }
 }

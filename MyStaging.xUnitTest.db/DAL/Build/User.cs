@@ -46,64 +46,54 @@ namespace MyStaging.xUnitTest.DAL
 
 			public new UserUpdateBuilder Where(Expression<Func<UserModel, bool>> predicate)
 			{
-				 base.Where(predicate);
-				 return this;
+				base.Where(predicate);
+				return this;
 			}
-
 			public new UserUpdateBuilder Where(string formatCommad, params object[] pValue)
 			{
-				 base.Where(formatCommad,pValue);
-				 return this;
+				base.Where(formatCommad,pValue);
+				return this;
 			}
-
 			public UserUpdateBuilder SetId(string id)
 			{
 				base.SetField("id", NpgsqlDbType.Varchar, id, -1, null);
 				return this;
 			}
-
 			public UserUpdateBuilder SetLoginname(string loginname)
 			{
 				base.SetField("loginname", NpgsqlDbType.Varchar, loginname, 255, null);
 				return this;
 			}
-
 			public UserUpdateBuilder SetPassword(string password)
 			{
 				base.SetField("password", NpgsqlDbType.Varchar, password, 255, null);
 				return this;
 			}
-
 			public UserUpdateBuilder SetNickname(string nickname)
 			{
 				base.SetField("nickname", NpgsqlDbType.Varchar, nickname, 255, null);
 				return this;
 			}
-
 			public UserUpdateBuilder SetSex(bool? sex)
 			{
 				base.SetField("sex", NpgsqlDbType.Boolean, sex, 1, null);
 				return this;
 			}
-
 			public UserUpdateBuilder SetAge(int age)
 			{
 				base.SetField("age", NpgsqlDbType.Integer, age, 4, null);
 				return this;
 			}
-
 			public UserUpdateBuilder SetMoney(decimal money)
 			{
 				base.SetField("money", NpgsqlDbType.Numeric, money, -1, null);
 				return this;
 			}
-
 			public UserUpdateBuilder SetCreatetime(DateTime createtime)
 			{
 				base.SetField("createtime", NpgsqlDbType.Timestamp, createtime, 8, null);
 				return this;
 			}
-
 		}
 
 	}

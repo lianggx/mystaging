@@ -6,8 +6,8 @@ namespace MyStaging.App.Models
 {
     public class EnumTypeInfo
     {
-        public int oid { get; set; }
-        public string typename { get; set; }
-        public string nspname { get; set; }
+        public int Oid { get; set; }
+        public string TypeName { get; set; }
+        public string NspName { get; set; }
     }
 }

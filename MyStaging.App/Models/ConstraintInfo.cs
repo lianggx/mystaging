@@ -6,10 +6,10 @@ namespace MyStaging.App.Models
 {
     public class ConstraintInfo
     {
-        public string conname { get; set; }
-        public string contype { get; set; }
-        public string ref_column { get; set; }
-        public string table_name { get; set; }
-        public string nspname { get; set; }
+        public string ConlumnName { get; set; }
+        public string ConlumnType { get; set; }
+        public string RefColumn { get; set; }
+        public string TablaName { get; set; }
+        public string NspName { get; set; }
     }
 }

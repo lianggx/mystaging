@@ -23,11 +23,11 @@ namespace MyStaging.xUnitTest.Model.Schemas
 		{
 			schemas = new Dictionary<string, SchemaModel>
 			{
-				{"id",new SchemaModel{ FieldName="id", DbType= NpgsqlDbType.Varchar, Size=-1, SpecificType=null } },
-				{"userid",new SchemaModel{ FieldName="userid", DbType= NpgsqlDbType.Varchar, Size=-1, SpecificType=null } },
-				{"title",new SchemaModel{ FieldName="title", DbType= NpgsqlDbType.Varchar, Size=255, SpecificType=null } },
-				{"content",new SchemaModel{ FieldName="content", DbType= NpgsqlDbType.Jsonb, Size=-1, SpecificType=null } },
-				{"createtime",new SchemaModel{ FieldName="createtime", DbType= NpgsqlDbType.Timestamp, Size=8, SpecificType=null } }
+				{"id", new SchemaModel{ FieldName = "id", DbType = NpgsqlDbType.Varchar, Size = -1, SpecificType = null ,Primarykey = true} },
+				{"userid", new SchemaModel{ FieldName = "userid", DbType = NpgsqlDbType.Varchar, Size = -1, SpecificType = null ,Primarykey = true} },
+				{"title", new SchemaModel{ FieldName = "title", DbType = NpgsqlDbType.Varchar, Size = 255, SpecificType = null} },
+				{"content", new SchemaModel{ FieldName = "content", DbType = NpgsqlDbType.Jsonb, Size = -1, SpecificType = null} },
+				{"createtime", new SchemaModel{ FieldName = "createtime", DbType = NpgsqlDbType.Timestamp, Size = 8, SpecificType = null} }
 			};
 			properties = ContractUtils.GetProperties(typeof(ArticleModel));
 		}

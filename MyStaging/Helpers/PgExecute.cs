@@ -335,19 +335,22 @@ namespace MyStaging.Helpers
             DbParameterCollection coll = command.Parameters;
             ex.Data["DbConnection"] = command.Connection;
             string ps = string.Empty;
+            string sql = command.CommandText;
             if (coll != null)
+            {
                 for (int i = 0; i < coll.Count; i++)
                 {
                     var item = coll[i];
                     ps += $"{ item.ParameterName}:{item.Value},";
                 }
-            string sql = command.CommandText;
-            for (int i = 0; i < coll.Count; i++)
-            {
-                var para = coll[i];
-                var isString = IsString(para.DbType);
-                var val = string.Format("{0}{1}{0}", isString ? "'" : "", para.Value.ToString());
-                sql = sql.Replace("@" + para.ParameterName, val);
+
+                for (int i = 0; i < coll.Count; i++)
+                {
+                    var para = coll[i];
+                    var isString = IsString(para.DbType);
+                    var val = string.Format("{0}{1}{0}", isString ? "'" : "", para.Value.ToString());
+                    sql = sql.Replace("@" + para.ParameterName, val);
+                }
             }
             if (_logger != null)
                 _logger.LogError(new EventId(111111), ex, "数据库执行出错：===== \n {0}\n{1}\n{2}", sql, coll, ps);

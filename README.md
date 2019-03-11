@@ -110,13 +110,47 @@
 **数据库操作**
 
 
-* **插入记录**
+* **插入单条记录**
 
 ``` C#
     UserModel user = new UserModel();
     user.Id = Guid.NewGuid();
     user.Login_name = "test@gmail.com";
     User.Insert(user);
+```
+
+* **一次性插入多条记录**
+
+``` C#
+        [Fact]
+        public void InsertRange()
+        {
+            int total = 500;
+            List<UserModel> list = new List<UserModel>();
+            for (int i = 0; i < total; i++)
+            {
+                var model = new UserModel()
+                {
+                    Age = 18,
+                    Createtime = DateTime.Now,
+                    Id = ObjectId.NewId().ToString(),
+                    Loginname = Guid.NewGuid().ToString("N"),
+                    Money = 100,
+                    Nickname = Guid.NewGuid().ToString("N"),
+                    Password = "123456",
+                    Sex = true
+                };
+
+                list.Add(model);
+            }
+            Stopwatch sw = new Stopwatch();
+            sw.Start();
+            var rows = User.InsertRange(list);
+            sw.Stop();
+
+            output.WriteLine("执行时间：{0}", sw.ElapsedMilliseconds);
+            Assert.Equal(total, rows);
+        }
 ```
 
 

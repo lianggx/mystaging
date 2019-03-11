@@ -161,23 +161,6 @@ namespace MyStaging.Common
         }
 
         /// <summary>
-        /// 将两个管理对象进行比较，如果一致，则返回 true，反之返回 false
-        /// </summary>
-        /// <param name="other">要比较的目标对象</param>
-        /// <returns></returns>
-        public override bool Equals(object obj)
-        {
-            if (obj is ObjectId)
-            {
-                return Equals((ObjectId)obj);
-            }
-            else
-            {
-                return false;
-            }
-        }
-
-        /// <summary>
         ///  运算符重载 <
         /// </summary>
         /// <param name="a"></param>

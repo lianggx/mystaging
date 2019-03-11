@@ -7,6 +7,6 @@ namespace MyStaging.App.Models
     public class PrimarykeyInfo
     {
         public string Field { get; set; }
-        public string Typname { get; set; }
+        public string TypeName { get; set; }
     }
 }

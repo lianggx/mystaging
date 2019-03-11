@@ -34,7 +34,7 @@ namespace MyStaging.App
                 List<TableViewModel> tableList = GetTables(schemaName);
                 foreach (var item in tableList)
                 {
-                    Console.WriteLine("{0}:{1}", item.type, item.name);
+                    Console.WriteLine("{0}:{1}", item.Type, item.Name);
                     TablesDal td = new TablesDal(GeneralFactory.projectName, modelPath, schemaPath, dalPath, schemaName, item);
                     td.Create();
                 }
@@ -46,7 +46,7 @@ namespace MyStaging.App
             modelPath = Path.Combine(outputDir, projectName + ".db", "Model", "Build");
             schemaPath = Path.Combine(outputDir, projectName + ".db", "Model", "Schemas");
             dalPath = Path.Combine(outputDir, projectName + ".db", "DAL", "Build");
-            string[] ps = { modelPath, dalPath };
+            string[] ps = { modelPath, schemaPath, dalPath };
             for (int i = 0; i < ps.Length; i++)
             {
                 if (!Directory.Exists(ps[i]))
@@ -76,39 +76,6 @@ namespace MyStaging.App
                 writer.WriteLine("\t</ItemGroup>");
                 writer.WriteLine("</Project>");
             }
-            // sln
-
-            string sln_file = Path.Combine(outputDir, projectName, $"{projectName}.sln");
-            if (!File.Exists(sln_file))
-            {
-                using (StreamWriter writer = new StreamWriter(File.Create(sln_file), System.Text.Encoding.UTF8))
-                {
-                    writer.WriteLine("Microsoft Visual Studio Solution File, Format Version 12.00");
-                    writer.WriteLine("# Visual Studio 15>");
-                    writer.WriteLine($"VisualStudioVersion = 15.0.26430.13");
-
-                    Guid db_guid = Guid.NewGuid();
-                    writer.WriteLine($"Project(\"{Guid.NewGuid()}\") = \"{projectName}.db\", \"{projectName}.db\\{projectName}.db.csproj\", \"{ db_guid}\"");
-                    writer.WriteLine($"EndProject");
-
-                    writer.WriteLine("Global");
-                    writer.WriteLine("\tGlobalSection(SolutionConfigurationPlatforms) = preSolution");
-                    writer.WriteLine("\t\tDebug|Any CPU = Debug|Any CPU");
-                    writer.WriteLine("\t\tRelease|Any CPU = Release|Any CPU");
-                    writer.WriteLine("\tEndGlobalSection");
-
-                    writer.WriteLine("\tGlobalSection(ProjectConfigurationPlatforms) = postSolution");
-                    writer.WriteLine($"\t\t{db_guid}.Debug|Any CPU.ActiveCfg = Debug|Any CPU");
-                    writer.WriteLine($"\t\t{db_guid}.Debug|Any CPU.Build.0 = Debug|Any CPU");
-                    writer.WriteLine($"\t\t{db_guid}.Release|Any CPU.ActiveCfg = Release|Any CPU");
-                    writer.WriteLine($"\t\t{db_guid}.Release|Any CPU.Build.0 = Release|Any CPU");
-                    writer.WriteLine("\tEndGlobalSection");
-                    writer.WriteLine("\tGlobalSection(SolutionProperties) = preSolution");
-                    writer.WriteLine("\t\tHideSolutionNode = FALSE");
-                    writer.WriteLine("\tEndGlobalSection");
-                    writer.WriteLine("EndGlobal");
-                }
-            }
         }
 
         private static List<TableViewModel> GetTables(string schema)
@@ -119,7 +86,7 @@ SELECT table_name,'view' as type FROM INFORMATION_SCHEMA.views WHERE table_schem
             List<TableViewModel> tableList = new List<TableViewModel>();
             PgSqlHelper.ExecuteDataReader(dr =>
             {
-                TableViewModel model = new TableViewModel() { name = dr["table_name"].ToString(), type = dr["type"].ToString() };
+                TableViewModel model = new TableViewModel() { Name = dr["table_name"].ToString(), Type = dr["type"].ToString() };
                 tableList.Add(model);
             }, CommandType.Text, _sqltext);
 

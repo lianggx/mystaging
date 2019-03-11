@@ -8,10 +8,11 @@
     <Copyright>MIT</Copyright>
     <PackageLicenseUrl>https://github.com/lianggx/mystaging/blob/master/LICENSE</PackageLicenseUrl>
     <PackageProjectUrl>https://github.com/lianggx/mystaging</PackageProjectUrl>
-    <Version>1.0.6</Version>
-    <AssemblyVersion>1.0.6.0</AssemblyVersion>
-    <FileVersion>1.0.6.0</FileVersion>
+    <Version>1.0.7</Version>
+    <AssemblyVersion>1.0.7.0</AssemblyVersion>
+    <FileVersion>1.0.7.0</FileVersion>
     <PackageReleaseNotes>增加 Update 和 Delete 操作的检查，当没有指定更新字段和 Where 条件时，将抛出异常，防止对整表的误操作</PackageReleaseNotes>
+    <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
   </PropertyGroup>
 
   <ItemGroup>

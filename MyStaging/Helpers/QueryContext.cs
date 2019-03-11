@@ -111,7 +111,7 @@ namespace MyStaging.Helpers
             {
                 alisname += ".";
             }
-            else if (string.IsNullOrEmpty(alisname) && UnionList.Count > 0)
+            else if (UnionList.Count > 0)
             {
                 alisname = masterAlisName + ".";
             }

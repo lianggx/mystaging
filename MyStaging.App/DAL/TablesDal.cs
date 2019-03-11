@@ -34,13 +34,14 @@ namespace MyStaging.App.DAL
             this.dalpath = dalpath;
             this.schemaName = schemaName;
             this.table = table;
-            Get_Fields();
-            Get_Primarykey(fieldList[0].Oid);
-            Get_Constraint();
         }
 
         public void Create()
         {
+            Get_Fields();
+            Get_Primarykey(fieldList[0].Oid);
+            Get_Constraint();
+
             CreateModel();
             CreateSchema();
             CreateDal();
@@ -62,7 +63,7 @@ namespace MyStaging.App.DAL
                 writer.WriteLine();
                 writer.WriteLine($"namespace {projectName}.Model");
                 writer.WriteLine("{");
-                writer.WriteLine($"\t[EntityMapping(name: \"{this.table.name}\", Schema = \"{this.schemaName}\")]");
+                writer.WriteLine($"\t[EntityMapping(name: \"{this.table.Name}\", Schema = \"{this.schemaName}\")]");
                 writer.WriteLine($"\tpublic partial class {_classname}");
                 writer.WriteLine("\t{");
 
@@ -78,24 +79,24 @@ namespace MyStaging.App.DAL
                     writer.WriteLine($"\t\tpublic {_type} {item.Field.ToUpperPascal()} {{ get; set; }}");
                     writer.WriteLine();
                 }
-                if (this.table.type == "table")
+                if (this.table.Type == "table")
                 {
                     string dalPath = $"{ projectName }.DAL.";
                     Hashtable ht = new Hashtable();
                     foreach (var item in consList)
                     {
-                        string f_dalName = CreateName(item.nspname, item.table_name);
-                        string pname = $"{item.table_name.ToUpperPascal()}";
+                        string f_dalName = CreateName(item.NspName, item.TablaName);
+                        string pname = $"{item.TablaName.ToUpperPascal()}";
                         string propertyName = f_dalName;
                         if (ht.ContainsKey(propertyName) || _classname == propertyName)
                         {
-                            propertyName += "By" + item.conname.ToUpperPascal();
+                            propertyName += "By" + item.ConlumnName.ToUpperPascal();
                         }
 
 
                         string tmp_var = propertyName.ToLowerPascal();
                         writer.WriteLine($"\t\tprivate {f_dalName}Model {tmp_var} = null;");
-                        writer.WriteLine($"\t\t[ForeignKeyMapping(name: \"{item.conname}\"), JsonIgnore] public {f_dalName}Model {propertyName} {{ get {{ if ({tmp_var} == null) {tmp_var} = {dalPath}{f_dalName}.Context.Where(f => f.{item.ref_column.ToUpperPascal()} == this.{item.conname.ToUpperPascal()}).ToOne(); return {tmp_var}; }} }}");
+                        writer.WriteLine($"\t\t[ForeignKeyMapping(name: \"{item.ConlumnName}\"), JsonIgnore] public {f_dalName}Model {propertyName} {{ get {{ if ({tmp_var} == null) {tmp_var} = {dalPath}{f_dalName}.Context.Where(f => f.{item.RefColumn.ToUpperPascal()} == this.{item.ConlumnName.ToUpperPascal()}).ToOne(); return {tmp_var}; }} }}");
                         writer.WriteLine();
                         ht.Add(propertyName, "");
                     }
@@ -157,9 +158,15 @@ namespace MyStaging.App.DAL
                 for (int i = 0; i < fieldList.Count; i++)
                 {
                     var fi = fieldList[i];
-                    string specificType = GetspecificType(fi);
+                    string specificType = GetSpecificType(fi);
                     string ap = fi.Is_array ? " | NpgsqlDbType.Array" : "";
-                    var line = $"{{\"{fi.Field}\",new SchemaModel{{ FieldName=\"{fi.Field}\", DbType= NpgsqlDbType.{fi.PgDbType}{ap}, Size={fi.Length}, SpecificType={specificType} }} }}";
+                    var pk = pkList.FirstOrDefault(f => f.Field == fi.Field) != null;
+                    var primarykey = "";
+                    if (pk)
+                    {
+                        primarykey = " ,Primarykey = true";
+                    }
+                    var line = $"{{\"{fi.Field}\", new SchemaModel{{ FieldName = \"{fi.Field}\", DbType = NpgsqlDbType.{fi.PgDbType}{ap}, Size = {fi.Length}, SpecificType = {specificType}{primarykey}}} }}";
                     writer.WriteLine("\t\t\t\t" + line + (i + 1 == fieldList.Count ? "" : ","));
                 }
                 writer.WriteLine("\t\t\t};");
@@ -187,7 +194,7 @@ namespace MyStaging.App.DAL
 
         private string CreateName()
         {
-            return CreateName(this.schemaName, this.table.name);
+            return CreateName(this.schemaName, this.table.Name);
         }
 
         protected void CreateDal()
@@ -232,7 +239,7 @@ namespace MyStaging.App.DAL
                     }
                 }
 
-                if (this.table.type == "table")
+                if (this.table.Type == "table")
                 {
                     writer.WriteLine();
                     Insert_Generator(writer, _model_classname, _classname);
@@ -320,17 +327,15 @@ namespace MyStaging.App.DAL
 
             writer.WriteLine($"\t\t\tpublic new {updateName} Where(Expression<Func<{class_model.ToUpperPascal()}, bool>> predicate)");
             writer.WriteLine("\t\t\t{");
-            writer.WriteLine($"\t\t\t\t base.Where(predicate);");
-            writer.WriteLine($"\t\t\t\t return this;");
+            writer.WriteLine($"\t\t\t\tbase.Where(predicate);");
+            writer.WriteLine($"\t\t\t\treturn this;");
             writer.WriteLine("\t\t\t}");
-            writer.WriteLine();
 
             writer.WriteLine($"\t\t\tpublic new {updateName} Where(string formatCommad, params object[] pValue)");
             writer.WriteLine("\t\t\t{");
-            writer.WriteLine($"\t\t\t\t base.Where(formatCommad,pValue);");
-            writer.WriteLine($"\t\t\t\t return this;");
+            writer.WriteLine($"\t\t\t\tbase.Where(formatCommad,pValue);");
+            writer.WriteLine($"\t\t\t\treturn this;");
             writer.WriteLine("\t\t\t}");
-            writer.WriteLine();
 
             foreach (var item in fieldList)
             {
@@ -338,7 +343,7 @@ namespace MyStaging.App.DAL
 
                 writer.WriteLine($"\t\t\tpublic {updateName} Set{item.Field.ToUpperPascal()}({item.RelType} {item.Field})");
                 writer.WriteLine("\t\t\t{");
-                string specificType = GetspecificType(item);
+                string specificType = GetSpecificType(item);
                 string ap = item.Is_array ? " | NpgsqlDbType.Array" : "";
                 writer.WriteLine($"\t\t\t\tbase.SetField(\"{ item.Field}\", NpgsqlDbType.{item.PgDbType}{ap}, {item.Field}, {item.Length}, {specificType});");
                 writer.WriteLine($"\t\t\t\treturn this;");
@@ -358,7 +363,6 @@ namespace MyStaging.App.DAL
                     writer.WriteLine($"\t\t\t\treturn this;");
                     writer.WriteLine("\t\t\t}");
                 }
-                writer.WriteLine();
             }
             writer.WriteLine("\t\t}");
         }
@@ -405,7 +409,7 @@ namespace MyStaging.App.DAL
                                 left join pg_type e2 on e2.oid=e.typelem
                                 inner join information_schema.columns f on f.table_schema = b.nspname and f.table_name=a.relname and column_name = c.attname
                                 WHERE b.nspname='{0}' and a.relname='{1}';";
-            _sqltext = string.Format(_sqltext, this.schemaName, this.table.name);
+            _sqltext = string.Format(_sqltext, this.schemaName, this.table.Name);
 
 
             PgSqlHelper.ExecuteDataReader(dr =>
@@ -448,7 +452,7 @@ namespace MyStaging.App.DAL
             }, CommandType.Text, _sqltext);
         }
 
-        private string GetspecificType(FieldInfo fi)
+        private string GetSpecificType(FieldInfo fi)
         {
             string specificType = "null";
             if (fi.Data_Type == "e")
@@ -462,13 +466,13 @@ namespace MyStaging.App.DAL
             string _sqltext = $@"SELECT b.attname, format_type(b.atttypid, b.atttypmod) AS data_type
 FROM pg_index a
 INNER JOIN pg_attribute b ON b.attrelid = a.indrelid AND b.attnum = ANY(a.indkey)
-WHERE a.indrelid = '{schemaName}.{table.name}'::regclass AND a.indisprimary;
+WHERE a.indrelid = '{schemaName}.{table.Name}'::regclass AND a.indisprimary;
 ";
             PgSqlHelper.ExecuteDataReader(dr =>
             {
                 PrimarykeyInfo pk = new PrimarykeyInfo();
                 pk.Field = dr["attname"].ToString();
-                pk.Typname = dr["data_type"].ToString();
+                pk.TypeName = dr["data_type"].ToString();
                 pkList.Add(pk);
             }, CommandType.Text, _sqltext);
         }
@@ -488,7 +492,7 @@ WHERE conrelid in
 SELECT a.oid FROM pg_class a 
 inner join pg_namespace b on a.relnamespace=b.oid
 WHERE b.nspname='{0}' and a.relname='{1}');"
-        , this.schemaName, this.table.name);
+        , this.schemaName, this.table.Name);
 
 
             PgSqlHelper.ExecuteDataReader(dr =>
@@ -500,11 +504,11 @@ WHERE b.nspname='{0}' and a.relname='{1}');"
                     string nspname = dr["nspname"].ToString();
                     consList.Add(new ConstraintInfo()
                     {
-                        conname = conname,
-                        contype = contype,
-                        ref_column = ref_column,
-                        table_name = relname,
-                        nspname = nspname
+                        ConlumnName = conname,
+                        ConlumnType = contype,
+                        RefColumn = ref_column,
+                        TablaName = relname,
+                        NspName = nspname
                     });
                 }, CommandType.Text, _sqltext);
         }

@@ -29,9 +29,9 @@ where a.typtype = 'e' order by oid asc";
             {
                 list.Add(new EnumTypeInfo()
                 {
-                    oid = Convert.ToInt32(dr["oid"]),
-                    typename = dr["typname"].ToString(),
-                    nspname = dr["nspname"].ToString()
+                    Oid = Convert.ToInt32(dr["oid"]),
+                    TypeName = dr["typname"].ToString(),
+                    NspName = dr["nspname"].ToString()
                 });
             }, System.Data.CommandType.Text, _sqltext);
 
@@ -46,9 +46,9 @@ where a.typtype = 'e' order by oid asc";
                 for (int i = 0; i < list.Count; i++)
                 {
                     var item = list[i];
-                    writer.WriteLine($"\tpublic enum {item.typename.ToUpperPascal()}");
+                    writer.WriteLine($"\tpublic enum {item.TypeName.ToUpperPascal()}");
                     writer.WriteLine("\t{");
-                    string sql = $"select oid,enumlabel from pg_enum WHERE enumtypid = {item.oid} ORDER BY oid asc";
+                    string sql = $"select oid,enumlabel from pg_enum WHERE enumtypid = {item.Oid} ORDER BY oid asc";
                     PgSqlHelper.ExecuteDataReader(dr =>
                     {
                         string c = i < list.Count ? "," : "";
@@ -87,7 +87,7 @@ where a.typtype = 'e' order by oid asc";
                     writer.WriteLine("\t\t\tNpgsqlNameTranslator translator = new NpgsqlNameTranslator();");
                     foreach (var item in list)
                     {
-                        writer.WriteLine($"\t\t\tNpgsqlConnection.MapEnumGlobally<{item.typename.ToUpperPascal()}>(\"{item.nspname}.{item.typename}\", translator);");
+                        writer.WriteLine($"\t\t\tNpgsqlConnection.MapEnumGlobally<{item.TypeName.ToUpperPascal()}>(\"{item.NspName}.{item.TypeName}\", translator);");
                     }
                 }
 

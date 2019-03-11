@@ -16,11 +16,11 @@ namespace MyStaging.Helpers
     /// </summary>
     public partial class ConnectionPool
     {
-        private object _lock = new object();
-        private object _lock_getconnection = new object();
-        public List<DbConnection> All_Connection = new List<DbConnection>();
-        private Queue<ManualResetEvent> GetConnectionQueue = new Queue<ManualResetEvent>();
-        private Random connRandom = new Random();
+        private readonly object _lock = new object();
+        private readonly object _lock_getconnection = new object();
+        public readonly List<DbConnection> All_Connection = new List<DbConnection>();
+        private readonly Queue<ManualResetEvent> GetConnectionQueue = new Queue<ManualResetEvent>();
+        private readonly Random connRandom = new Random();
         private Timer timer = null;
 
         /// <summary>
