@@ -363,16 +363,17 @@ namespace MyStaging.Helpers
                 TResult obj = default(TResult);
                 Type objType = typeof(TResult);
                 bool isTuple = objType.Namespace == "System" && objType.Name.StartsWith("ValueTuple`");
+                bool isEnum = objType.IsEnum;
                 if (isTuple)
                 {
                     int columnIndex = -1;
                     obj = (TResult)GetValueTuple(objType, dr, ref columnIndex);
                 }
-                else if (IsValueType(objType))
+                else if (IsValueType(objType) || isEnum)
                 {
                     obj = (TResult)GetValueType(objType, dr);
                 }
-                else if (objType.Namespace.StartsWith("Newtonsoft"))
+                else if (objType.Namespace != null && objType.Namespace.StartsWith("Newtonsoft"))
                 {
                     obj = (TResult)GetJToken(dr);
                 }

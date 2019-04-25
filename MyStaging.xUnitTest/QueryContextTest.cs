@@ -88,7 +88,16 @@ namespace MyStaging.xUnitTest
         {
             var list = User.Context.OrderByDescing(f => f.Createtime).Page(1, 10).ToList();
 
-            Assert.Equal(10, list.Count);
+            var list2 = User.Context.InnerJoin<ArticleModel>("b", (a, b) => a.Id == b.Userid).OrderByDescing(f => f.Createtime).Page(1, 10).ToList<UserViewModel>("a.id,a.nickname,a.password");
+
+            Assert.Equal(10, list2.Count);
+        }
+
+        public class UserViewModel
+        {
+            public string Id { get; set; }
+            public string NickName { get; set; }
+            public string Password { get; set; }
         }
 
         [Fact]
