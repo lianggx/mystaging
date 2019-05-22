@@ -1,4 +1,5 @@
 ﻿using Microsoft.Extensions.Logging;
+using MyStaging.Common;
 using MyStaging.Helpers;
 using MyStaging.xUnitTest.DAL;
 using System;
@@ -14,7 +15,12 @@ namespace MyStaging.xUnitTest
         {
             LoggerFactory factory = new LoggerFactory();
             var log = factory.CreateLogger<PgSqlHelper>();
-            _startup.Init(log, ConstantUtil.CONNECTIONSTRING);
+            var options = new StagingOptions()
+            {
+                Logger = log,
+                ConnectionMaster = ConstantUtil.CONNECTIONSTRING
+            };
+            _startup.Init(options);
         }
 
         [Fact]

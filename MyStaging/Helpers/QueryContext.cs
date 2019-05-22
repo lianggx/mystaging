@@ -1,17 +1,17 @@
 ﻿using MyStaging.Common;
 using MyStaging.Mapping;
+using Newtonsoft.Json.Linq;
 using Npgsql;
 using NpgsqlTypes;
 using System;
 using System.Collections.Generic;
 using System.Data;
+using System.Data.Common;
+using System.Diagnostics;
+using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
 using System.Text;
-using System.Linq;
-using System.Text.RegularExpressions;
-using Newtonsoft.Json.Linq;
-using System.Data.Common;
 
 namespace MyStaging.Helpers
 {
@@ -267,15 +267,24 @@ namespace MyStaging.Helpers
             Fields.Clear();
             Fields.Add(field);
             string cmdText = ToString();
-            object _val = null;
-            if (PgSqlHelper.InstanceSlave != null && !this.Master)
+            object result = null;
+            if (Master)
             {
-                _val = PgSqlHelper.ExecuteScalarSlave(CommandType.Text, cmdText, this.ParamList.ToArray());
+                result = PgSqlHelper.ExecuteScalar(CommandType.Text, cmdText, command =>
+                {
+                    this.Command = command;
+                    this.Connection = command?.Connection;
+                }, this.ParamList.ToArray());
             }
             else
-                _val = PgSqlHelper.ExecuteScalar(CommandType.Text, cmdText, this.ParamList.ToArray());
-
-            return (TResult)_val;
+            {
+                result = PgSqlHelper.ExecuteScalarSlave(CommandType.Text, cmdText, command =>
+                {
+                    this.Command = command;
+                    this.Connection = command?.Connection;
+                }, this.ParamList.ToArray());
+            }
+            return (TResult)result;
         }
 
         /// <summary>
@@ -287,9 +296,34 @@ namespace MyStaging.Helpers
         public TResult ToOne<TResult>(params string[] fields)
         {
             Page(1, 1);
-            List<TResult> list = ToList<TResult>(fields);
+            ResetFields(fields);
+
+            var objType = typeof(TResult);
+            var enable = Cacheing && PgSqlHelper.CacheManager != null && objType.IsClass;
+            // 读取缓存
+            TResult obj = default(TResult);
+            if (enable)
+            {
+                obj = PgSqlHelper.CacheManager.GetItemCache<TResult>(this.ParamList);
+                if (obj != null)
+                {
+                    this.Clear();
+                    return obj;
+                }
+            }
+
+            List<TResult> list = ExecuteReader<TResult>(this.commandtext);
+
             if (list.Count > 0)
-                return list[0];
+            {
+                var result = list[0];
+                if (enable)
+                {
+                    PgSqlHelper.CacheManager.SetItemCache(result, this.Expire);
+                }
+
+                return result;
+            }
             else
                 return default(TResult);
         }
@@ -317,16 +351,16 @@ namespace MyStaging.Helpers
         /// <returns></returns>
         public List<TResult> ToList<TResult>(params string[] fields)
         {
+            ResetFields(fields);
+            return ExecuteReader<TResult>(this.commandtext);
+        }
+
+        private void ResetFields(params string[] fields)
+        {
             Fields.Clear();
             if (fields == null || fields.Length == 0)
             {
-                PropertyInfo[] ps = typeof(TResult).GetProperties();
-                foreach (var item in ps)
-                {
-                    if (item.GetCustomAttribute<ForeignKeyMappingAttribute>() != null || item.GetCustomAttribute<NonDbColumnMappingAttribute>() != null)
-                        continue;
-                    Fields.Add(string.Format("{0}.{1}", masterAlisName, item.Name.ToLower()));
-                }
+                Fields.Add(string.Format("{0}.*", masterAlisName));
             }
             else
             {
@@ -335,18 +369,8 @@ namespace MyStaging.Helpers
                     Fields.Add(item);
                 }
             }
-            return ExecuteReader<TResult>();
-        }
 
-        /// <summary>
-        ///  执行查询并返回结果集
-        /// </summary>
-        /// <typeparam name="TResult">接受查询结果对象类型</typeparam>
-        /// <returns></returns>
-        public List<TResult> ExecuteReader<TResult>()
-        {
             ToString();
-            return ExecuteReader<TResult>(this.commandtext);
         }
 
         /// <summary>
@@ -360,6 +384,7 @@ namespace MyStaging.Helpers
             DynamicBuilder<TResult> builder = null;
             void action(DbDataReader dr)
             {
+
                 TResult obj = default(TResult);
                 Type objType = typeof(TResult);
                 bool isTuple = objType.Namespace == "System" && objType.Name.StartsWith("ValueTuple`");
@@ -386,16 +411,31 @@ namespace MyStaging.Helpers
                     obj = builder.Build(dr);
                 }
                 list.Add(obj);
+
             }
 
-
-            if (PgSqlHelper.InstanceSlave != null && !Master)
+            try
             {
-                PgSqlHelper.ExecuteDataReaderSlave(action, CommandType.Text, cmdText, this.ParamList.ToArray());
+                if (Master)
+                {
+                    PgSqlHelper.ExecuteDataReader(action, CommandType.Text, cmdText, command =>
+                    {
+                        this.Command = command;
+                        this.Connection = command?.Connection;
+                    }, this.ParamList.ToArray());
+                }
+                else
+                {
+                    PgSqlHelper.ExecuteDataReaderSlave(action, CommandType.Text, cmdText, command =>
+                     {
+                         this.Command = command;
+                         this.Connection = command?.Connection;
+                     }, this.ParamList.ToArray());
+                }
             }
-            else
+            finally
             {
-                PgSqlHelper.ExecuteDataReader(action, CommandType.Text, cmdText, this.ParamList.ToArray());
+                this.Clear();
             }
             return list;
         }
@@ -478,12 +518,18 @@ namespace MyStaging.Helpers
         {
             this.commandtext = cmdText;
             T restult = default(T);
-            PgSqlHelper.ExecuteDataReader(dr =>
+            try
             {
-                restult = DynamicBuilder<T>.CreateBuilder(dr).Build(dr);
+                PgSqlHelper.ExecuteDataReader(dr =>
+                {
+                    restult = DynamicBuilder<T>.CreateBuilder(dr).Build(dr);
 
-            }, CommandType.Text, this.commandtext, this.ParamList.ToArray());
-
+                }, CommandType.Text, this.commandtext, this.ParamList.ToArray());
+            }
+            finally
+            {
+                this.Clear();
+            }
             return restult;
         }
 
@@ -917,7 +963,34 @@ namespace MyStaging.Helpers
         /// </summary>
         /// <param name="cmdText"></param>
         /// <returns></returns>
-        public int ExecuteNonQuery(string cmdText) => PgSqlHelper.ExecuteNonQuery(CommandType.Text, cmdText, ParamList.ToArray());
+        public int ExecuteNonQuery(string cmdText)
+        {
+            return this.ExecuteNonQuery(cmdText, this.ParamList.ToArray());
+        }
+
+        /// <summary>
+        ///  执行查询，并返回受影响的行数
+        /// </summary>
+        /// <param name="cmdText"></param>
+        /// <returns></returns>
+        public int ExecuteNonQuery(string cmdText, DbParameter[] parameters)
+        {
+            var affrows = 0;
+            try
+            {
+                affrows = PgSqlHelper.ExecuteNonQuery(CommandType.Text, cmdText, command =>
+                {
+                    this.Command = command;
+                    this.Connection = command?.Connection;
+                }, parameters);
+            }
+            finally
+            {
+                this.Clear();
+            }
+
+            return affrows;
+        }
 
         /// <summary>
         ///  添加仅从已配置的主数据源中查询数据的约束
@@ -929,7 +1002,19 @@ namespace MyStaging.Helpers
             return this;
         }
 
+        /// <summary>
+        ///  清除参数列表
+        /// </summary>
+        protected void Clear()
+        {
+            this.ParamList.Clear();
+            this.WhereList.Clear();
+            this.WhereExpressionList.Clear();
+        }
+
         #region Properties
+        public DbCommand Command { get; internal set; }
+        public DbConnection Connection { get; internal set; }
         /// <summary>
         ///  获取或者设置参数列表
         /// </summary>
@@ -987,6 +1072,16 @@ namespace MyStaging.Helpers
         ///  当前 InsertOnReader 方法不受此属性约束
         /// </summary>
         public bool Master { get; set; } = false;
+
+        /// <summary>
+        ///  缓存时间，每个子类可重写该成员进行自定义时间设置，单位：seconds
+        /// </summary>
+        public virtual int Expire { get; set; }
+
+        /// <summary>
+        ///  是否进行缓存
+        /// </summary>
+        public virtual bool Cacheing { get; set; } = true;
 
         /// <summary>
         ///  设置默认的数据库类型

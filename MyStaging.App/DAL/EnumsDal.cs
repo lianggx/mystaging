@@ -69,17 +69,19 @@ where a.typtype = 'e' order by oid asc";
             {
                 writer.WriteLine($"using {projectName}.Model;");
                 writer.WriteLine("using System;");
+                writer.WriteLine("using Npgsql;");
                 writer.WriteLine("using Microsoft.Extensions.Logging;");
                 writer.WriteLine("using MyStaging.Helpers;");
-                writer.WriteLine("using Npgsql;");
+                writer.WriteLine("using MyStaging.Common;");
+                writer.WriteLine("using Microsoft.Extensions.Caching.Distributed;");
                 writer.WriteLine();
                 writer.WriteLine($"namespace {projectName}");
                 writer.WriteLine("{");
                 writer.WriteLine("\tpublic class _startup");
                 writer.WriteLine("\t{");
-                writer.WriteLine("\t\tpublic static void Init(ILogger logger, string connectionMaster, string[] connectionSlaves = null, int slavesMaxPool = -1)");
+                writer.WriteLine("\t\tpublic static void Init(StagingOptions options)");
                 writer.WriteLine("\t\t{");
-                writer.WriteLine("\t\t\tPgSqlHelper.InitConnection(logger, connectionMaster, connectionSlaves, slavesMaxPool);");
+                writer.WriteLine("\t\t\tPgSqlHelper.InitConnection(options);");
 
                 if (list.Count > 0)
                 {

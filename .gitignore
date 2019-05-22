@@ -30,3 +30,7 @@
 /MyStaging/bin/Debug/netstandard2.0
 /MyStaging/bin/Debug/MyStaging.1.0.1.nupkg
 *.nupkg
+/WebApplication1/bin/Debug/netcoreapp2.2
+/WebApplication1/obj/Debug/netcoreapp2.2
+/WebApplication1/obj
+/.vs/config

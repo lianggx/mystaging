@@ -177,9 +177,26 @@ namespace MyStaging.Helpers
         }
 
         /// <summary>
+        /// 刷新数据库连接
+        /// </summary>
+        /// <param name="connS"></param>
+        /// <param name="poolSize"></param>
+        public void Refresh(List<ConnectionStringConfiguration> connS, int poolSize = 32)
+        {
+            lock (_lock)
+            {
+                ConnectionList?.Clear();
+                ConnectionList = connS;
+                this.PoolSize = poolSize;
+                Free?.Clear();
+                All_Connection?.Clear();
+            }
+        }
+
+        /// <summary>
         ///  获取连接池大小
         /// </summary>
-        public int PoolSize { get; } = 32;
+        public int PoolSize { get; set; } = 32;
 
         /// <summary>
         ///  获取闲置的连接

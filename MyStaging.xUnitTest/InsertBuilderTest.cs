@@ -21,7 +21,12 @@ namespace MyStaging.xUnitTest
             output = outPut;
             LoggerFactory factory = new LoggerFactory();
             var log = factory.CreateLogger<PgSqlHelper>();
-            _startup.Init(log, ConstantUtil.CONNECTIONSTRING);
+            var options = new StagingOptions()
+            {
+                ConnectionMaster = ConstantUtil.CONNECTIONSTRING,
+                Logger = log
+            };
+            _startup.Init(options);
         }
 
         [Fact]

@@ -1,12 +1,12 @@
 ﻿using Microsoft.Extensions.Logging;
+using MyStaging.Common;
 using System;
 using System.Collections.Generic;
 using System.Data;
+using System.Data.Common;
 using System.Net.Sockets;
 using System.Threading;
 using System.Threading.Tasks;
-using MyStaging.Common;
-using System.Data.Common;
 
 namespace MyStaging.Helpers
 {
@@ -15,7 +15,7 @@ namespace MyStaging.Helpers
     /// </summary>
     public abstract class PgExecute
     {
-        #region Identity        
+        #region Identity
         /// <summary>
         ///  获取或者设置数据库连接池对象
         /// </summary>
@@ -50,12 +50,23 @@ namespace MyStaging.Helpers
         /// <param name="logger">日志输出对象</param>
         /// <param name="connectionSalve">数据库连接字符串</param>
         /// <param name="poolSize">连接池大小</param>
-        public PgExecute(ILogger logger, List<ConnectionStringConfiguration> connectionList, int poolSize)
+        public PgExecute(ILogger logger, List<ConnectionStringConfiguration> connectionList, int poolSize) : this(logger, new ConnectionPool(connectionList, poolSize))
+        {
+
+        }
+
+        /// <summary>
+        ///  构造函数
+        /// </summary>
+        /// <param name="logger">日志输出对象</param>
+        /// <param name="connectionSalve">数据库连接字符串</param>
+        /// <param name="poolSize">连接池大小</param>
+        public PgExecute(ILogger logger, ConnectionPool pool)
         {
             _logger = logger;
             if (_logger == null)
                 _logger = new LoggerFactory().CreateLogger<PgExecute>();
-            Pool = new ConnectionPool(connectionList, poolSize);
+            Pool = pool;
         }
         #endregion
 
@@ -131,7 +142,7 @@ namespace MyStaging.Helpers
         /// <param name="commandText">待执行的 SQL 语句</param>
         /// <param name="commandParameters">NpgsqlCommand 对象的参数列表</param>
         /// <returns></returns>
-        public virtual object ExecuteScalar(CommandType commandType, string commandText, params DbParameter[] commandParameters)
+        public virtual object ExecuteScalar(CommandType commandType, string commandText, Action<DbCommand> onExecuted = null, params DbParameter[] commandParameters)
         {
             object retval = null;
             DbCommand command = null;
@@ -155,7 +166,9 @@ namespace MyStaging.Helpers
             finally
             {
                 Clear(command);
+                onExecuted?.Invoke(command);
             }
+
             return retval;
         }
 
@@ -166,7 +179,7 @@ namespace MyStaging.Helpers
         /// <param name="commandText">待执行的 SQL 语句</param>
         /// <param name="commandParameters">NpgsqlCommand 对象的参数列表</param>
         /// <returns></returns>
-        public async virtual Task<object> ExecuteScalarAsync(CommandType commandType, string commandText, params DbParameter[] commandParameters)
+        public async virtual Task<object> ExecuteScalarAsync(CommandType commandType, string commandText, Action<DbCommand> onExecuted = null, params DbParameter[] commandParameters)
         {
             object retval = null;
             DbCommand command = null;
@@ -190,6 +203,7 @@ namespace MyStaging.Helpers
             finally
             {
                 Clear(command);
+                onExecuted?.Invoke(command);
             }
             return retval;
         }
@@ -201,7 +215,7 @@ namespace MyStaging.Helpers
         /// <param name="commandText">待执行的 SQL 语句</param>
         /// <param name="commandParameters">NpgsqlCommand 对象的参数列表</param>
         /// <returns></returns>
-        public virtual int ExecuteNonQuery(CommandType commandType, string commandText, params DbParameter[] commandParameters)
+        public virtual int ExecuteNonQuery(CommandType commandType, string commandText, Action<DbCommand> onExecuted = null, params DbParameter[] commandParameters)
         {
             int retval = 0;
             DbCommand command = null;
@@ -219,7 +233,9 @@ namespace MyStaging.Helpers
             finally
             {
                 Clear(command);
+                onExecuted?.Invoke(command);
             }
+
             return retval;
         }
 
@@ -230,7 +246,7 @@ namespace MyStaging.Helpers
         /// <param name="commandText">待执行的 SQL 语句</param>
         /// <param name="commandParameters">NpgsqlCommand 对象的参数列表</param>
         /// <returns></returns>
-        public async virtual Task<int> ExecuteNonQueryAsync(CommandType commandType, string commandText, params DbParameter[] commandParameters)
+        public async virtual Task<int> ExecuteNonQueryAsync(CommandType commandType, string commandText, Action<DbCommand> onExecuted = null, params DbParameter[] commandParameters)
         {
             int retval = 0;
             DbCommand command = null;
@@ -248,6 +264,7 @@ namespace MyStaging.Helpers
             finally
             {
                 Clear(command);
+                onExecuted?.Invoke(command);
             }
             return retval;
         }
@@ -259,7 +276,7 @@ namespace MyStaging.Helpers
         /// <param name="commandType">CommandType 类型</param>
         /// <param name="commandText">待执行的 SQL 语句</param>
         /// <param name="commandParameters">NpgsqlCommand 对象的参数列表</param>
-        public virtual void ExecuteDataReader(Action<DbDataReader> action, CommandType commandType, string commandText, params DbParameter[] commandParameters)
+        public virtual void ExecuteDataReader(Action<DbDataReader> action, CommandType commandType, string commandText, Action<DbCommand> onExecuted = null, params DbParameter[] commandParameters)
         {
             DbCommand command = null;
             DbDataReader reader = null;
@@ -284,6 +301,7 @@ namespace MyStaging.Helpers
                 if (reader != null)
                     reader.Close();
                 Clear(command);
+                onExecuted?.Invoke(command);
             }
         }
 
@@ -294,7 +312,7 @@ namespace MyStaging.Helpers
         /// <param name="commandType">CommandType 类型</param>
         /// <param name="commandText">待执行的 SQL 语句</param>
         /// <param name="commandParameters">NpgsqlCommand 对象的参数列表</param>
-        public async virtual Task ExecuteDataReaderAsync(Action<DbDataReader> action, CommandType commandType, string commandText, params DbParameter[] commandParameters)
+        public async virtual Task ExecuteDataReaderAsync(Action<DbDataReader> action, CommandType commandType, string commandText, Action<DbCommand> onExecuted = null, params DbParameter[] commandParameters)
         {
             DbCommand command = null;
             DbDataReader reader = null;
@@ -319,6 +337,7 @@ namespace MyStaging.Helpers
                 if (reader != null)
                     reader.Close();
                 Clear(command);
+                onExecuted?.Invoke(command);
             }
         }
 
@@ -469,12 +488,14 @@ namespace MyStaging.Helpers
         /// <param name="cmd"></param>
         private void Clear(DbCommand cmd)
         {
-            if (this.CurrentThreadTransaction == null)
+            if (cmd != null)
             {
-                this.Pool.FreeConnection(cmd.Connection);
+                if (this.CurrentThreadTransaction == null)
+                {
+                    this.Pool.FreeConnection(cmd.Connection);
+                }
+                cmd.Parameters?.Clear();
             }
-
-            cmd.Parameters.Clear();
         }
     }
 }

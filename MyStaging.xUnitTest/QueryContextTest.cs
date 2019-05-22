@@ -1,26 +1,39 @@
-using System;
-using Xunit;
-using MyStaging.Helpers;
+using Microsoft.Extensions.Caching.Distributed;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
-using MyStaging.xUnitTest;
-using MyStaging.xUnitTest.Model;
-using MyStaging.xUnitTest.DAL;
+using Microsoft.Extensions.Options;
 using MyStaging.Common;
+using MyStaging.Helpers;
+using MyStaging.xUnitTest.DAL;
+using MyStaging.xUnitTest.Model;
+using System;
+using System.Collections.Generic;
+using System.Diagnostics;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading;
-using System.Diagnostics;
-using Newtonsoft.Json;
+using System.Threading.Tasks;
+using Xunit;
+using Xunit.Abstractions;
 
 namespace MyStaging.xUnitTest
 {
     public class QueryContextTest
     {
-        public QueryContextTest()
+        private readonly ITestOutputHelper output;
+        public QueryContextTest(ITestOutputHelper output)
         {
+            this.output = output;
             LoggerFactory factory = new LoggerFactory();
             var log = factory.CreateLogger<PgSqlHelper>();
-            _startup.Init(log, ConstantUtil.CONNECTIONSTRING);
+            var options = new StagingOptions()
+            {
+                ConnectionMaster = ConstantUtil.CONNECTIONSTRING,
+                ConnectionSlaves = new string[] { ConstantUtil.CONNECTIONSTRING },
+                Logger = log
+            };
+
+            _startup.Init(options);
         }
 
         private string Sha256Hash(string text)
@@ -29,7 +42,7 @@ namespace MyStaging.xUnitTest
         }
 
         static int num = 0;
-        [Fact(Skip = "需要手动运行该测试")]
+        [Fact]
         public void InsertTest()
         {
             for (int i = 0; i < 10; i++)
@@ -86,11 +99,47 @@ namespace MyStaging.xUnitTest
         [Fact]
         public void ToList()
         {
-            var list = User.Context.OrderByDescing(f => f.Createtime).Page(1, 10).ToList();
+            var context = User.Context;
+            for (int i = 0; i < 10; i++)
+            {
+                Stopwatch sw = new Stopwatch();
+                sw.Start();
+                var user = context.Where(f => f.Id == "5cc69c04f6e262476805e111").ToOne();
+                sw.Stop();
+
+                this.output.WriteLine("Index:{0},Milli:{1}", i, sw.ElapsedMilliseconds);
+            }
+            return;
+            var Createtime = context.ToScalar<DateTime>("Createtime");
 
             var list2 = User.Context.InnerJoin<ArticleModel>("b", (a, b) => a.Id == b.Userid).OrderByDescing(f => f.Createtime).Page(1, 10).ToList<UserViewModel>("a.id,a.nickname,a.password");
 
-            Assert.Equal(10, list2.Count);
+            List<Task> tasks = new List<Task>();
+            for (int i = 0; i < 100; i++)
+            {
+                var t = Task.Run(() =>
+                  {
+                      Stopwatch sw = new Stopwatch();
+                      sw.Start();
+                      var result = User.Context.OrderByDescing(f => f.Createtime).Page(i, 10).ToList();
+                      sw.Stop();
+
+                      this.output.WriteLine("Index:{0},Milli:{1},Count:{2}", i, sw.ElapsedMilliseconds, result.Count);
+                  });
+                tasks.Add(t);
+
+                Task.Run(() =>
+                {
+                    if (i >= 50 && i <= 55)
+                    {
+                        PgSqlHelper.Refresh(ConstantUtil.CONNECTIONSTRING, new string[] { ConstantUtil.CONNECTIONSTRING });
+                    }
+                });
+            }
+
+            Task.WaitAll(tasks.ToArray());
+
+            Assert.Equal(1, 1);
         }
 
         public class UserViewModel

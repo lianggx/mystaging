@@ -1,10 +1,17 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using Microsoft.Extensions.Caching.Distributed;
+using Microsoft.Extensions.Logging;
 using MyStaging.Common;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.Common;
+using System.IO;
+using System.Reflection;
+using System.Runtime.Serialization.Formatters.Binary;
 using System.Text.RegularExpressions;
+using System.Threading.Tasks;
+using System.Linq;
 
 namespace MyStaging.Helpers
 {
@@ -34,29 +41,18 @@ namespace MyStaging.Helpers
             public SlaveExecute(ILogger logger, List<ConnectionStringConfiguration> connectionString, int poolSize) : base(logger, connectionString, poolSize) { }
         }
 
-        private static MasterExecute instanceMaster = null;
         /// <summary>
         ///  主数据库实例
         /// </summary>
-        public static PgExecute InstanceMaster
-        {
-            get
-            {
-                return instanceMaster;
-            }
-        }
+        public static PgExecute InstanceMaster { get; set; }
 
-        private static SlaveExecute instanceSlave = null;
         /// <summary>
         ///  从库数据库实例
         /// </summary>
-        public static PgExecute InstanceSlave
-        {
-            get
-            {
-                return instanceSlave;
-            }
-        }
+        public static PgExecute InstanceSlave { get; set; }
+
+        public static CacheManager CacheManager { get; set; } = null;
+        public static StagingOptions Options { get; set; }
 
         /// <summary>
         ///  初始化数据库连接
@@ -65,22 +61,47 @@ namespace MyStaging.Helpers
         /// <param name="connectionMaster">可读写数据库连接</param>
         /// <param name="connectionStringSlave">从库数据库连接</param>
         /// <param name="connectionSlaves">从库连接池总大小，如果不指定（默认 -1），如果没有设定 maximum pool size 的值,则从库中读取 maximum pool size 设定的值进行累计</param>
-        public static void InitConnection(ILogger logger, string connectionMaster, string[] connectionSlaves = null, int slavesMaxPool = -1)
+        public static void InitConnection(StagingOptions options)
         {
-            if (string.IsNullOrEmpty(connectionMaster))
+            if (options == null) throw new ArgumentNullException(nameof(StagingOptions));
+            if (string.IsNullOrEmpty(options.ConnectionMaster))
                 throw new ArgumentNullException("connectionString not null");
 
+            Options = options;
+
             // 初始化主库连接实例
-            int poolsizeMaster = GetPollSize(connectionMaster);
-            ConnectionStringConfiguration connS = new ConnectionStringConfiguration() { ConnectionString = connectionMaster, MaxConnection = poolsizeMaster, DbConnection = new Npgsql.NpgsqlConnection(connectionMaster) };
-            instanceMaster = new MasterExecute(logger, connS);
+            int poolsizeMaster = GetPollSize(options.ConnectionMaster);
+            ConnectionStringConfiguration connS = new ConnectionStringConfiguration()
+            {
+                ConnectionString = options.ConnectionMaster,
+                MaxConnection = poolsizeMaster,
+                DbConnection = new Npgsql.NpgsqlConnection(options.ConnectionMaster)
+            };
+            InstanceMaster = new MasterExecute(options.Logger, connS);
 
             // 初始化从库连接实例
+            List<ConnectionStringConfiguration> connList = GetSlaves(options.ConnectionSlaves, out int poolsizeSlave);
+            if (options.SlavesMaxPool != -1)
+                poolsizeSlave = options.SlavesMaxPool;
+            if (connList != null)
+                InstanceSlave = new SlaveExecute(options.Logger, connList, poolsizeSlave);
+
+            if (options.CacheOptions != null && options.CacheOptions.Cache != null)
+            {
+                Console.WriteLine("options.CacheOptions.Cache:{0}", options.CacheOptions.Cache == null);
+                CacheManager = new CacheManager(options.CacheOptions);
+            }
+        }
+
+
+
+        private static List<ConnectionStringConfiguration> GetSlaves(string[] connectionSlaves, out int pollsizeSlave)
+        {
+            pollsizeSlave = 0;
+            List<ConnectionStringConfiguration> connList = null;
             if (connectionSlaves != null && connectionSlaves.Length > 0)
             {
-                int pollsizeSlave = 0;
-
-                List<ConnectionStringConfiguration> connList = new List<ConnectionStringConfiguration>();
+                connList = new List<ConnectionStringConfiguration>();
                 for (int i = 0; i < connectionSlaves.Length; i++)
                 {
                     var item = connectionSlaves[i];
@@ -89,15 +110,34 @@ namespace MyStaging.Helpers
                         ConnectionString = item,
                         Id = i,
                         MaxConnection = GetPollSize(item),
-                        DbConnection = new Npgsql.NpgsqlConnection(connectionMaster)
+                        DbConnection = new Npgsql.NpgsqlConnection(item)
                     });
                     pollsizeSlave += connList[i].MaxConnection;
                 }
-                if (slavesMaxPool != -1)
-                    pollsizeSlave = slavesMaxPool;
-
-                instanceSlave = new SlaveExecute(logger, connList, pollsizeSlave);
             }
+
+            return connList;
+        }
+
+        /// <summary>
+        ///  刷新数据库连接
+        /// </summary>
+        /// <param name="connS"></param>
+        /// <param name="poolSize"></param>
+        public static void Refresh(string connectionMaster, string[] connectionSlaves = null, int slavesMaxPool = -1)
+        {
+            int poolsizeMaster = GetPollSize(connectionMaster);
+            ConnectionStringConfiguration connS = new ConnectionStringConfiguration()
+            {
+                ConnectionString = connectionMaster,
+                MaxConnection = poolsizeMaster,
+                DbConnection = new Npgsql.NpgsqlConnection(connectionMaster)
+            };
+
+            InstanceMaster.Pool.Refresh(new List<ConnectionStringConfiguration>() { connS }, connS.MaxConnection);
+
+            List<ConnectionStringConfiguration> connList = GetSlaves(connectionSlaves, out int poolsizeSlave);
+            InstanceSlave?.Pool?.Refresh(connList, poolsizeSlave);
         }
 
         /// <summary>
@@ -124,7 +164,16 @@ namespace MyStaging.Helpers
         /// <param name="action"></param>
         public static object ExecuteScalar(CommandType commandType, string commandText, params DbParameter[] commandParameters)
         {
-            return InstanceMaster.ExecuteScalar(commandType, commandText, commandParameters);
+            return InstanceMaster.ExecuteScalar(commandType, commandText, null, commandParameters);
+        }
+
+        /// <summary>
+        ///  此函数只能在读写数据库连接中进行
+        /// </summary>
+        /// <param name="action"></param>
+        public static object ExecuteScalar(CommandType commandType, string commandText, Action<DbCommand> onExecuted = null, params DbParameter[] commandParameters)
+        {
+            return InstanceMaster.ExecuteScalar(commandType, commandText, onExecuted, commandParameters);
         }
 
         /// <summary>
@@ -133,7 +182,16 @@ namespace MyStaging.Helpers
         /// <param name="action"></param>
         public static int ExecuteNonQuery(CommandType commandType, string commandText, params DbParameter[] commandParameters)
         {
-            return InstanceMaster.ExecuteNonQuery(commandType, commandText, commandParameters);
+            return ExecuteNonQuery(commandType, commandText, null, commandParameters);
+        }
+
+        /// <summary>
+        ///  此函数只能在读写数据库连接中进行
+        /// </summary>
+        /// <param name="action"></param>
+        public static int ExecuteNonQuery(CommandType commandType, string commandText, Action<DbCommand> onExecuted = null, params DbParameter[] commandParameters)
+        {
+            return InstanceMaster.ExecuteNonQuery(commandType, commandText, onExecuted, commandParameters);
         }
 
         /// <summary>
@@ -142,7 +200,16 @@ namespace MyStaging.Helpers
         /// <param name="action"></param>
         public static void ExecuteDataReader(Action<DbDataReader> action, CommandType commandType, string commandText, params DbParameter[] commandParameters)
         {
-            InstanceMaster.ExecuteDataReader(action, commandType, commandText, commandParameters);
+            ExecuteDataReader(action, commandType, commandText, null, commandParameters);
+        }
+
+        /// <summary>
+        ///  此函数只能在读写数据库连接中进行
+        /// </summary>
+        /// <param name="action"></param>
+        public static void ExecuteDataReader(Action<DbDataReader> action, CommandType commandType, string commandText, Action<DbCommand> onExecuted = null, params DbParameter[] commandParameters)
+        {
+            InstanceMaster.ExecuteDataReader(action, commandType, commandText, onExecuted, commandParameters);
         }
 
         /// <summary>
@@ -151,30 +218,33 @@ namespace MyStaging.Helpers
         /// <param name="action"></param>
         public static object ExecuteScalarSlave(CommandType commandType, string commandText, params DbParameter[] commandParameters)
         {
+            return ExecuteScalarSlave(commandType, commandText, null, commandParameters);
+        }
+
+        /// <summary>
+        ///  此函数只能在从库数据库连接中进行
+        /// </summary>
+        /// <param name="action"></param>
+        public static object ExecuteScalarSlave(CommandType commandType, string commandText, Action<DbCommand> onExecuted = null, params DbParameter[] commandParameters)
+        {
             object result = null;
             void Transfer(Exception ex)
             {
                 RemoveConnection(InstanceSlave, ex);
-                if (instanceSlave != null && instanceSlave.Pool.ConnectionList.Count > 0)
+                if (InstanceSlave != null && InstanceSlave.Pool.ConnectionList.Count > 0)
                 {
-                    result = ExecuteScalarSlave(commandType, commandText, commandParameters);
+                    result = InstanceSlave.ExecuteScalar(commandType, commandText, onExecuted, commandParameters);
                 }
                 else
                 {
                     WriteLog("The database all connection refused，transfer to database master");
-                    result = instanceMaster.ExecuteScalar(commandType, commandText, commandParameters);
+                    result = InstanceMaster.ExecuteScalar(commandType, commandText, onExecuted, commandParameters);
                 }
             }
 
             try
             {
-                if (instanceSlave != null && instanceSlave.Pool.ConnectionList.Count > 0)
-                    result = InstanceSlave.ExecuteScalar(commandType, commandText, commandParameters);
-                else
-                {
-                    WriteLog("The database slave connection zero，transfer to database master");
-                    result = instanceMaster.ExecuteScalar(commandType, commandText, commandParameters);
-                }
+                Transfer(null);
             }
             catch (System.TimeoutException te)
             {
@@ -193,29 +263,32 @@ namespace MyStaging.Helpers
         /// <param name="action"></param>
         public static void ExecuteDataReaderSlave(Action<DbDataReader> action, CommandType commandType, string commandText, params DbParameter[] commandParameters)
         {
+            ExecuteDataReaderSlave(action, commandType, commandText, null, commandParameters);
+        }
+
+        /// <summary>
+        ///  此函数只能在从库数据库连接中进行
+        /// </summary>
+        /// <param name="action"></param>
+        public static void ExecuteDataReaderSlave(Action<DbDataReader> action, CommandType commandType, string commandText, Action<DbCommand> onExecuted = null, params DbParameter[] commandParameters)
+        {
             void Transfer(Exception ex)
             {
-                RemoveConnection(instanceSlave, ex);
-                if (instanceSlave != null && instanceSlave.Pool.ConnectionList.Count > 0)
+                RemoveConnection(InstanceSlave, ex);
+                if (InstanceSlave != null && InstanceSlave.Pool.ConnectionList.Count > 0)
                 {
-                    ExecuteDataReaderSlave(action, commandType, commandText, commandParameters);
+                    InstanceSlave.ExecuteDataReader(action, commandType, commandText, onExecuted, commandParameters);
                 }
                 else
                 {
                     WriteLog("The database all connection refused，transfer to database master");
-                    instanceMaster.ExecuteDataReader(action, commandType, commandText, commandParameters);
+                    InstanceMaster.ExecuteDataReader(action, commandType, commandText, onExecuted, commandParameters);
                 }
             }
 
             try
             {
-                if (instanceSlave != null && instanceSlave.Pool.ConnectionList.Count > 0)
-                    InstanceSlave.ExecuteDataReader(action, commandType, commandText, commandParameters);
-                else
-                {
-                    WriteLog("The database slave connection zero，transfer to database master");
-                    instanceMaster.ExecuteDataReader(action, commandType, commandText, commandParameters);
-                }
+                Transfer(null);
             }
             catch (System.TimeoutException te)
             {
@@ -228,15 +301,39 @@ namespace MyStaging.Helpers
         }
 
         /// <summary>
+        ///  此函数只能在从库数据库连接中进行
+        /// </summary>
+        /// <param name="action"></param>
+        public static int ExecuteNonQuerySlave(CommandType commandType, string commandText, params DbParameter[] commandParameters)
+        {
+            return ExecuteNonQuery(commandType, commandText, null, commandParameters);
+        }
+
+        /// <summary>
+        ///  此函数只能在从库数据库连接中进行
+        /// </summary>
+        /// <param name="action"></param>
+        public static int ExecuteNonQuerySlave(CommandType commandType, string commandText, Action<DbCommand> onExecuted = null, params DbParameter[] commandParameters)
+        {
+            return InstanceSlave.ExecuteNonQuery(commandType, commandText, onExecuted, commandParameters);
+        }
+
+        /// <summary>
         ///  移除从库连接，记录日志
         /// </summary>
         /// <param name="ex"></param>
         private static void RemoveConnection(object sender, Exception ex)
         {
-            var dbConnection = (DbConnection)ex.Data["DbConnection"];
-            string message = string.Format("The database slave[{0}] connection refused，transfer slave the others.{1}", dbConnection.ConnectionString, ex.StackTrace);
-            WriteLog(message);
-            instanceSlave.Pool.RemoveConnection(dbConnection);
+            if (ex != null)
+            {
+                var dbConnection = ex.Data["DbConnection"] as DbConnection;
+                if (dbConnection != null)
+                {
+                    string message = string.Format("The database slave[{0}] connection refused，transfer slave the others.{1}", dbConnection.ConnectionString, ex.StackTrace);
+                    WriteLog(message);
+                    InstanceSlave.Pool.RemoveConnection(dbConnection);
+                }
+            }
             // 传递异常
             OnException?.Invoke(sender, ex);
         }
@@ -250,8 +347,7 @@ namespace MyStaging.Helpers
             Console.ForegroundColor = ConsoleColor.Red;
             Console.WriteLine(message);
             Console.ForegroundColor = ConsoleColor.White;
-            if (instanceMaster._logger != null)
-                instanceMaster._logger.LogError(message);
+            Options.Logger?.LogError(message);
         }
 
         /// <summary>

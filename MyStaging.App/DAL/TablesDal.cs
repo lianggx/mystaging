@@ -60,6 +60,7 @@ namespace MyStaging.App.DAL
                 writer.WriteLine("using Newtonsoft.Json.Linq;");
                 writer.WriteLine("using MyStaging.Mapping;");
                 writer.WriteLine("using NpgsqlTypes;");
+                writer.WriteLine("using MyStaging.Helpers;");
                 writer.WriteLine();
                 writer.WriteLine($"namespace {projectName}.Model");
                 writer.WriteLine("{");
@@ -75,6 +76,9 @@ namespace MyStaging.App.DAL
                         writer.WriteLine($"\t\t/// {item.Comment}");
                         writer.WriteLine("\t\t/// </summary>");
                     }
+                    if (pkList.Count(f => f.Field == item.Field) > 0)
+                        writer.WriteLine($"\t\t[PrimaryKey]");
+
                     string _type = item.RelType == "char" || item.RelType == "char?" ? "string" : item.RelType;
                     writer.WriteLine($"\t\tpublic {_type} {item.Field.ToUpperPascal()} {{ get; set; }}");
                     writer.WriteLine();
@@ -101,16 +105,21 @@ namespace MyStaging.App.DAL
                         ht.Add(propertyName, "");
                     }
 
+                    List<string> cacheKey = new List<string>();
                     List<string> d_key = new List<string>();
                     foreach (var item in pkList)
                     {
                         FieldInfo fs = fieldList.FirstOrDefault(f => f.Field == item.Field);
                         d_key.Add("this." + fs.Field.ToUpperPascal());
+                        var tostring = fs.CsType == "string" ? "" : ".ToString()";
+                        cacheKey.Add($"this.{fs.Field.ToUpperPascal()}{tostring}");
                     }
+
                     string dalName = CreateName();
                     string updateName = $"{dalPath}{dalName}.{dalName}UpdateBuilder";
                     string dkString = d_key.Count > 0 ? $", { string.Join(",", d_key)}" : "";
-                    writer.WriteLine($"\t\t[NonDbColumnMapping, JsonIgnore] public {updateName} UpdateBuilder {{ get {{ return new {updateName}(model =>{{MyStaging.Helpers.MyStagingUtils.CopyProperty<{_classname}>(this, model);}}{dkString}); }} }}");
+                    string cacheString = cacheKey.Count > 0 ? $"{ string.Join(" + \"\" + ", cacheKey)}" : "";
+                    writer.WriteLine($"\t\t[NonDbColumnMapping, JsonIgnore] public {updateName} UpdateBuilder {{ get {{ return new {updateName}(model =>{{MyStaging.Helpers.MyStagingUtils.CopyProperty<{_classname}>(this, model); PgSqlHelper.CacheManager?.RemoveItemCache<{_classname}>({cacheString}); }}{dkString}); }} }}");
                     writer.WriteLine();
                     writer.WriteLine($"\t\tpublic {_classname} Insert() {{ return {dalPath}{dalName}.Insert(this); }}");
                     writer.WriteLine();
@@ -376,14 +385,23 @@ namespace MyStaging.App.DAL
             {
                 List<string> d_key = new List<string>();
                 List<string> d_key_param = new List<string>();
+                List<string> cacheKey = new List<string>();
                 foreach (var item in pkList)
                 {
                     FieldInfo fs = fieldList.FirstOrDefault(f => f.Field == item.Field);
                     d_key.Add(fs.RelType + " " + fs.Field);
                     d_key_param.Add("f." + fs.Field.ToUpperPascal() + " == " + fs.Field);
-                }
 
-                writer.WriteLine($"\t\tpublic static int Delete({string.Join(",", d_key)}) => DeleteBuilder.Where(f => {string.Join(" && ", d_key_param)}).SaveChange();");
+                    var tostring = fs.CsType == "string" ? "" : ".ToString()";
+                    cacheKey.Add($"{fs.Field}{tostring}");
+                }
+                string cacheString = cacheKey.Count > 0 ? $"{ string.Join(" + \"\" + ", cacheKey)}" : "";
+                writer.WriteLine($"\t\tpublic static int Delete({string.Join(",", d_key)})");
+                writer.WriteLine("\t\t{");
+                writer.WriteLine($"\t\t\tvar affrows = DeleteBuilder.Where(f => {string.Join(" && ", d_key_param)}).SaveChange();");
+                writer.WriteLine($"\t\t\tif (affrows > 0) PgSqlHelper.CacheManager?.RemoveItemCache<{class_model}>({cacheString});");
+                writer.WriteLine("\t\t\treturn affrows;");
+                writer.WriteLine("\t\t\t}");
             }
         }
 

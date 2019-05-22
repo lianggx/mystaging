@@ -40,8 +40,17 @@ namespace MyStaging.Helpers
                 throw new ArgumentException("The delete operation must specify where conditions!");
 
             this.ToString();
+            var affrows = 0;
+            try
+            {
+                affrows = base.ExecuteNonQuery(this.CommandText);
+            }
+            finally
+            {
+                base.ParamList.Clear();
+            }
 
-            return base.ExecuteNonQuery(this.CommandText);
+            return affrows;
         }
 
         /// <summary>

@@ -1,16 +1,18 @@
 ﻿using MyStaging.xUnitTest.Model;
 using System;
+using Npgsql;
 using Microsoft.Extensions.Logging;
 using MyStaging.Helpers;
-using Npgsql;
+using MyStaging.Common;
+using Microsoft.Extensions.Caching.Distributed;
 
 namespace MyStaging.xUnitTest
 {
 	public class _startup
 	{
-		public static void Init(ILogger logger, string connectionMaster, string[] connectionSlaves = null, int slavesMaxPool = -1)
+		public static void Init(StagingOptions options)
 		{
-			PgSqlHelper.InitConnection(logger, connectionMaster, connectionSlaves, slavesMaxPool);
+			PgSqlHelper.InitConnection(options);
 		}
 	}
 	public partial class NpgsqlNameTranslator : INpgsqlNameTranslator

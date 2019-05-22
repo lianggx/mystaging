@@ -41,6 +41,14 @@ namespace MyStaging.Mapping
     }
 
     /// <summary>
+    ///  标识列主键
+    /// </summary>
+    [AttributeUsage(AttributeTargets.Property | AttributeTargets.Class, Inherited = true)]
+    public class PrimaryKeyAttribute : ColumnAttribute
+    {
+    }
+
+    /// <summary>
     ///  外键关系映射对象
     /// </summary>
     [AttributeUsage(AttributeTargets.Property, Inherited = true)]
