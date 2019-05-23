@@ -152,6 +152,7 @@ namespace MyStaging.Helpers
                 OpenConnection(command);
 
                 retval = command.ExecuteScalar();
+                if (retval is DBNull) return null;
             }
             catch (SocketException se)
             {

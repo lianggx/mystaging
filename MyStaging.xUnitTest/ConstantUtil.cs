@@ -9,6 +9,6 @@ namespace MyStaging.xUnitTest
         /// <summary>
         ///  数据库连接字符串
         /// </summary>
-        public static string CONNECTIONSTRING = "Host=127.0.0.1;Port=5432;Username=postgres;Password=postgres;Database=mystaging;Pooling=true;Maximum Pool Size=50;Timeout=10;CommandTimeout=120;";
+        public static string CONNECTIONSTRING = "Host=127.0.0.1;Port=5432;Username=postgres;Password=postgres;Database=mystaging;Pooling=true;Maximum Pool Size=100;Timeout=10;CommandTimeout=120;";
     }
 }

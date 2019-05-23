@@ -29,7 +29,7 @@ namespace MyStaging.xUnitTest
             var options = new StagingOptions()
             {
                 ConnectionMaster = ConstantUtil.CONNECTIONSTRING,
-                ConnectionSlaves = new string[] { ConstantUtil.CONNECTIONSTRING },
+                ConnectionSlaves = new string[] { ConstantUtil.CONNECTIONSTRING, ConstantUtil.CONNECTIONSTRING },
                 Logger = log
             };
 
@@ -99,45 +99,30 @@ namespace MyStaging.xUnitTest
         [Fact]
         public void ToList()
         {
-            var context = User.Context;
-            for (int i = 0; i < 10; i++)
-            {
-                Stopwatch sw = new Stopwatch();
-                sw.Start();
-                var user = context.Where(f => f.Id == "5cc69c04f6e262476805e111").ToOne();
-                sw.Stop();
-
-                this.output.WriteLine("Index:{0},Milli:{1}", i, sw.ElapsedMilliseconds);
-            }
-            return;
-            var Createtime = context.ToScalar<DateTime>("Createtime");
-
             var list2 = User.Context.InnerJoin<ArticleModel>("b", (a, b) => a.Id == b.Userid).OrderByDescing(f => f.Createtime).Page(1, 10).ToList<UserViewModel>("a.id,a.nickname,a.password");
 
             List<Task> tasks = new List<Task>();
-            for (int i = 0; i < 100; i++)
+            for (int i = 0; i < 50; i++)
             {
                 var t = Task.Run(() =>
                   {
                       Stopwatch sw = new Stopwatch();
                       sw.Start();
-                      var result = User.Context.OrderByDescing(f => f.Createtime).Page(i, 10).ToList();
+                      var result = User.Context.OrderByDescing(f => f.Createtime).Page(i, 5).ToList();
                       sw.Stop();
 
                       this.output.WriteLine("Index:{0},Milli:{1},Count:{2}", i, sw.ElapsedMilliseconds, result.Count);
                   });
                 tasks.Add(t);
-
-                Task.Run(() =>
-                {
-                    if (i >= 50 && i <= 55)
-                    {
-                        PgSqlHelper.Refresh(ConstantUtil.CONNECTIONSTRING, new string[] { ConstantUtil.CONNECTIONSTRING });
-                    }
-                });
             }
 
             Task.WaitAll(tasks.ToArray());
+            var pool = PgSqlHelper.InstanceSlave.Pool;
+
+            foreach (var item in pool.ConnectionList)
+            {
+                output.WriteLine("{0}:{1}", item.DbConnection.DataSource, item.Used);
+            }
 
             Assert.Equal(1, 1);
         }
@@ -234,3 +219,5 @@ namespace MyStaging.xUnitTest
         }
     }
 }
+
+

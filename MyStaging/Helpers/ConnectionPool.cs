@@ -8,19 +8,93 @@ using MyStaging.Common;
 using System.Data.Common;
 using System.Data;
 using Npgsql;
+using System.Threading.Tasks;
 
 namespace MyStaging.Helpers
 {
+    public class EasyLock
+    {
+        private ReaderWriterLockSlim slim = new ReaderWriterLockSlim();
+        public bool Enabled { get; set; }
+
+        public EasyLock()
+        {
+            Enabled = true;
+        }
+
+        public IDisposable Read()
+        {
+            if (Enabled == false || slim.IsReadLockHeld || slim.IsWriteLockHeld)
+            {
+                return Disposable.Empty;
+            }
+            else
+            {
+                slim.EnterReadLock();
+                return new SimpleLock(slim, false);
+            }
+        }
+
+        public IDisposable Write()
+        {
+            if (Enabled == false || slim.IsWriteLockHeld)
+            {
+                return Disposable.Empty;
+            }
+            else if (slim.IsReadLockHeld)
+            {
+                throw new NotImplementedException("读取模式不允许切换到写入模式锁");
+            }
+            else
+            {
+                slim.EnterWriteLock();
+                return new SimpleLock(slim, true);
+            }
+        }
+
+        private class SimpleLock : IDisposable
+        {
+            private ReaderWriterLockSlim slimLock;
+
+            private bool writing;
+            public SimpleLock(ReaderWriterLockSlim slimLock, bool writing)
+            {
+                this.slimLock = slimLock;
+                this.writing = writing;
+            }
+
+            public void Dispose()
+            {
+                if (writing)
+                {
+                    if (slimLock.IsWriteLockHeld)
+                    {
+                        slimLock.ExitWriteLock();
+                    }
+                }
+                else
+                {
+                    if (slimLock.IsReadLockHeld)
+                    {
+                        slimLock.ExitReadLock();
+                    }
+                }
+            }
+        }
+
+        private class Disposable : IDisposable
+        {
+            public static readonly Disposable Empty = new Disposable();
+            public void Dispose() { }
+        }
+    }
+
     /// <summary>
     ///  数据库连接池管理对象
     /// </summary>
     public partial class ConnectionPool
     {
-        private readonly object _lock = new object();
-        private readonly object _lock_getconnection = new object();
-        public readonly List<DbConnection> All_Connection = new List<DbConnection>();
-        private readonly Queue<ManualResetEvent> GetConnectionQueue = new Queue<ManualResetEvent>();
-        private readonly Random connRandom = new Random();
+        private EasyLock easyLock = null;
         private Timer timer = null;
 
         /// <summary>
@@ -31,43 +105,22 @@ namespace MyStaging.Helpers
         public ConnectionPool(List<ConnectionStringConfiguration> connS, int poolSize = 32)
         {
             this.ConnectionList = connS;
-            this.PoolSize = poolSize <= 0 ? 32 : poolSize;
+            this.easyLock = new EasyLock();
         }
 
+        private object objLock = new object();
         /// <summary>
         ///  从连接池中获取可用的数据库连接，如果无法获取，将抛出异常
         /// </summary>
         /// <returns></returns>
         public DbConnection GetConnection()
         {
-            DbConnection conn = null;
-            if (Free.Count > 0)
-                lock (_lock)
-                    if (Free.Count > 0)
-                        conn = Free.Dequeue();
-            if (conn == null && All_Connection.Count < this.PoolSize)
+            using (easyLock.Write())
             {
-                lock (_lock)
-                    if (All_Connection.Count < this.PoolSize)
-                    {
-                        var connS = RandomConnectionString();
-                        conn = new NpgsqlConnection(connS.ConnectionString);
-
-                        All_Connection.Add(conn);
-                    }
+                var connS = RandomConnectionString();
+                var conn = new NpgsqlConnection(connS.ConnectionString);
+                return conn;
             }
-
-            if (conn == null)
-            {
-                ManualResetEvent wait = new ManualResetEvent(false);
-                lock (_lock_getconnection)
-                    GetConnectionQueue.Enqueue(wait);
-                if (wait.WaitOne(TimeSpan.FromSeconds(10)))
-                    return GetConnection();
-                throw new TimeoutException("从连接池中获取数据库连接超时，可能已无可用连接");
-            }
-
-            return conn;
         }
 
         /// <summary>
@@ -77,17 +130,6 @@ namespace MyStaging.Helpers
         public void FreeConnection(DbConnection conn)
         {
             conn.Close();
-            lock (_lock)
-                Free.Enqueue(conn);
-
-            if (GetConnectionQueue.Count > 0)
-            {
-                ManualResetEvent wait = null;
-                lock (_lock_getconnection)
-                    if (GetConnectionQueue.Count > 0)
-                        wait = GetConnectionQueue.Dequeue();
-                if (wait != null) wait.Set();
-            }
         }
 
         /// <summary>
@@ -102,15 +144,18 @@ namespace MyStaging.Helpers
             }
             if (ConnectionList.Count == 1)
             {
+                ConnectionList[0].Used++;
                 return ConnectionList[0];
             }
             else
             {
-                var connS = ConnectionList.Where(f => f.MaxConnection > f.Used).OrderBy(f => f.Used).First();
+                var connS = ConnectionList.OrderBy(f => f.Used).First();
                 if (connS == null)
                     throw new NoSlaveConnection("已无可用的数据库连接");
 
-                connS.Used++;
+                if (connS.Used < long.MaxValue)
+                    connS.Used++;
+
                 return connS;
             }
         }
@@ -183,25 +228,13 @@ namespace MyStaging.Helpers
         /// <param name="poolSize"></param>
         public void Refresh(List<ConnectionStringConfiguration> connS, int poolSize = 32)
         {
-            lock (_lock)
+            using (easyLock.Write())
             {
+                NpgsqlConnection.ClearAllPools();
                 ConnectionList?.Clear();
                 ConnectionList = connS;
-                this.PoolSize = poolSize;
-                Free?.Clear();
-                All_Connection?.Clear();
             }
         }
-
-        /// <summary>
-        ///  获取连接池大小
-        /// </summary>
-        public int PoolSize { get; set; } = 32;
-
-        /// <summary>
-        ///  获取闲置的连接
-        /// </summary>
-        public Queue<DbConnection> Free { get; } = new Queue<DbConnection>();
 
         /// <summary>
         ///  获取或者设置数据库连接字符串
