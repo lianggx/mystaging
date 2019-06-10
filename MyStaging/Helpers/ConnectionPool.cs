@@ -95,7 +95,6 @@ namespace MyStaging.Helpers
     public partial class ConnectionPool
     {
         private EasyLock easyLock = null;
-        private Timer timer = null;
 
         /// <summary>
         ///  构造函数
@@ -157,67 +156,6 @@ namespace MyStaging.Helpers
                     connS.Used++;
 
                 return connS;
-            }
-        }
-
-        /// <summary>
-        ///  移除异常的数据库连接
-        /// </summary>
-        /// <param name="connectionString"></param>
-        public void RemoveConnection(DbConnection dbConnection)
-        {
-            for (int i = 0; i < this.ConnectionList.Count; i++)
-            {
-                var sourceConfig = this.ConnectionList[i];
-                var assert = sourceConfig.DbConnection.DataSource == dbConnection.DataSource
-                            && sourceConfig.DbConnection.Database == dbConnection.Database;
-                if (assert)
-                {
-                    this.ConnectionList.RemoveAt(i);
-                    Monitor(sourceConfig);
-                    break;
-                }
-            }
-        }
-
-        /// <summary>
-        ///  启动连接监控
-        /// </summary>
-        /// <param name="connectionString"></param>
-        private void Monitor(ConnectionStringConfiguration connS)
-        {
-            ErrorList.Add(connS);
-            if (timer == null)
-            {
-                timer = new Timer(OnTick, this, 10 * 1000, 60 * 1000);
-                Console.WriteLine("监控服务已启动");
-            }
-        }
-
-        /// <summary>
-        ///  检查连接是否正常
-        /// </summary>
-        /// <param name="state"></param>
-        private void OnTick(object state)
-        {
-            if (ErrorList.Count == 0)
-                return;
-
-            for (int i = 0; i < ErrorList.Count; i++)
-            {
-                var connS = ErrorList[i];
-                try
-                {
-                    ErrorList[i].Error++;
-                    NpgsqlConnection conn = new NpgsqlConnection(connS.ConnectionString);
-                    conn.Open();
-                    conn.Close();
-                    ErrorList.RemoveAt(i);
-                    ConnectionList.Add(connS);
-
-                    Console.WriteLine("连接正常，重新放入连接池：[{0}]", connS.ConnectionString);
-                }
-                catch { }
             }
         }
 

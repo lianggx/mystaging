@@ -230,14 +230,12 @@ namespace MyStaging.Helpers
             object result = null;
             void Transfer(Exception ex)
             {
-                RemoveConnection(InstanceSlave, ex);
                 if (InstanceSlave != null && InstanceSlave.Pool.ConnectionList.Count > 0)
                 {
                     result = InstanceSlave.ExecuteScalar(commandType, commandText, onExecuted, commandParameters);
                 }
                 else
                 {
-                    WriteLog("The database all connection refused，transfer to database master");
                     result = InstanceMaster.ExecuteScalar(commandType, commandText, onExecuted, commandParameters);
                 }
             }
@@ -248,10 +246,12 @@ namespace MyStaging.Helpers
             }
             catch (System.TimeoutException te)
             {
+                WriteLog(te);
                 Transfer(te);
             }
             catch (System.Net.Sockets.SocketException ex)
             {
+                WriteLog(ex);
                 Transfer(ex);
             }
             return result;
@@ -274,14 +274,12 @@ namespace MyStaging.Helpers
         {
             void Transfer(Exception ex)
             {
-                RemoveConnection(InstanceSlave, ex);
                 if (InstanceSlave != null && InstanceSlave.Pool.ConnectionList.Count > 0)
                 {
                     InstanceSlave.ExecuteDataReader(action, commandType, commandText, onExecuted, commandParameters);
                 }
                 else
                 {
-                    WriteLog("The database all connection refused，transfer to database master");
                     InstanceMaster.ExecuteDataReader(action, commandType, commandText, onExecuted, commandParameters);
                 }
             }
@@ -292,10 +290,12 @@ namespace MyStaging.Helpers
             }
             catch (System.TimeoutException te)
             {
+                WriteLog(te);
                 Transfer(te);
             }
             catch (System.Net.Sockets.SocketException ex)
             {
+                WriteLog(ex);
                 Transfer(ex);
             }
         }
@@ -318,25 +318,25 @@ namespace MyStaging.Helpers
             return InstanceSlave.ExecuteNonQuery(commandType, commandText, onExecuted, commandParameters);
         }
 
-        /// <summary>
-        ///  移除从库连接，记录日志
-        /// </summary>
-        /// <param name="ex"></param>
-        private static void RemoveConnection(object sender, Exception ex)
-        {
-            if (ex != null)
-            {
-                var dbConnection = ex.Data["DbConnection"] as DbConnection;
-                if (dbConnection != null)
-                {
-                    string message = string.Format("The database slave[{0}] connection refused，transfer slave the others.{1}", dbConnection.ConnectionString, ex.StackTrace);
-                    WriteLog(message);
-                    InstanceSlave.Pool.RemoveConnection(dbConnection);
-                }
-            }
-            // 传递异常
-            OnException?.Invoke(sender, ex);
-        }
+        ///// <summary>
+        /////  移除从库连接，记录日志
+        ///// </summary>
+        ///// <param name="ex"></param>
+        //private static void RemoveConnection(object sender, Exception ex)
+        //{
+        //    if (ex != null)
+        //    {
+        //        var dbConnection = ex.Data["DbConnection"] as DbConnection;
+        //        if (dbConnection != null)
+        //        {
+        //            string message = string.Format("The database slave[{0}] connection refused，transfer slave the others.{1}", dbConnection.ConnectionString, ex.StackTrace);
+        //            WriteLog(message);
+        //            InstanceSlave.Pool.RemoveConnection(dbConnection);
+        //        }
+        //    }
+        //    // 传递异常
+        //    OnException?.Invoke(sender, ex);
+        //}
 
         /// <summary>
         ///  记录连接异常日志
@@ -348,6 +348,16 @@ namespace MyStaging.Helpers
             Console.WriteLine(message);
             Console.ForegroundColor = ConsoleColor.White;
             Options.Logger?.LogError(message);
+        }
+        private static void WriteLog(Exception ex)
+        {
+            string message = ex.Message + ex.StackTrace;
+            var dbConnection = ex.Data["DbConnection"] as DbConnection;
+            if (dbConnection != null)
+            {
+                message = string.Format("The database slave[{0}] connection refused，transfer slave the others.{1}", dbConnection.ConnectionString, ex.StackTrace);
+            }
+            WriteLog(message);
         }
 
         /// <summary>
