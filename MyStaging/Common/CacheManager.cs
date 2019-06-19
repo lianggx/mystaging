@@ -52,7 +52,9 @@ namespace MyStaging.Common
         public T GetItemCache<T>(IList<Npgsql.NpgsqlParameter> parameters)
         {
             T obj = default(T);
-            if (parameters.Count > 0)
+            // 缓存 key 不得超出主键数量
+            var pk = typeof(T).GetProperties().Where(f => f.GetCustomAttribute<PrimaryKeyAttribute>() != null).Count();
+            if (parameters.Count > 0 && parameters.Count <= pk)
             {
                 var id = GetKeys<T>(parameters);
                 var key = FormatKey<T>(id);
