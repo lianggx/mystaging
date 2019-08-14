@@ -1,17 +1,20 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 	<PropertyGroup>
-		<TargetFramework>netcoreapp2.0</TargetFramework>
+		<TargetFramework>netstandard2.0</TargetFramework>
 		<Authors></Authors>
 		 <Company></Company>
+		 <ApplicationIcon />
+		 <OutputType>Library</OutputType>
+		 <StartupObject />
 	</PropertyGroup>
-
-	<ItemGroup>
-		<ProjectReference Include="..\MyStaging\MyStaging.csproj" />
-	</ItemGroup>
 
 	<ItemGroup>
 	  <Folder Include="DAL\Build\" />
 	  <Folder Include="Model\Build\" />
 	  <Folder Include="Model\Schemas\" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <ProjectReference Include="..\MyStaging\MyStaging.csproj" />
 	</ItemGroup>
 </Project>

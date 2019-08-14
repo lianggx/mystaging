@@ -340,9 +340,9 @@ namespace MyStaging.App.DAL
             writer.WriteLine($"\t\t\t\treturn this;");
             writer.WriteLine("\t\t\t}");
 
-            writer.WriteLine($"\t\t\tpublic new {updateName} Where(string formatCommad, params object[] pValue)");
+            writer.WriteLine($"\t\t\tpublic new {updateName} Where(string expression)");
             writer.WriteLine("\t\t\t{");
-            writer.WriteLine($"\t\t\t\tbase.Where(formatCommad,pValue);");
+            writer.WriteLine($"\t\t\t\tbase.Where(expression);");
             writer.WriteLine($"\t\t\t\treturn this;");
             writer.WriteLine("\t\t\t}");
 

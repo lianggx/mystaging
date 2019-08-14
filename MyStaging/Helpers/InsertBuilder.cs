@@ -4,6 +4,7 @@ using MyStaging.Schemas;
 using NpgsqlTypes;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
@@ -19,6 +20,12 @@ namespace MyStaging.Helpers
         private readonly List<T> setList = new List<T>();
         private List<T> models = new List<T>();
         private ISchemaModel schema;
+        private static object zeroTime = new DateTime();
+        private static Dictionary<string, string> defaultValueField = new Dictionary<string, string>
+        {
+            { "createtime",null },
+            { "create_time", null }
+        };
 
         public InsertBuilder() { }
 
@@ -110,7 +117,16 @@ namespace MyStaging.Helpers
                         var piName = $"@{key}_{i}";
                         piNames += piName + ",";
                         var sm = fieldCollection[key];
-                        base.AddParameter(piName, sm.DbType, pi.GetValue(mObj), sm.Size, sm.SpecificType);
+                        var value = pi.GetValue(mObj);
+                        if (sm.Primarykey || defaultValueField.ContainsKey(key))
+                        {
+                            if (value == null
+                                || value.Equals(Guid.Empty)
+                                || zeroTime.Equals(value))
+                                value = CreateDefaultValue(sm);
+                        }
+
+                        base.AddParameter(piName, sm.DbType, value, sm.Size, sm.SpecificType);
                     }
                 }
 
@@ -122,6 +138,24 @@ namespace MyStaging.Helpers
             base.CommandText = sqlBuilder.ToString();
 
             return CommandText;
+        }
+
+        private object CreateDefaultValue(SchemaModel model)
+        {
+            object defaultValue = null;
+            if (model.DbType == NpgsqlDbType.Uuid)
+            {
+                defaultValue = Guid.NewGuid();
+            }
+            else if (defaultValueField.ContainsKey(model.FieldName.ToLower()))
+            {
+                if (model.DbType == NpgsqlDbType.Time || model.DbType == NpgsqlDbType.TimeTZ)
+                    defaultValue = DateTime.Now.TimeOfDay;
+                else
+                    defaultValue = DateTime.Now;
+            }
+
+            return defaultValue;
         }
     }
 }

@@ -101,9 +101,9 @@ namespace MyStaging.Helpers
         /// </summary>
         /// <param name="connectionList">数据库连接字符串</param>
         /// <param name="poolSize">连接池大小</param>
-        public ConnectionPool(List<ConnectionStringConfiguration> connS, int poolSize = 32)
+        public ConnectionPool(List<ConnectionStringConfiguration> connectionList)
         {
-            this.ConnectionList = connS;
+            this.ConnectionList = connectionList;
             this.easyLock = new EasyLock();
         }
 
@@ -116,8 +116,8 @@ namespace MyStaging.Helpers
         {
             using (easyLock.Write())
             {
-                var connS = RandomConnectionString();
-                var conn = new NpgsqlConnection(connS.ConnectionString);
+                var connText = RandomConnectionString();
+                var conn = new NpgsqlConnection(connText.ConnectionString);
                 return conn;
             }
         }
@@ -126,9 +126,10 @@ namespace MyStaging.Helpers
         ///  将数据库连接关闭，并放入当前连接池中
         /// </summary>
         /// <param name="conn"></param>
-        public void FreeConnection(DbConnection conn)
+        public void FreeConnection(DbConnection connection)
         {
-            conn.Close();
+            if (connection != null)
+                connection.Close();
         }
 
         /// <summary>
@@ -162,15 +163,15 @@ namespace MyStaging.Helpers
         /// <summary>
         /// 刷新数据库连接
         /// </summary>
-        /// <param name="connS"></param>
+        /// <param name="connectionList"></param>
         /// <param name="poolSize"></param>
-        public void Refresh(List<ConnectionStringConfiguration> connS, int poolSize = 32)
+        public void Refresh(List<ConnectionStringConfiguration> connectionList)
         {
             using (easyLock.Write())
             {
                 NpgsqlConnection.ClearAllPools();
                 ConnectionList?.Clear();
-                ConnectionList = connS;
+                ConnectionList = connectionList;
             }
         }
 

@@ -1,6 +1,7 @@
 ﻿using Microsoft.Extensions.Logging;
 using MyStaging.Common;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.Common;
@@ -26,8 +27,7 @@ namespace MyStaging.Helpers
         /// </summary>
         public ILogger _logger = null;
 
-        private Dictionary<int, DbTransaction> _trans = new Dictionary<int, DbTransaction>();
-        private object _trans_lock = new object();
+        private ConcurrentDictionary<int, DbTransaction> _trans = new ConcurrentDictionary<int, DbTransaction>();
 
         /// <summary>
         ///  默认构造函数
@@ -40,7 +40,7 @@ namespace MyStaging.Helpers
         /// <param name="logger">日志输出对象</param>
         /// <param name="connectionString">数据库连接字符串</param>
         /// <param name="poolSize">连接池大小</param>
-        public PgExecute(ILogger logger, ConnectionStringConfiguration connectionString) : this(logger, new List<ConnectionStringConfiguration>() { connectionString }, connectionString.MaxConnection)
+        public PgExecute(ILogger logger, ConnectionStringConfiguration connectionString) : this(logger, new List<ConnectionStringConfiguration>() { connectionString })
         {
         }
 
@@ -50,7 +50,7 @@ namespace MyStaging.Helpers
         /// <param name="logger">日志输出对象</param>
         /// <param name="connectionSalve">数据库连接字符串</param>
         /// <param name="poolSize">连接池大小</param>
-        public PgExecute(ILogger logger, List<ConnectionStringConfiguration> connectionList, int poolSize) : this(logger, new ConnectionPool(connectionList, poolSize))
+        public PgExecute(ILogger logger, List<ConnectionStringConfiguration> connectionList) : this(logger, new ConnectionPool(connectionList))
         {
 
         }
@@ -331,7 +331,7 @@ namespace MyStaging.Helpers
             catch (Exception ex)
             {
                 ExceptionOutPut(command, ex);
-                throw ex;
+                throw;
             }
             finally
             {
@@ -411,7 +411,7 @@ namespace MyStaging.Helpers
         /// <summary>
         ///  在当前线程上开始执行事务
         /// </summary>
-        public virtual void BeginTransaction()
+        public virtual DbConnection BeginTransaction()
         {
             if (CurrentThreadTransaction != null)
                 CommitTransaction(true);
@@ -423,11 +423,10 @@ namespace MyStaging.Helpers
             int tid = Thread.CurrentThread.ManagedThreadId;
             if (_trans.ContainsKey(tid))
                 CommitTransaction();
+            else
+                _trans.TryAdd(tid, tran);
 
-            lock (_trans_lock)
-            {
-                _trans.Add(tid, tran);
-            }
+            return Connection;
         }
 
         /// <summary>
@@ -442,35 +441,29 @@ namespace MyStaging.Helpers
         ///  可控制的事务提交
         /// </summary>
         /// <param name="iscommit">true=提交事务，false=回滚事务</param>
-        public virtual void CommitTransaction(bool iscommit)
+        public virtual DbConnection CommitTransaction(bool iscommit)
         {
             DbTransaction tran = CurrentThreadTransaction;
-            if (tran == null || tran.Connection == null) return;
+            if (tran == null || tran.Connection == null) return null;
 
-            lock (_trans_lock)
-            {
-                int tid = Thread.CurrentThread.ManagedThreadId;
-                _trans.Remove(tid);
-            }
-            DbConnection conn = tran.Connection;
+            int tid = Thread.CurrentThread.ManagedThreadId;
+            _trans.TryRemove(tid, out tran);
+
+            DbConnection connection = tran.Connection;
             if (iscommit)
                 tran.Commit();
             else
                 tran.Rollback();
 
-            this.Pool.FreeConnection(conn);
+            return connection;
         }
 
         /// <summary>
         ///  将当前线程上的事务进行回滚
         /// </summary>
-        public virtual void RollBackTransaction()
+        public virtual DbConnection RollBackTransaction()
         {
-            DbTransaction tran = CurrentThreadTransaction;
-            if (tran != null)
-            {
-                CommitTransaction(false);
-            }
+            return CommitTransaction(false);
         }
 
         /// <summary>

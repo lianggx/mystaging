@@ -6,6 +6,7 @@ using MyStaging.Common;
 using MyStaging.Helpers;
 using MyStaging.xUnitTest.DAL;
 using MyStaging.xUnitTest.Model;
+using MyStaging.xUnitTest.Model.Schemas;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -32,13 +33,57 @@ namespace MyStaging.xUnitTest
                 ConnectionSlaves = new string[] { ConstantUtil.CONNECTIONSTRING, ConstantUtil.CONNECTIONSTRING },
                 Logger = log
             };
-
+            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+            Console.OutputEncoding = Encoding.UTF8;
             _startup.Init(options);
         }
 
         private string Sha256Hash(string text)
         {
             return Convert.ToBase64String(SHA256.Create().ComputeHash(Encoding.UTF8.GetBytes(text)));
+        }
+
+        [Fact]
+        public void MultiTest()
+        {
+            //PgSqlHelper.Transaction(() =>
+            //{
+            //    var user = User.Context.OrderBy("random()").ToOne();
+            //    user.UpdateBuilder.SetCreatetime(DateTime.Now).SaveChange();
+            //    int i = 0;
+            //    int j = 50 / i;
+            //});
+            List<TopicModel> topics = new List<TopicModel>();
+            for (int i = 0; i < 1; i++)
+            {
+                topics.Add(new TopicModel()
+                {
+                    Title = $"µÚ {i} ¸öÌû×Ó"
+                });
+                // output.WriteLine(ts.SchemaSet["id"].ToString());
+            }
+
+            Topic.InsertRange(topics);
+            return;
+
+            List<Task> tasks = new List<Task>();
+            for (int i = 0; i < 1000; i++)
+            {
+                var task = Task.Run(() =>
+                {
+                    try
+                    {
+                        var user = User.Context.OrderBy("random()").ToOne();
+                        user.UpdateBuilder.SetCreatetime(DateTime.Now).SaveChange();
+                    }
+                    catch (Exception ex)
+                    {
+                        output.WriteLine("{0}/{1}", ex.Message, ex.StackTrace);
+                    }
+                });
+                tasks.Add(task);
+            }
+            Task.WaitAll(tasks.ToArray());
         }
 
         static int num = 0;
@@ -76,6 +121,12 @@ namespace MyStaging.xUnitTest
             {
                 Thread.Sleep(1000);
             }
+        }
+
+        private void TestException()
+        {
+            User user = null;
+            bool iscacheing = user.Cacheing;
         }
 
         [Fact]

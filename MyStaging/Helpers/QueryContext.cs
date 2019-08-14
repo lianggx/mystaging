@@ -295,6 +295,18 @@ namespace MyStaging.Helpers
         /// <returns></returns>
         public TResult ToOne<TResult>(params string[] fields)
         {
+            return ToOne<TResult>(true, fields);
+        }
+
+        /// <summary>
+        ///  查询返回一行数据
+        /// </summary>
+        /// <param name="cacheing">是否使用缓存结果，cacheing=true时，直接查询数据库，无论cacheing是否为true，最终都会根据全局缓存设置更新缓存</param>
+        /// <typeparam name="TResult">接受查询结果对象类型</typeparam>
+        /// <param name="fields">指定查询的字段</param>
+        /// <returns></returns>
+        public TResult ToOne<TResult>(bool cacheing, params string[] fields)
+        {
             Page(1, 1);
             ResetFields(fields);
 
@@ -302,7 +314,7 @@ namespace MyStaging.Helpers
             var enable = Cacheing && PgSqlHelper.CacheManager != null && objType.IsClass;
             // 读取缓存
             TResult obj = default(TResult);
-            if (enable)
+            if (enable && cacheing)
             {
                 obj = PgSqlHelper.CacheManager.GetItemCache<TResult>(this.ParamList);
                 if (obj != null)
@@ -542,7 +554,7 @@ namespace MyStaging.Helpers
         {
             if (string.IsNullOrEmpty(expression)) throw new ArgumentNullException("必须传递参数 expression");
 
-            WhereList.Add(expression);
+            WhereList.Add($"({expression})");
             return this;
         }
 
@@ -562,9 +574,8 @@ namespace MyStaging.Helpers
                 this.AddParameter(name, item);
                 nameList.Add("@" + name);
             }
-            formatCommad = string.Format(formatCommad, nameList.ToArray());
-            WhereList.Add(formatCommad);
-            return this;
+            var expression = string.Format(formatCommad, nameList.ToArray());
+            return this.Where(expression);
         }
 
         /// <summary>

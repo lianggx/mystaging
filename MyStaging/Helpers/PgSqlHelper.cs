@@ -12,6 +12,7 @@ using System.Runtime.Serialization.Formatters.Binary;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Linq;
+using System.Text;
 
 namespace MyStaging.Helpers
 {
@@ -38,7 +39,7 @@ namespace MyStaging.Helpers
         /// </summary>
         public partial class SlaveExecute : PgExecute
         {
-            public SlaveExecute(ILogger logger, List<ConnectionStringConfiguration> connectionString, int poolSize) : base(logger, connectionString, poolSize) { }
+            public SlaveExecute(ILogger logger, List<ConnectionStringConfiguration> connectionString) : base(logger, connectionString) { }
         }
 
         /// <summary>
@@ -70,21 +71,18 @@ namespace MyStaging.Helpers
             Options = options;
 
             // 初始化主库连接实例
-            int poolsizeMaster = GetPollSize(options.ConnectionMaster);
-            ConnectionStringConfiguration connS = new ConnectionStringConfiguration()
+            ConnectionStringConfiguration conn = new ConnectionStringConfiguration()
             {
                 ConnectionString = options.ConnectionMaster,
-                MaxConnection = poolsizeMaster,
                 DbConnection = new Npgsql.NpgsqlConnection(options.ConnectionMaster)
             };
-            InstanceMaster = new MasterExecute(options.Logger, connS);
+            InstanceMaster = new MasterExecute(options.Logger, conn);
 
             // 初始化从库连接实例
-            List<ConnectionStringConfiguration> connList = GetSlaves(options.ConnectionSlaves, out int poolsizeSlave);
-            if (options.SlavesMaxPool != -1)
-                poolsizeSlave = options.SlavesMaxPool;
+            List<ConnectionStringConfiguration> connList = GetSlaves(options.ConnectionSlaves);
+
             if (connList != null)
-                InstanceSlave = new SlaveExecute(options.Logger, connList, poolsizeSlave);
+                InstanceSlave = new SlaveExecute(options.Logger, connList);
 
             if (options.CacheOptions != null && options.CacheOptions.Cache != null)
             {
@@ -93,11 +91,8 @@ namespace MyStaging.Helpers
             }
         }
 
-
-
-        private static List<ConnectionStringConfiguration> GetSlaves(string[] connectionSlaves, out int pollsizeSlave)
+        private static List<ConnectionStringConfiguration> GetSlaves(string[] connectionSlaves)
         {
-            pollsizeSlave = 0;
             List<ConnectionStringConfiguration> connList = null;
             if (connectionSlaves != null && connectionSlaves.Length > 0)
             {
@@ -109,10 +104,8 @@ namespace MyStaging.Helpers
                     {
                         ConnectionString = item,
                         Id = i,
-                        MaxConnection = GetPollSize(item),
                         DbConnection = new Npgsql.NpgsqlConnection(item)
                     });
-                    pollsizeSlave += connList[i].MaxConnection;
                 }
             }
 
@@ -124,38 +117,17 @@ namespace MyStaging.Helpers
         /// </summary>
         /// <param name="connS"></param>
         /// <param name="poolSize"></param>
-        public static void Refresh(string connectionMaster, string[] connectionSlaves = null, int slavesMaxPool = -1)
+        public static void Refresh(string connectionMaster, string[] connectionSlaves = null)
         {
-            int poolsizeMaster = GetPollSize(connectionMaster);
-            ConnectionStringConfiguration connS = new ConnectionStringConfiguration()
+            ConnectionStringConfiguration conn = new ConnectionStringConfiguration()
             {
                 ConnectionString = connectionMaster,
-                MaxConnection = poolsizeMaster,
                 DbConnection = new Npgsql.NpgsqlConnection(connectionMaster)
             };
 
-            InstanceMaster.Pool.Refresh(new List<ConnectionStringConfiguration>() { connS }, connS.MaxConnection);
-
-            List<ConnectionStringConfiguration> connList = GetSlaves(connectionSlaves, out int poolsizeSlave);
-            InstanceSlave?.Pool?.Refresh(connList, poolsizeSlave);
-        }
-
-        /// <summary>
-        ///  获取数据库连接池配置
-        /// </summary>
-        /// <param name="connectionString"></param>
-        /// <returns></returns>
-        private static int GetPollSize(string connectionString)
-        {
-            int size = 32;
-            Match m = Regex.Match(connectionString.ToLower(), @"maximum\s*pool\s*size\s*=\s*(\d+)", RegexOptions.IgnoreCase);
-            if (m.Success)
-                int.TryParse(m.Groups[1].Value, out size);
-
-            if (size <= 0)
-                size = 32;
-
-            return size;
+            InstanceMaster.Pool.Refresh(new List<ConnectionStringConfiguration>() { conn });
+            List<ConnectionStringConfiguration> connList = GetSlaves(connectionSlaves);
+            InstanceSlave?.Pool?.Refresh(connList);
         }
 
         /// <summary>
@@ -318,26 +290,6 @@ namespace MyStaging.Helpers
             return InstanceSlave.ExecuteNonQuery(commandType, commandText, onExecuted, commandParameters);
         }
 
-        ///// <summary>
-        /////  移除从库连接，记录日志
-        ///// </summary>
-        ///// <param name="ex"></param>
-        //private static void RemoveConnection(object sender, Exception ex)
-        //{
-        //    if (ex != null)
-        //    {
-        //        var dbConnection = ex.Data["DbConnection"] as DbConnection;
-        //        if (dbConnection != null)
-        //        {
-        //            string message = string.Format("The database slave[{0}] connection refused，transfer slave the others.{1}", dbConnection.ConnectionString, ex.StackTrace);
-        //            WriteLog(message);
-        //            InstanceSlave.Pool.RemoveConnection(dbConnection);
-        //        }
-        //    }
-        //    // 传递异常
-        //    OnException?.Invoke(sender, ex);
-        //}
-
         /// <summary>
         ///  记录连接异常日志
         /// </summary>
@@ -351,13 +303,22 @@ namespace MyStaging.Helpers
         }
         private static void WriteLog(Exception ex)
         {
-            string message = ex.Message + ex.StackTrace;
+            StringBuilder sb = new StringBuilder();
+            sb.AppendLine(ex.Message);
+            sb.AppendLine(ex.StackTrace);
             var dbConnection = ex.Data["DbConnection"] as DbConnection;
             if (dbConnection != null)
             {
-                message = string.Format("The database slave[{0}] connection refused，transfer slave the others.{1}", dbConnection.ConnectionString, ex.StackTrace);
+                sb.AppendLine(dbConnection.ConnectionString);
             }
-            WriteLog(message);
+
+            if (ex.InnerException != null)
+            {
+                sb.AppendLine(ex.InnerException.Message);
+                sb.AppendLine(ex.InnerException.StackTrace);
+            }
+
+            WriteLog(sb.ToString());
         }
 
         /// <summary>
@@ -366,16 +327,22 @@ namespace MyStaging.Helpers
         /// <param name="action"></param>
         public static void Transaction(Action action)
         {
+            DbConnection connection = null;
             try
             {
-                InstanceMaster.BeginTransaction();
+                connection = InstanceMaster.BeginTransaction();
                 action?.Invoke();
                 InstanceMaster.CommitTransaction();
             }
-            catch (Exception e)
+            catch (Exception ex)
             {
                 InstanceMaster.RollBackTransaction();
-                throw e;
+                WriteLog(ex);
+                throw;
+            }
+            finally
+            {
+                InstanceMaster.Pool.FreeConnection(connection);
             }
         }
     }
