@@ -6,9 +6,7 @@
     <AssemblyName>MyStaging.App</AssemblyName>
     <ApplicationIcon />
     <StartupObject></StartupObject>
-    <Version>1.1</Version>
-    <AssemblyVersion>1.1.0.0</AssemblyVersion>
-    <FileVersion>1.1.0.0</FileVersion>
+    <Version>1.2</Version>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
