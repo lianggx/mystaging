@@ -386,7 +386,6 @@ namespace MyStaging.Helpers
         /// <returns></returns>
         private bool IsString(DbType dbType)
         {
-
             switch (dbType)
             {
                 case DbType.Int16:
@@ -411,7 +410,7 @@ namespace MyStaging.Helpers
         /// <summary>
         ///  在当前线程上开始执行事务
         /// </summary>
-        public virtual DbConnection BeginTransaction()
+        public virtual DbTransaction BeginTransaction()
         {
             if (CurrentThreadTransaction != null)
                 CommitTransaction(true);
@@ -419,6 +418,7 @@ namespace MyStaging.Helpers
             DbConnection Connection = this.Pool.GetConnection();
             if (Connection.State != ConnectionState.Open)
                 Connection.Open();
+
             DbTransaction tran = Connection.BeginTransaction();
             int tid = Thread.CurrentThread.ManagedThreadId;
             if (_trans.ContainsKey(tid))
@@ -426,44 +426,34 @@ namespace MyStaging.Helpers
             else
                 _trans.TryAdd(tid, tran);
 
-            return Connection;
+            return tran;
         }
 
         /// <summary>
         ///  提交当前线程上执行的事务
         /// </summary>
-        public virtual void CommitTransaction()
-        {
-            CommitTransaction(true);
-        }
+        public virtual DbTransaction CommitTransaction() => CommitTransaction(true);
+
+        /// <summary>
+        ///  将当前线程上的事务进行回滚
+        /// </summary>
+        public virtual DbTransaction RollBackTransaction() => CommitTransaction(false);
 
         /// <summary>
         ///  可控制的事务提交
         /// </summary>
         /// <param name="iscommit">true=提交事务，false=回滚事务</param>
-        public virtual DbConnection CommitTransaction(bool iscommit)
+        public virtual DbTransaction CommitTransaction(bool iscommit)
         {
-            DbTransaction tran = CurrentThreadTransaction;
-            if (tran == null || tran.Connection == null) return null;
-
             int tid = Thread.CurrentThread.ManagedThreadId;
-            _trans.TryRemove(tid, out tran);
-
-            DbConnection connection = tran.Connection;
-            if (iscommit)
-                tran.Commit();
-            else
-                tran.Rollback();
-
-            return connection;
-        }
-
-        /// <summary>
-        ///  将当前线程上的事务进行回滚
-        /// </summary>
-        public virtual DbConnection RollBackTransaction()
-        {
-            return CommitTransaction(false);
+            if (_trans.TryRemove(tid, out DbTransaction tran))
+            {
+                if (iscommit)
+                    tran.Commit();
+                else
+                    tran.Rollback();
+            }
+            return tran;
         }
 
         /// <summary>

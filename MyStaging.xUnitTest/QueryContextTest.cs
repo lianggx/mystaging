@@ -46,24 +46,25 @@ namespace MyStaging.xUnitTest
         [Fact]
         public void MultiTest()
         {
-            //PgSqlHelper.Transaction(() =>
-            //{
-            //    var user = User.Context.OrderBy("random()").ToOne();
-            //    user.UpdateBuilder.SetCreatetime(DateTime.Now).SaveChange();
-            //    int i = 0;
-            //    int j = 50 / i;
-            //});
-            List<TopicModel> topics = new List<TopicModel>();
-            for (int i = 0; i < 1; i++)
+            PgSqlHelper.Transaction(() =>
             {
-                topics.Add(new TopicModel()
-                {
-                    Title = $"第 {i} 个帖子"
-                });
-                // output.WriteLine(ts.SchemaSet["id"].ToString());
-            }
+                var user = User.Context.OrderBy("random()").ToOne();
+                user.UpdateBuilder.SetCreatetime(DateTime.Now).SaveChange();
+                //int i = 0;
+                //int j = 50 / i;
+            });
 
-            Topic.InsertRange(topics);
+            //List<TopicModel> topics = new List<TopicModel>();
+            //for (int i = 0; i < 1; i++)
+            //{
+            //    topics.Add(new TopicModel()
+            //    {
+            //        Title = $"第 {i} 个帖子"
+            //    });
+            //    // output.WriteLine(ts.SchemaSet["id"].ToString());
+            //}
+
+            // Topic.InsertRange(topics);
             return;
 
             List<Task> tasks = new List<Task>();

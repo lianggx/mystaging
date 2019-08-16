@@ -327,10 +327,9 @@ namespace MyStaging.Helpers
         /// <param name="action"></param>
         public static void Transaction(Action action)
         {
-            DbConnection connection = null;
             try
             {
-                connection = InstanceMaster.BeginTransaction();
+                InstanceMaster.BeginTransaction();
                 action?.Invoke();
                 InstanceMaster.CommitTransaction();
             }
@@ -339,10 +338,6 @@ namespace MyStaging.Helpers
                 InstanceMaster.RollBackTransaction();
                 WriteLog(ex);
                 throw;
-            }
-            finally
-            {
-                InstanceMaster.Pool.FreeConnection(connection);
             }
         }
     }
