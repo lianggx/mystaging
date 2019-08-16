@@ -88,13 +88,20 @@ where a.typtype = 'e' order by oid asc";
                 {
                     writer.WriteLine();
                     writer.WriteLine("\t\t\tType[] jsonTypes = { typeof(JToken), typeof(JObject), typeof(JArray) };");
+                    writer.WriteLine("\t\t\tNpgsqlNameTranslator translator = new NpgsqlNameTranslator();");
                     writer.WriteLine("\t\t\tNpgsqlConnection.GlobalTypeMapper.UseJsonNet(jsonTypes);");
                     foreach (var item in list)
                     {
-                        writer.WriteLine($"\t\t\tNpgsqlConnection.GlobalTypeMapper.MapEnum<{item.TypeName.ToUpperPascal()}>(\"{item.NspName}.{item.TypeName}\");");
+                        writer.WriteLine($"\t\t\tNpgsqlConnection.GlobalTypeMapper.MapEnum<{item.TypeName.ToUpperPascal()}>(\"{item.NspName}.{item.TypeName}\", translator);");
                     }
                 }
+
                 writer.WriteLine("\t\t}");
+                writer.WriteLine("\t}");
+                writer.WriteLine("\tpublic partial class NpgsqlNameTranslator : INpgsqlNameTranslator");
+                writer.WriteLine("\t{");
+                writer.WriteLine("\t\tpublic string TranslateMemberName(string clrName) => clrName;");
+                writer.WriteLine("\t\tpublic string TranslateTypeName(string clrTypeName) => clrTypeName;");
                 writer.WriteLine("\t}");
                 writer.WriteLine("}"); // namespace end
             }
