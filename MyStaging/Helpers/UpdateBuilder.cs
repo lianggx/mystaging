@@ -28,11 +28,26 @@ namespace MyStaging.Helpers
         /// <param name="dbType">数据库数据类型</param>
         /// <param name="value">字段指定的值</param>
         /// <param name="size">字段大小</param>
-        /// <param name="specificType">指定的数据库类型，通常在字段类型为枚举类型时需要指定</param>
         /// <returns></returns>
-        protected UpdateBuilder<T> SetField(string field, NpgsqlDbType dbType, object value, int size, Type specificType = null)
+        protected UpdateBuilder<T> SetField(string field, NpgsqlDbType dbType, object value, int size)
         {
-            base.AddParameter(field, dbType, value, size, specificType);
+            base.AddParameter(field, dbType, value, size);
+            setList.Add($"\"{field}\"=@{field}");
+            return this;
+        }
+
+
+        /// <summary>
+        ///  设置字段值
+        /// </summary>
+        /// <param name="field">字段名称</param>
+        /// <param name="dbType">数据库数据类型</param>
+        /// <param name="value">字段指定的值</param>
+        /// <param name="size">字段大小</param>
+        /// <returns></returns>
+        protected UpdateBuilder<T> SetField(string field, object value, int size)
+        {
+            base.AddParameter(field, null, value, size);
             setList.Add($"\"{field}\"=@{field}");
             return this;
         }
@@ -56,11 +71,24 @@ namespace MyStaging.Helpers
         /// <param name="dbType">数据库数据类型</param>
         /// <param name="value">字段指定的值</param>
         /// <param name="size">字段大小</param>
-        /// <param name="specificType">通常在字段类型为枚举类型时需要指定</param>
         /// <returns></returns>
-        protected UpdateBuilder<T> SetArrayAppend(string field, NpgsqlDbType dbType, object value, int size, Type specificType = null)
+        protected UpdateBuilder<T> SetArrayAppend(string field, NpgsqlDbType dbType, object value, int size)
         {
-            base.AddParameter(field, dbType, value, size, specificType);
+            base.AddParameter(field, dbType, value, size);
+            setList.Add($"\"{field}\"=array_append({field},@{field})");
+            return this;
+        }
+
+        /// <summary>
+        ///  对数据库数组字段进行追加值操作
+        /// </summary>
+        /// <param name="field">字段名称</param>
+        /// <param name="value">字段指定的值</param>
+        /// <param name="size">字段大小</param>
+        /// <returns></returns>
+        protected UpdateBuilder<T> SetArrayAppend(string field, object value, int size)
+        {
+            base.AddParameter(field, value, size);
             setList.Add($"\"{field}\"=array_append({field},@{field})");
             return this;
         }
@@ -72,11 +100,25 @@ namespace MyStaging.Helpers
         /// <param name="dbType">数据库数据类型</param>
         /// <param name="value">字段指定的值</param>
         /// <param name="size">字段大小</param>
-        /// <param name="specificType">通常在字段类型为枚举类型时需要指定</para
         /// <returns></returns>
-        protected UpdateBuilder<T> SetArrayRemove(string field, NpgsqlDbType dbType, object value, int size, Type specificType = null)
+        protected UpdateBuilder<T> SetArrayRemove(string field, NpgsqlDbType dbType, object value, int size)
         {
-            base.AddParameter(field, dbType, value, size, specificType);
+            base.AddParameter(field, dbType, value, size);
+            setList.Add($"\"{field}\" = array_remove({field},@{field})");
+            return this;
+        }
+
+        /// <summary>
+        ///  从数据库数组字段中移除指定的值
+        /// </summary>
+        /// <param name="field">字段名称</param>
+        /// <param name="dbType">数据库数据类型</param>
+        /// <param name="value">字段指定的值</param>
+        /// <param name="size">字段大小</param>
+        /// <returns></returns>
+        protected UpdateBuilder<T> SetArrayRemove(string field, object value, int size)
+        {
+            base.AddParameter(field, value, size);
             setList.Add($"\"{field}\" = array_remove({field},@{field})");
             return this;
         }

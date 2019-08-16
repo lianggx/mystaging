@@ -166,19 +166,7 @@ namespace MyStaging.Helpers
             }
             else if (selector is ConstantExpression ce)
             {
-                if (this.Left is UnaryExpression)
-                {
-                    Type type = ((UnaryExpression)this.Left).Operand.Type;
-                    if (type.BaseType.Name == "Enum")
-                    {
-                        object val = Enum.Parse(type, ce.Value.ToString());
-                        SetValue(val, parent_type, type);
-                    }
-                    else
-                        SetValue(ce.Value, parent_type);
-                }
-                else
-                    SetValue(ce.Value, parent_type);
+                SetValue(ce.Value, parent_type);
             }
             else if (selector is UnaryExpression ue)
             {
@@ -235,7 +223,7 @@ namespace MyStaging.Helpers
         /// <param name="val">参数的值</param>
         /// <param name="type">运算符类型</param>
         /// <param name="specificType">数据库指定列的类型</param>
-        protected void SetValue(object val, ExpressionType type, Type specificType = null)
+        protected void SetValue(object val, ExpressionType type)
         {
             if (val == null)
             {
@@ -248,15 +236,7 @@ namespace MyStaging.Helpers
             else
             {
                 string p_key = Guid.NewGuid().ToString("N");
-                NpgsqlParameter parameter = null;
-                if (specificType != null)
-                {
-                    parameter = new NpgsqlParameter(p_key, NpgsqlDbType.Enum);
-                    parameter.SpecificType = specificType;
-                    parameter.Value = val;
-                }
-                else
-                    parameter = new NpgsqlParameter(p_key, val);
+                NpgsqlParameter parameter = new NpgsqlParameter(p_key, val);
                 Parameters.Add(parameter);
                 CommandText.Append($"@{p_key}");
             }

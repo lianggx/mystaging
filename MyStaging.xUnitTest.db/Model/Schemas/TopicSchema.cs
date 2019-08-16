@@ -23,17 +23,17 @@ namespace MyStaging.xUnitTest.Model.Schemas
 		{
 			schemas = new Dictionary<string, SchemaModel>
 			{
-				{"id", new SchemaModel{ FieldName = "id", DbType = NpgsqlDbType.Uuid, Size = 16, SpecificType = null ,Primarykey = true} },
-				{"title", new SchemaModel{ FieldName = "title", DbType = NpgsqlDbType.Varchar, Size = 255, SpecificType = null} },
-				{"create_time", new SchemaModel{ FieldName = "create_time", DbType = NpgsqlDbType.Timestamp, Size = 8, SpecificType = null} },
-				{"update_time", new SchemaModel{ FieldName = "update_time", DbType = NpgsqlDbType.Timestamp, Size = 8, SpecificType = null} },
-				{"last_time", new SchemaModel{ FieldName = "last_time", DbType = NpgsqlDbType.Timestamp, Size = 8, SpecificType = null} },
-				{"user_id", new SchemaModel{ FieldName = "user_id", DbType = NpgsqlDbType.Uuid, Size = 16, SpecificType = null} },
-				{"name", new SchemaModel{ FieldName = "name", DbType = NpgsqlDbType.Varchar, Size = 255, SpecificType = null} },
-				{"age", new SchemaModel{ FieldName = "age", DbType = NpgsqlDbType.Integer, Size = 4, SpecificType = null} },
-				{"sex", new SchemaModel{ FieldName = "sex", DbType = NpgsqlDbType.Boolean, Size = 1, SpecificType = null} },
-				{"createtime", new SchemaModel{ FieldName = "createtime", DbType = NpgsqlDbType.Date, Size = 4, SpecificType = null} },
-				{"updatetime", new SchemaModel{ FieldName = "updatetime", DbType = NpgsqlDbType.Time, Size = 8, SpecificType = null} }
+				{"id", new SchemaModel{ FieldName = "id", DbType =  NpgsqlDbType.Uuid, Size = 16 ,Primarykey = true} },
+				{"title", new SchemaModel{ FieldName = "title", DbType =  NpgsqlDbType.Varchar, Size = 255} },
+				{"create_time", new SchemaModel{ FieldName = "create_time", DbType =  NpgsqlDbType.Timestamp, Size = 8} },
+				{"update_time", new SchemaModel{ FieldName = "update_time", DbType =  NpgsqlDbType.Timestamp, Size = 8} },
+				{"last_time", new SchemaModel{ FieldName = "last_time", DbType =  NpgsqlDbType.Timestamp, Size = 8} },
+				{"user_id", new SchemaModel{ FieldName = "user_id", DbType =  NpgsqlDbType.Uuid, Size = 16} },
+				{"name", new SchemaModel{ FieldName = "name", DbType =  NpgsqlDbType.Varchar, Size = 255} },
+				{"age", new SchemaModel{ FieldName = "age", DbType =  NpgsqlDbType.Integer, Size = 4} },
+				{"sex", new SchemaModel{ FieldName = "sex", DbType =  NpgsqlDbType.Boolean, Size = 1} },
+				{"createtime", new SchemaModel{ FieldName = "createtime", DbType =  NpgsqlDbType.Date, Size = 4} },
+				{"updatetime", new SchemaModel{ FieldName = "updatetime", DbType =  NpgsqlDbType.Time, Size = 8} }
 			};
 			properties = ContractUtils.GetProperties(typeof(TopicModel));
 		}

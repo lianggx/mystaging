@@ -73,6 +73,7 @@ where a.typtype = 'e' order by oid asc";
                 writer.WriteLine("using Microsoft.Extensions.Logging;");
                 writer.WriteLine("using MyStaging.Helpers;");
                 writer.WriteLine("using MyStaging.Common;");
+                writer.WriteLine("using Newtonsoft.Json.Linq;");
                 writer.WriteLine("using Microsoft.Extensions.Caching.Distributed;");
                 writer.WriteLine();
                 writer.WriteLine($"namespace {projectName}");
@@ -86,28 +87,13 @@ where a.typtype = 'e' order by oid asc";
                 if (list.Count > 0)
                 {
                     writer.WriteLine();
-                    writer.WriteLine("\t\t\tNpgsqlNameTranslator translator = new NpgsqlNameTranslator();");
+                    writer.WriteLine("\t\t\tType[] jsonTypes = { typeof(JToken), typeof(JObject), typeof(JArray) };");
+                    writer.WriteLine("\t\t\tNpgsqlConnection.GlobalTypeMapper.UseJsonNet(jsonTypes);");
                     foreach (var item in list)
                     {
-                        writer.WriteLine($"\t\t\tNpgsqlConnection.MapEnumGlobally<{item.TypeName.ToUpperPascal()}>(\"{item.NspName}.{item.TypeName}\", translator);");
+                        writer.WriteLine($"\t\t\tNpgsqlConnection.GlobalTypeMapper.MapEnum<{item.TypeName.ToUpperPascal()}>(\"{item.NspName}.{item.TypeName}\");");
                     }
                 }
-
-                writer.WriteLine("\t\t}");
-                writer.WriteLine("\t}");
-                writer.WriteLine("\tpublic partial class NpgsqlNameTranslator : INpgsqlNameTranslator");
-                writer.WriteLine("\t{");
-                writer.WriteLine("\t\tprivate string clrName;");
-                writer.WriteLine("\t\tpublic string TranslateMemberName(string clrName)");
-                writer.WriteLine("\t\t{");
-                writer.WriteLine("\t\t\tthis.clrName = clrName;");
-                writer.WriteLine("\t\t\treturn this.clrName;");
-                writer.WriteLine("\t\t}");
-                writer.WriteLine("\t\tprivate string clrTypeName;");
-                writer.WriteLine("\t\tpublic string TranslateTypeName(string clrName)");
-                writer.WriteLine("\t\t{");
-                writer.WriteLine("\t\t\tthis.clrTypeName = clrName;");
-                writer.WriteLine("\t\t\treturn this.clrTypeName;");
                 writer.WriteLine("\t\t}");
                 writer.WriteLine("\t}");
                 writer.WriteLine("}"); // namespace end

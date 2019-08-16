@@ -167,7 +167,6 @@ namespace MyStaging.App.DAL
                 for (int i = 0; i < fieldList.Count; i++)
                 {
                     var fi = fieldList[i];
-                    string specificType = GetSpecificType(fi);
                     string ap = fi.Is_array ? " | NpgsqlDbType.Array" : "";
                     var pk = pkList.FirstOrDefault(f => f.Field == fi.Field) != null;
                     var primarykey = "";
@@ -175,7 +174,8 @@ namespace MyStaging.App.DAL
                     {
                         primarykey = " ,Primarykey = true";
                     }
-                    var line = $"{{\"{fi.Field}\", new SchemaModel{{ FieldName = \"{fi.Field}\", DbType = NpgsqlDbType.{fi.PgDbType}{ap}, Size = {fi.Length}, SpecificType = {specificType}{primarykey}}} }}";
+                    var type = fi.PgDbType.HasValue ? $" NpgsqlDbType.{fi.PgDbType}{ap}" : "null";
+                    var line = $"{{\"{fi.Field}\", new SchemaModel{{ FieldName = \"{fi.Field}\", DbType = {type}, Size = {fi.Length}{primarykey}}} }}";
                     writer.WriteLine("\t\t\t\t" + line + (i + 1 == fieldList.Count ? "" : ","));
                 }
                 writer.WriteLine("\t\t\t};");
@@ -240,7 +240,14 @@ namespace MyStaging.App.DAL
                         writer.WriteLine($"\t\tpublic {_classname} Where{item.Field.ToUpperPascal()}Any(params {item.RelType} {item.Field})");
                         writer.WriteLine("\t\t{");
                         writer.WriteLine($"\t\t\t if ({item.Field} == null || {item.Field}.Length == 0) return this;");
-                        writer.WriteLine($"\t\t\t string text = JoinTo({item.Field}, NpgsqlDbType.{item.PgDbType}, \"{item.Db_type}\");");
+                        if (item.PgDbType.HasValue)
+                        {
+                            writer.WriteLine($"\t\t\t string text = JoinTo({item.Field}, NpgsqlDbType.{item.PgDbType}.ToString());");
+                        }
+                        else
+                        {
+                            writer.WriteLine($"\t\t\t string text = JoinTo({item.Field}, \"{item.Db_type}\");");
+                        }
                         writer.WriteLine($"\t\t\t base.Where($\"{item.Field} @> array[{{text}}]\");");
                         writer.WriteLine($"\t\t\t return this;");
                         writer.WriteLine("\t\t}");
@@ -352,9 +359,16 @@ namespace MyStaging.App.DAL
 
                 writer.WriteLine($"\t\t\tpublic {updateName} Set{item.Field.ToUpperPascal()}({item.RelType} {item.Field})");
                 writer.WriteLine("\t\t\t{");
-                string specificType = GetSpecificType(item);
-                string ap = item.Is_array ? " | NpgsqlDbType.Array" : "";
-                writer.WriteLine($"\t\t\t\tbase.SetField(\"{ item.Field}\", NpgsqlDbType.{item.PgDbType}{ap}, {item.Field}, {item.Length}, {specificType});");
+                if (item.PgDbType.HasValue)
+                {
+                    string ap = item.Is_array ? " | NpgsqlDbType.Array" : "";
+                    writer.WriteLine($"\t\t\t\tbase.SetField(\"{ item.Field}\", NpgsqlDbType.{item.PgDbType}{ap}, {item.Field}, {item.Length});");
+                }
+                else
+                {
+                    writer.WriteLine($"\t\t\t\tbase.SetField(\"{ item.Field}\", {item.Field}, {item.Length});");
+                }
+
                 writer.WriteLine($"\t\t\t\treturn this;");
                 writer.WriteLine("\t\t\t}");
 
@@ -362,13 +376,27 @@ namespace MyStaging.App.DAL
                 {
                     writer.WriteLine($"\t\t\tpublic {updateName} Set{item.Field.ToUpperPascal()}Append({item.CsType} {item.Field})");
                     writer.WriteLine("\t\t\t{");
-                    writer.WriteLine($"\t\t\t\tbase.SetArrayAppend(\"{ item.Field}\", NpgsqlDbType.{item.PgDbType}, {item.Field}, {item.Length}, {specificType});");
+                    if (item.PgDbType.HasValue)
+                    {
+                        writer.WriteLine($"\t\t\t\tbase.SetArrayAppend(\"{ item.Field}\", NpgsqlDbType.{item.PgDbType}, {item.Field}, {item.Length});");
+                    }
+                    else
+                    {
+                        writer.WriteLine($"\t\t\t\tbase.SetArrayAppend(\"{ item.Field}\", {item.Field}, {item.Length});");
+                    }
                     writer.WriteLine($"\t\t\t\treturn this;");
                     writer.WriteLine("\t\t\t}");
 
                     writer.WriteLine($"\t\t\tpublic {updateName} Set{item.Field.ToUpperPascal()}Remove({item.CsType} {item.Field})");
                     writer.WriteLine("\t\t\t{");
-                    writer.WriteLine($"\t\t\t\tbase.SetArrayRemove(\"{ item.Field}\", NpgsqlDbType.{item.PgDbType}, {item.Field}, {item.Length}, {specificType});");
+                    if (item.PgDbType.HasValue)
+                    {
+                        writer.WriteLine($"\t\t\t\tbase.SetArrayRemove(\"{ item.Field}\", NpgsqlDbType.{item.PgDbType}, {item.Field}, {item.Length});");
+                    }
+                    else
+                    {
+                        writer.WriteLine($"\t\t\t\tbase.SetArrayRemove(\"{ item.Field}\", {item.Field}, {item.Length});");
+                    }
                     writer.WriteLine($"\t\t\t\treturn this;");
                     writer.WriteLine("\t\t\t}");
                 }
@@ -468,15 +496,6 @@ namespace MyStaging.App.DAL
                 // dal
                 this.fieldList.Add(fi);
             }, CommandType.Text, _sqltext);
-        }
-
-        private string GetSpecificType(FieldInfo fi)
-        {
-            string specificType = "null";
-            if (fi.Data_Type == "e")
-                specificType = $"typeof({fi.RelType.Replace("?", "")})";
-
-            return specificType;
         }
 
         protected void Get_Primarykey(int oid)

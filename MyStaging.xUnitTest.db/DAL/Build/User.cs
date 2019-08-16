@@ -61,42 +61,42 @@ namespace MyStaging.xUnitTest.DAL
 			}
 			public UserUpdateBuilder SetId(string id)
 			{
-				base.SetField("id", NpgsqlDbType.Varchar, id, -1, null);
+				base.SetField("id", NpgsqlDbType.Varchar, id, -1);
 				return this;
 			}
 			public UserUpdateBuilder SetLoginname(string loginname)
 			{
-				base.SetField("loginname", NpgsqlDbType.Varchar, loginname, 255, null);
+				base.SetField("loginname", NpgsqlDbType.Varchar, loginname, 255);
 				return this;
 			}
 			public UserUpdateBuilder SetPassword(string password)
 			{
-				base.SetField("password", NpgsqlDbType.Varchar, password, 255, null);
+				base.SetField("password", NpgsqlDbType.Varchar, password, 255);
 				return this;
 			}
 			public UserUpdateBuilder SetNickname(string nickname)
 			{
-				base.SetField("nickname", NpgsqlDbType.Varchar, nickname, 255, null);
+				base.SetField("nickname", NpgsqlDbType.Varchar, nickname, 255);
 				return this;
 			}
 			public UserUpdateBuilder SetSex(bool? sex)
 			{
-				base.SetField("sex", NpgsqlDbType.Boolean, sex, 1, null);
+				base.SetField("sex", NpgsqlDbType.Boolean, sex, 1);
 				return this;
 			}
 			public UserUpdateBuilder SetAge(int age)
 			{
-				base.SetField("age", NpgsqlDbType.Integer, age, 4, null);
+				base.SetField("age", NpgsqlDbType.Integer, age, 4);
 				return this;
 			}
 			public UserUpdateBuilder SetMoney(decimal money)
 			{
-				base.SetField("money", NpgsqlDbType.Numeric, money, -1, null);
+				base.SetField("money", NpgsqlDbType.Numeric, money, -1);
 				return this;
 			}
 			public UserUpdateBuilder SetCreatetime(DateTime createtime)
 			{
-				base.SetField("createtime", NpgsqlDbType.Timestamp, createtime, 8, null);
+				base.SetField("createtime", NpgsqlDbType.Timestamp, createtime, 8);
 				return this;
 			}
 		}

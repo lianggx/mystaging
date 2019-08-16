@@ -302,28 +302,24 @@ namespace MyStaging.Helpers
         /// <param name="nodeType">运算表达式节点类型</param>
         protected void Evaluate(Type type, object value, ExpressionType nodeType)
         {
-            Type specificType = null;
             NpgsqlDbType? dbType = null;
-            if (type.IsEnum)
-            {
-                specificType = type;
-                dbType = NpgsqlDbType.Enum;
-            }
+            //if (type.IsEnum)
+            //{
+            //    dbType = NpgsqlDbType.Enum;
+            //}
             if (type.IsArray)
             {
                 if (PG_TYPES.ContainsKey(type)) dbType = PG_TYPES[type];
-                else
-                {
-                    var ft = type.Assembly.GetType(type.FullName.Replace("[]", ""));
-                    if (ft.IsEnum)
-                    {
-                        specificType = ft;
-                        dbType = NpgsqlDbType.Enum | NpgsqlDbType.Array;
-                    }
-                }
+                //else
+                //{
+                //    var ft = type.Assembly.GetType(type.FullName.Replace("[]", ""));
+                //    if (ft.IsEnum)
+                //    {
+                //        dbType = NpgsqlDbType.Enum | NpgsqlDbType.Array;
+                //    }
+                //}
             }
             var text = ParameterGenerated(out NpgsqlParameter p, value, nodeType, dbType);
-            if (p != null) p.SpecificType = specificType;
 
             this.SqlText.Builder.Append(text);
         }

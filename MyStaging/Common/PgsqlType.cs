@@ -78,12 +78,11 @@ namespace MyStaging.Common
         /// <param name="data_type"></param>
         /// <param name="db_type"></param>
         /// <returns></returns>
-        public static NpgsqlDbType SwitchToSql(string data_type, string db_type)
+        public static NpgsqlDbType? SwitchToSql(string data_type, string db_type)
         {
-
-            NpgsqlDbType _dbtype;
+            NpgsqlDbType? _dbtype = null;
             if (data_type == "e")
-                _dbtype = NpgsqlDbType.Enum;  //   _dbtype = item.Db_type.ToUpperPascal();
+                _dbtype = null;
             else if (db_type == "int2" || db_type == "int4")
             {
                 _dbtype = NpgsqlDbType.Integer;
@@ -106,8 +105,8 @@ namespace MyStaging.Common
             }
             else if (db_type == "path" || db_type == "line" || db_type == "polygon" || db_type == "circle" || db_type == "point" || db_type == "box" || db_type == "lseg")
             {
-                if (db_type == "lseg") db_type = "LSeg";
-                System.Enum.TryParse<NpgsqlDbType>(db_type.ToUpperPascal(), out _dbtype);
+                if (db_type == "lseg")
+                    db_type = "LSeg";
             }
             else if (db_type == "interval")
             {
@@ -119,7 +118,9 @@ namespace MyStaging.Common
             }
             else
             {
-                System.Enum.TryParse<NpgsqlDbType>(db_type.ToUpperPascal(), out _dbtype);
+                NpgsqlDbType type = NpgsqlDbType.Unknown;
+                if (System.Enum.TryParse<NpgsqlDbType>(db_type.ToUpperPascal(), out type))
+                    return type;
             }
 
             return _dbtype;

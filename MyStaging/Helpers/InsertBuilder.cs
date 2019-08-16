@@ -126,7 +126,7 @@ namespace MyStaging.Helpers
                                 value = CreateDefaultValue(sm);
                         }
 
-                        base.AddParameter(piName, sm.DbType, value, sm.Size, sm.SpecificType);
+                        base.AddParameter(piName, sm.DbType, value, sm.Size);
                     }
                 }
 

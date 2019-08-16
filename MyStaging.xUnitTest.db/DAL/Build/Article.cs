@@ -61,27 +61,27 @@ namespace MyStaging.xUnitTest.DAL
 			}
 			public ArticleUpdateBuilder SetId(string id)
 			{
-				base.SetField("id", NpgsqlDbType.Varchar, id, -1, null);
+				base.SetField("id", NpgsqlDbType.Varchar, id, -1);
 				return this;
 			}
 			public ArticleUpdateBuilder SetUserid(string userid)
 			{
-				base.SetField("userid", NpgsqlDbType.Varchar, userid, -1, null);
+				base.SetField("userid", NpgsqlDbType.Varchar, userid, -1);
 				return this;
 			}
 			public ArticleUpdateBuilder SetTitle(string title)
 			{
-				base.SetField("title", NpgsqlDbType.Varchar, title, 255, null);
+				base.SetField("title", NpgsqlDbType.Varchar, title, 255);
 				return this;
 			}
 			public ArticleUpdateBuilder SetContent(JToken content)
 			{
-				base.SetField("content", NpgsqlDbType.Jsonb, content, -1, null);
+				base.SetField("content", NpgsqlDbType.Jsonb, content, -1);
 				return this;
 			}
 			public ArticleUpdateBuilder SetCreatetime(DateTime createtime)
 			{
-				base.SetField("createtime", NpgsqlDbType.Timestamp, createtime, 8, null);
+				base.SetField("createtime", NpgsqlDbType.Timestamp, createtime, 8);
 				return this;
 			}
 		}

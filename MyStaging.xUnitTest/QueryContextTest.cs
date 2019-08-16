@@ -7,6 +7,7 @@ using MyStaging.Helpers;
 using MyStaging.xUnitTest.DAL;
 using MyStaging.xUnitTest.Model;
 using MyStaging.xUnitTest.Model.Schemas;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -46,25 +47,44 @@ namespace MyStaging.xUnitTest
         [Fact]
         public void MultiTest()
         {
-            PgSqlHelper.Transaction(() =>
-            {
-                var user = User.Context.OrderBy("random()").ToOne();
-                user.UpdateBuilder.SetCreatetime(DateTime.Now).SaveChange();
-                //int i = 0;
-                //int j = 50 / i;
-            });
+            //PgSqlHelper.Transaction(() =>
+            //{
+            //    var user = User.Context.OrderBy("random()").ToOne();
+            //    user.UpdateBuilder.SetCreatetime(DateTime.Now).SaveChange();
+            //    //int i = 0;
+            //    //int j = 50 / i;
+            //});
 
             //List<TopicModel> topics = new List<TopicModel>();
-            //for (int i = 0; i < 1; i++)
+            //for (int i = 0; i < 10; i++)
             //{
             //    topics.Add(new TopicModel()
             //    {
             //        Title = $"第 {i} 个帖子"
             //    });
-            //    // output.WriteLine(ts.SchemaSet["id"].ToString());
             //}
 
-            // Topic.InsertRange(topics);
+            //Topic.InsertRange(topics);
+
+            //List<PostModel> posts = new List<PostModel>();
+            //for (int i = 0; i < 10; i++)
+            //{
+            //    posts.Add(new PostModel()
+            //    {
+            //        Title = $"第 {i} 个回复",
+            //        Content = JToken.FromObject(new { type = 1, message = "success", create_time = DateTime.Now }),
+            //        Role = new Et_role[] { Et_role.普通成员, Et_role.管理员 },
+            //        State = Et_data_state.正常,
+            //        Text = JToken.FromObject(new { type = 1, message = "success", create_time = DateTime.Now }),
+            //    });
+            //}
+
+            //Post.InsertRange(posts);
+            var content = JToken.FromObject(new { type = 2, message = "fault", create_time = DateTime.Now });
+            var id = Guid.Parse("db8df745-0f31-4ddf-8399-80ba47299853");
+            var post = Post.Context.Where(f => f.Id == id).ToOne();
+            //post.UpdateBuilder.SetRoleAppend(Et_role.群主).SaveChange();
+            post.UpdateBuilder.SetState(Et_data_state.删除).SetContent(content).SaveChange();
             return;
 
             List<Task> tasks = new List<Task>();
@@ -91,7 +111,7 @@ namespace MyStaging.xUnitTest
         [Fact]
         public void InsertTest()
         {
-            for (int i = 0; i < 10; i++)
+            for (int i = 0; i < 100; i++)
             {
                 Thread thr = new Thread(new ThreadStart(() =>
                 {

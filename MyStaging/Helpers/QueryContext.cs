@@ -858,30 +858,22 @@ namespace MyStaging.Helpers
         ///  增加一个查询参数
         /// </summary>
         /// <param name="field">数据库字段</param>
-        /// <param name="dbType">字段类型</param>
-        /// <param name="value">字段指定的值</param>
-        /// <returns></returns>
-        public QueryContext<T> AddParameter(string field, NpgsqlDbType dbType, object value) => AddParameter(field, dbType, value, -1, null);
-
-        /// <summary>
-        ///  增加一个查询参数
-        /// </summary>
-        /// <param name="field">数据库字段</param>
-        /// <param name="dbType">字段类型</param>
-        /// <param name="value">字段指定的值</param>
-        /// <param name="specificType">指定类型，通常枚举类型时需提供该参数的值</param>
-        /// <returns></returns>
-        public QueryContext<T> AddParameter(string field, NpgsqlDbType dbType, object value, Type specificType) => AddParameter(field, dbType, value, -1, specificType);
-
-        /// <summary>
-        ///  增加一个查询参数
-        /// </summary>
-        /// <param name="field">数据库字段</param>
-        /// <param name="dbType">字段类型</param>
         /// <param name="value">字段指定的值</param>
         /// <param name="size">字段长度</param>
         /// <returns></returns>
-        public QueryContext<T> AddParameter(string field, NpgsqlDbType dbType, object value, int size) => AddParameter(field, dbType, value, size, null);
+        public QueryContext<T> AddParameter(string field, object value, int size)
+        {
+            return AddParameter(field, null, value, size);
+        }
+
+        /// <summary>
+        ///  增加一个查询参数
+        /// </summary>
+        /// <param name="field">数据库字段</param>
+        /// <param name="dbType">字段类型</param>
+        /// <param name="value">字段指定的值</param>
+        /// <returns></returns>
+        public QueryContext<T> AddParameter(string field, NpgsqlDbType dbType, object value) => AddParameter(field, dbType, value, -1);
 
         /// <summary>
         ///  增加一个查询参数
@@ -890,9 +882,8 @@ namespace MyStaging.Helpers
         /// <param name="dbType">字段类型</param>        
         /// <param name="value">字段指定的值</param>
         /// <param name="size">字段长度</param>
-        /// <param name="specificType">指定类型，通常枚举类型时需提供该参数的值</param>
         /// <returns></returns>
-        public QueryContext<T> AddParameter(string field, NpgsqlDbType dbType, object value, int size, Type specificType)
+        public QueryContext<T> AddParameter(string field, NpgsqlDbType? dbType, object value, int size)
         {
             NpgsqlParameter p = this.ParamList.FirstOrDefault(f => f.ParameterName == field);
             if (p != null)
@@ -907,10 +898,15 @@ namespace MyStaging.Helpers
                     value = null;
                 }
             }
+            if (dbType.HasValue)
+            {
+                p = new NpgsqlParameter(field, dbType);
+            }
+            else
+            {
+                p = new NpgsqlParameter(field, value);
+            }
 
-            p = new NpgsqlParameter(field, dbType);
-            if (specificType != null)
-                p.SpecificType = specificType;
             if (size != -1)
                 p.Size = size;
 
@@ -953,16 +949,15 @@ namespace MyStaging.Helpers
         /// <param name="dbtype">数据库字段类型</param>
         /// <param name="enumtype">指定的枚举类型</param>
         /// <returns></returns>
-        protected string JoinTo(System.Collections.ICollection items, NpgsqlDbType dbtype, string enumtype)
+        protected string JoinTo(System.Collections.ICollection items, string type)
         {
-            string _dbType_text = dbtype == NpgsqlDbType.Enum ? enumtype : dbtype.ToString();
             StringBuilder sb = new StringBuilder();
             int i = 0;
             foreach (var item in items)
             {
                 string pName = Guid.NewGuid().ToString("N");
                 AddParameter(pName, item.ToString());
-                sb.Append("@" + pName + "::" + _dbType_text);
+                sb.Append("@" + pName + "::" + type);
                 if (++i < items.Count)
                     sb.Append(",");
             }
@@ -1093,28 +1088,6 @@ namespace MyStaging.Helpers
         ///  是否进行缓存
         /// </summary>
         public virtual bool Cacheing { get; set; } = true;
-
-        /// <summary>
-        ///  设置默认的数据库类型
-        /// </summary>
-        private readonly static NpgsqlDbType[] dbtypes = {
-                                                    NpgsqlDbType.Varchar,
-                                                    NpgsqlDbType.Char,
-                                                    NpgsqlDbType.Text,
-                                                    NpgsqlDbType.Date,
-                                                    NpgsqlDbType.Time,
-                                                    NpgsqlDbType.Timestamp,
-                                                    NpgsqlDbType.TimestampTZ,
-                                                    NpgsqlDbType.TimeTZ,
-                                                    NpgsqlDbType.Uuid,
-                                                    NpgsqlDbType.Unknown,
-                                                    NpgsqlDbType.Enum,
-                                                    NpgsqlDbType.Json,
-                                                    NpgsqlDbType.Jsonb,
-                                                    NpgsqlDbType.Xml,
-                                                    NpgsqlDbType.Bytea,
-                                                    NpgsqlDbType.MacAddr
-                                                };
         #endregion
     }
 }

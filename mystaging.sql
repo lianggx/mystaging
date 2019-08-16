@@ -18,22 +18,6 @@ File Encoding         : 65001
 Date: 2019-02-21 18:20:27
 */
 
-
--- ----------------------------
--- Table structure for article
--- ----------------------------
-DROP TABLE IF EXISTS "public"."article";
-CREATE TABLE "public"."article" (
-"id" varchar COLLATE "default" NOT NULL,
-"userid" varchar COLLATE "default",
-"title" varchar(255) COLLATE "default",
-"content" jsonb,
-"createtime" timestamp(6) NOT NULL
-)
-WITH (OIDS=FALSE)
-
-;
-
 -- ----------------------------
 -- Table structure for user
 -- ----------------------------
@@ -48,20 +32,56 @@ CREATE TABLE "public"."user" (
 "money" numeric(10,2) NOT NULL,
 "createtime" timestamp(6) NOT NULL
 )
-WITH (OIDS=FALSE)
+WITH (OIDS=FALSE);
 
+ALTER TABLE "public"."user" ADD PRIMARY KEY ("id");
+
+
+CREATE TABLE "public"."article" (
+"id" varchar COLLATE "default" NOT NULL,
+"userid" varchar COLLATE "default" NOT NULL,
+"title" varchar(255) COLLATE "default",
+"content" jsonb,
+"createtime" timestamp(6) NOT NULL,
+CONSTRAINT "article_pkey" PRIMARY KEY ("id", "userid"),
+CONSTRAINT "fk_userid" FOREIGN KEY ("userid") REFERENCES "public"."user" ("id") ON DELETE NO ACTION ON UPDATE NO ACTION
+)
+WITH (OIDS=FALSE)
 ;
 
--- ----------------------------
--- Alter Sequences Owned By 
--- ----------------------------
+ALTER TABLE "public"."article" OWNER TO "postgres";
 
--- ----------------------------
--- Primary Key structure for table article
--- ----------------------------
-ALTER TABLE "public"."article" ADD PRIMARY KEY ("id");
 
--- ----------------------------
--- Primary Key structure for table user
--- ----------------------------
-ALTER TABLE "public"."user" ADD PRIMARY KEY ("id");
+CREATE TABLE "public"."topic" (
+"id" uuid NOT NULL,
+"title" varchar(255) COLLATE "default",
+"create_time" timestamp(6),
+"update_time" timestamp(6),
+"last_time" timestamp(6),
+"user_id" uuid,
+"name" varchar(255) COLLATE "default",
+"age" int4,
+"sex" bool,
+"createtime" date,
+"updatetime" time(6),
+CONSTRAINT "topic_pkey" PRIMARY KEY ("id")
+)
+WITH (OIDS=FALSE)
+;
+
+ALTER TABLE "public"."topic" OWNER TO "postgres";
+
+
+CREATE TABLE "public"."post" (
+"id" uuid NOT NULL,
+"title" varchar(255) COLLATE "default" NOT NULL,
+"content" jsonb,
+"state" "public"."et_data_state" NOT NULL,
+"role" "public"."et_role"[] NOT NULL,
+"text" json,
+CONSTRAINT "post_pkey" PRIMARY KEY ("id")
+)
+WITH (OIDS=FALSE)
+;
+
+ALTER TABLE "public"."post" OWNER TO "postgres";

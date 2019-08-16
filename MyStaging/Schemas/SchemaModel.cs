@@ -17,7 +17,7 @@ namespace MyStaging.Schemas
         /// <summary>
         /// 字段类型
         /// </summary>
-        public NpgsqlDbType DbType { get; set; }
+        public NpgsqlDbType? DbType { get; set; }
         /// <summary>
         ///  字段长度
         /// </summary>
