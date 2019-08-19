@@ -47,55 +47,18 @@ namespace MyStaging.xUnitTest
         [Fact]
         public void MultiTest()
         {
-            //PgSqlHelper.Transaction(() =>
-            //{
-            //    var user = User.Context.OrderBy("random()").ToOne();
-            //    user.UpdateBuilder.SetCreatetime(DateTime.Now).SaveChange();
-            //    //int i = 0;
-            //    //int j = 50 / i;
-            //});
-
-            //List<TopicModel> topics = new List<TopicModel>();
-            //for (int i = 0; i < 10; i++)
-            //{
-            //    topics.Add(new TopicModel()
-            //    {
-            //        Title = $"第 {i} 个帖子"
-            //    });
-            //}
-
-            //Topic.InsertRange(topics);
-
-            //List<PostModel> posts = new List<PostModel>();
-            //for (int i = 0; i < 10; i++)
-            //{
-            //    posts.Add(new PostModel()
-            //    {
-            //        Title = $"第 {i} 个回复",
-            //        Content = JToken.FromObject(new { type = 1, message = "success", create_time = DateTime.Now }),
-            //        Role = new Et_role[] { Et_role.普通成员, Et_role.管理员 },
-            //        State = Et_data_state.正常,
-            //        Text = JToken.FromObject(new { type = 1, message = "success", create_time = DateTime.Now }),
-            //    });
-            //}
-
-            //Post.InsertRange(posts);
-            var content = JToken.FromObject(new { type = 2, message = "fault", create_time = DateTime.Now });
-            var id = Guid.Parse("db8df745-0f31-4ddf-8399-80ba47299853");
-            var post = Post.Context.Where(f => f.Id == id).ToOne();
-            //post.UpdateBuilder.SetRoleAppend(Et_role.群主).SaveChange();
-            post.UpdateBuilder.SetState(Et_data_state.删除).SetContent(content).SaveChange();
-            return;
-
+            List<UserModel> list = new List<UserModel>();
             List<Task> tasks = new List<Task>();
-            for (int i = 0; i < 1000; i++)
+            for (int i = 0; i < 10000; i++)
             {
                 var task = Task.Run(() =>
                 {
                     try
                     {
-                        var user = User.Context.OrderBy("random()").ToOne();
-                        user.UpdateBuilder.SetCreatetime(DateTime.Now).SaveChange();
+                        var rand = new Random();
+                        var page = rand.Next(1, 10000);
+                        var users = User.Context.Page(page, page + 10).ToList();
+                        list.AddRange(users);
                     }
                     catch (Exception ex)
                     {
@@ -105,43 +68,40 @@ namespace MyStaging.xUnitTest
                 tasks.Add(task);
             }
             Task.WaitAll(tasks.ToArray());
+            output.WriteLine(list.Count.ToString());
+            Assert.Equal(100000, list.Count);
         }
 
         static int num = 0;
         [Fact]
         public void InsertTest()
         {
+            List<Task> tasks = new List<Task>();
             for (int i = 0; i < 10000; i++)
             {
-                Thread thr = new Thread(new ThreadStart(() =>
-                {
-                    for (int j = 0; j < 10; j++)
-                    {
-                        UserModel user = new UserModel()
-                        {
-                            Age = 18,
-                            Createtime = DateTime.Now,
-                            Id = ObjectId.NewId().ToString(),
-                            Loginname = Guid.NewGuid().ToString("N").Substring(0, 8),
-                            Money = 0,
-                            Nickname = "北极熊",
-                            Password = Sha256Hash("123456"),
-                            Sex = true
-                        };
-                        var result = User.Insert(user);
-                        Assert.Equal(user.Id, result.Id);
-                    }
-                    num++;
-                }))
-                {
-                    IsBackground = true
-                };
-                thr.Start();
+                var task = Task.Run(() =>
+                  {
+                      for (int j = 0; j < 10; j++)
+                      {
+                          UserModel user = new UserModel()
+                          {
+                              Age = 18,
+                              Createtime = DateTime.Now,
+                              Id = ObjectId.NewId().ToString(),
+                              Loginname = Guid.NewGuid().ToString("N").Substring(0, 8),
+                              Money = 0,
+                              Nickname = "北极熊",
+                              Password = Sha256Hash("123456"),
+                              Sex = true
+                          };
+                          var result = User.Insert(user);
+                      }
+                      num++;
+                  });
+                tasks.Add(task);
             }
-            while (num < 10)
-            {
-                Thread.Sleep(1000);
-            }
+
+            Task.WaitAll(tasks.ToArray());
         }
 
         private void TestException()
