@@ -448,10 +448,13 @@ namespace MyStaging.Helpers
             int tid = Thread.CurrentThread.ManagedThreadId;
             if (_trans.TryRemove(tid, out DbTransaction tran))
             {
-                if (iscommit)
-                    tran.Commit();
-                else
-                    tran.Rollback();
+                using (var connection = tran.Connection)
+                {
+                    if (iscommit)
+                        tran.Commit();
+                    else
+                        tran.Rollback();
+                }
             }
             return tran;
         }

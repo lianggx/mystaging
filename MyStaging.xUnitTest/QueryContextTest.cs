@@ -47,6 +47,18 @@ namespace MyStaging.xUnitTest
         [Fact]
         public void MultiTest()
         {
+            try
+            {
+                PgSqlHelper.InstanceMaster.BeginTransaction();
+                var user = User.Context.Where(f => f.Age == 18).ToOne();
+                //throw new ArgumentException("aaa");
+                PgSqlHelper.InstanceMaster.CommitTransaction();
+            }
+            catch (Exception e)
+            {
+                PgSqlHelper.InstanceMaster.BeginTransaction();
+            }
+            return;
             List<UserModel> list = new List<UserModel>();
             List<Task> tasks = new List<Task>();
             for (int i = 0; i < 10000; i++)
