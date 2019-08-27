@@ -277,6 +277,9 @@ namespace MyStaging.Helpers
         {
             var expValue = node.Expression == null ? node : node.Expression;
             var obj = Expression.Lambda<Func<object>>(Expression.Convert(expValue, typeof(object))).Compile().Invoke();
+            if (obj == null)
+                throw new ArgumentNullException(node.ToString());
+
             var value = propertyInfo.GetValue(obj);
             Evaluate(propertyInfo.PropertyType, value, node.NodeType);
         }
@@ -290,6 +293,9 @@ namespace MyStaging.Helpers
         protected void AccessField(MemberExpression node, FieldInfo fieldInfo)
         {
             var obj = Expression.Lambda<Func<object>>(Expression.Convert(node.Expression, typeof(object))).Compile().Invoke();
+            if (obj == null)
+                throw new ArgumentNullException(node.ToString());
+
             var value = fieldInfo.GetValue(obj);
             Evaluate(fieldInfo.FieldType, value, node.NodeType);
         }
@@ -303,21 +309,9 @@ namespace MyStaging.Helpers
         protected void Evaluate(Type type, object value, ExpressionType nodeType)
         {
             NpgsqlDbType? dbType = null;
-            //if (type.IsEnum)
-            //{
-            //    dbType = NpgsqlDbType.Enum;
-            //}
             if (type.IsArray)
             {
                 if (PG_TYPES.ContainsKey(type)) dbType = PG_TYPES[type];
-                //else
-                //{
-                //    var ft = type.Assembly.GetType(type.FullName.Replace("[]", ""));
-                //    if (ft.IsEnum)
-                //    {
-                //        dbType = NpgsqlDbType.Enum | NpgsqlDbType.Array;
-                //    }
-                //}
             }
             var text = ParameterGenerated(out NpgsqlParameter p, value, nodeType, dbType);
 

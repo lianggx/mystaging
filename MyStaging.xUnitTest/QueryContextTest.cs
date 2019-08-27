@@ -49,14 +49,19 @@ namespace MyStaging.xUnitTest
         {
             try
             {
-                PgSqlHelper.InstanceMaster.BeginTransaction();
-                var user = User.Context.Where(f => f.Age == 18).ToOne();
+                //PgSqlHelper.InstanceMaster.BeginTransaction();
+                for (int i = 0; i < 1000000; i++)
+                {
+                    var user = User.Context.Where(f => f.Age == 18).ToOne();
+                    user.UpdateBuilder.SetAge(19).SaveChange();
+                }
                 //throw new ArgumentException("aaa");
-                PgSqlHelper.InstanceMaster.CommitTransaction();
+
+                //PgSqlHelper.InstanceMaster.CommitTransaction();
             }
             catch (Exception e)
             {
-                PgSqlHelper.InstanceMaster.BeginTransaction();
+                //PgSqlHelper.InstanceMaster.BeginTransaction();
             }
             return;
             List<UserModel> list = new List<UserModel>();
