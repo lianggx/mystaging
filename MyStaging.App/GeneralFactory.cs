@@ -1,47 +1,83 @@
 ﻿using MyStaging.App.DAL;
 using MyStaging.App.Models;
-using MyStaging.Helpers;
 using System;
 using System.Collections.Generic;
-using System.Data;
 using System.IO;
+using System.Linq;
 
 namespace MyStaging.App
 {
     public class GeneralFactory
     {
-        private static string schemaPath = string.Empty;
-        private static string modelPath = string.Empty;
-        private static string dalPath = string.Empty;
-        private static string projectName = string.Empty;
-        private static string outputDir = string.Empty;
+        private string schemaPath = string.Empty;
+        private string modelPath = string.Empty;
+        private string dalPath = string.Empty;
+        private string projectName = string.Empty;
+        private string outputDir = string.Empty;
 
-        public static void Build(string outputdir, string projName)
+        public GeneralFactory(string outputdir, string projName)
         {
-            if (string.IsNullOrEmpty(outputdir) || string.IsNullOrEmpty(projName))
-                throw new ArgumentNullException("outputdir 和 projName", "不能为空");
+            if (string.IsNullOrEmpty(outputdir))
+                throw new ArgumentNullException(nameof(outputdir));
+
+            if (string.IsNullOrEmpty(projName))
+                throw new ArgumentNullException(nameof(projName));
+
             outputDir = outputdir;
             projectName = projName;
+        }
+
+        public void Build()
+        {
+            var schemas = new SchemaDal().List();
+            var plugins = FindPlugins(schemas);
 
             CreateDir();
-            CreateCsproj();
-            EnumsDal.Generate(Path.Combine(outputdir, projName + ".db"), modelPath, GeneralFactory.projectName);
+            CreateCsproj(plugins);
+            CreateEnums(plugins);
+            CreateModels(schemas);
+        }
 
-            List<string> schemaList = SchemaDal.Get_List();
-            foreach (var schemaName in schemaList)
+        private List<PluginsViewModel> FindPlugins(List<SchemaViewModel> schemas)
+        {
+            var plugins = new List<PluginsViewModel>();
+            foreach (var item in schemas)
             {
-                Console.WriteLine("正在生成模式：{0}", schemaName);
-                List<TableViewModel> tableList = GetTables(schemaName);
-                foreach (var item in tableList)
+                if (item.Tables.FirstOrDefault(f => f.Name == "geometry_columns") != null)
                 {
-                    Console.WriteLine("{0}:{1}", item.Type, item.Name);
-                    TablesDal td = new TablesDal(GeneralFactory.projectName, modelPath, schemaPath, dalPath, schemaName, item);
+                    plugins.Add(new PluginsViewModel
+                    {
+                        Name = item.Name,
+                        Mapper = "NpgsqlConnection.GlobalTypeMapper.UseLegacyPostgis();",
+                        Package = "<PackageReference Include=\"Npgsql.LegacyPostgis\" Version=\"4.0.9\" />"
+                    });
+                }
+            }
+
+            return plugins;
+        }
+
+        private void CreateModels(List<SchemaViewModel> schemas)
+        {
+            foreach (var item in schemas)
+            {
+                Console.WriteLine("building：{0}", item.Name);
+                foreach (var table in item.Tables)
+                {
+                    Console.WriteLine("{0}:{1}", table.Type, table.Name);
+                    TablesDal td = new TablesDal(projectName, modelPath, schemaPath, dalPath, item.Name, table);
                     td.Create();
                 }
             }
         }
 
-        private static void CreateDir()
+        private void CreateEnums(List<PluginsViewModel> plugins)
+        {
+            var enumsDal = new EnumsDal(Path.Combine(outputDir, projectName + ".db"), modelPath, projectName, plugins);
+            enumsDal.Generate();
+        }
+
+        private void CreateDir()
         {
             modelPath = Path.Combine(outputDir, projectName + ".db", "Model", "Build");
             schemaPath = Path.Combine(outputDir, projectName + ".db", "Model", "Schemas");
@@ -54,10 +90,9 @@ namespace MyStaging.App
             }
         }
 
-        private static void CreateCsproj()
+        private void CreateCsproj(List<PluginsViewModel> plugins)
         {
             string path = Path.Combine(outputDir, $"{projectName}.db");
-
             string csproj = Path.Combine(path, $"{projectName}.db.csproj");
             if (File.Exists(csproj))
                 return;
@@ -72,26 +107,14 @@ namespace MyStaging.App
                 writer.WriteLine("\t</PropertyGroup>");
                 writer.WriteLine();
                 writer.WriteLine("\t<ItemGroup>");
-                writer.WriteLine("\t\t<PackageReference Include=\"MyStaging\" Version=\"1.0.0\" />");
+                writer.WriteLine("\t\t<PackageReference Include=\"MyStaging\" Version=\"2.*\" />");
+                foreach (var item in plugins)
+                {
+                    writer.WriteLine($"\t\t{item.Package}");
+                }
                 writer.WriteLine("\t</ItemGroup>");
                 writer.WriteLine("</Project>");
             }
         }
-
-        private static List<TableViewModel> GetTables(string schema)
-        {
-            string _sqltext = $@"SELECT table_name,'table' as type FROM INFORMATION_SCHEMA.tables WHERE table_schema='{schema}' AND table_type='BASE TABLE'
-UNION ALL
-SELECT table_name,'view' as type FROM INFORMATION_SCHEMA.views WHERE table_schema = '{schema}'";
-            List<TableViewModel> tableList = new List<TableViewModel>();
-            PgSqlHelper.ExecuteDataReader(dr =>
-            {
-                TableViewModel model = new TableViewModel() { Name = dr["table_name"].ToString(), Type = dr["type"].ToString() };
-                tableList.Add(model);
-            }, CommandType.Text, _sqltext);
-
-            return tableList;
-        }
-
     }
 }

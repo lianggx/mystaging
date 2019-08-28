@@ -3,18 +3,9 @@
 		<TargetFramework>netstandard2.0</TargetFramework>
 		<Authors></Authors>
 		 <Company></Company>
-		 <ApplicationIcon />
-		 <OutputType>Library</OutputType>
-		 <StartupObject />
 	</PropertyGroup>
 
 	<ItemGroup>
-	  <Folder Include="DAL\Build\" />
-	  <Folder Include="Model\Build\" />
-	  <Folder Include="Model\Schemas\" />
-	</ItemGroup>
-
-	<ItemGroup>
-	  <ProjectReference Include="..\MyStaging\MyStaging.csproj" />
+		<PackageReference Include="MyStaging" Version="2.*" />
 	</ItemGroup>
 </Project>

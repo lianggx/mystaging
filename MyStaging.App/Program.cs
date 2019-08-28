@@ -46,19 +46,22 @@ namespace MyStaging.App
                 }
                 i++;
             }
-            //outPutPath = @"D:\MyGitHub\mystaging";
-            //projName = "MyStaging.xUnitTest";
+
+            //var outPutPath = @"D:\MyGitHub\mystaging";
+            //var projName = "MyStaging.SuperApp";
             //MyStaging.Common.StagingOptions options = new Common.StagingOptions()
             //{
-            //    ConnectionMaster = "Host=127.0.0.1;Port=5432;Username=postgres;Password=postgres;Database=mystaging;Pooling=true;Maximum Pool Size=100"
+            //    ConnectionMaster = "Host=127.0.0.1;Port=5432;Username=postgres;Password=123456;Database=mystaging;Pooling=true;Maximum Pool Size=10;"
             //};
-            // PgSqlHelper.InitConnection(options);
+            //PgSqlHelper.InitConnection(options);
+
             var options = new Common.StagingOptions()
             {
                 ConnectionMaster = connection.ToString()
             };
             PgSqlHelper.InitConnection(options);
-            GeneralFactory.Build(outPutPath, projName);
+            GeneralFactory factory = new GeneralFactory(outPutPath, projName);
+            factory.Build();
 
             Console.WriteLine("success.....");
         }

@@ -9,16 +9,21 @@ namespace MyStaging.App.DAL
 {
     public class EnumsDal
     {
-        private static string projectName = string.Empty;
-        private static string modelPath = string.Empty;
-        private static string rootPath = string.Empty;
+        private string projectName = string.Empty;
+        private string modelPath = string.Empty;
+        private string rootPath = string.Empty;
+        private List<PluginsViewModel> plugins;
 
-        public static void Generate(string rootpath, string modelpath, string projName)
+        public EnumsDal(string rootpath, string modelpath, string projName, List<PluginsViewModel> plugins)
         {
-            rootPath = rootpath;
-            modelPath = modelpath;
-            projectName = projName;
+            this.rootPath = rootpath;
+            this.modelPath = modelpath;
+            this.projectName = projName;
+            this.plugins = plugins;
+        }
 
+        public void Generate()
+        {
             string _sqltext = @"
 select a.oid,a.typname,b.nspname from pg_type a 
 INNER JOIN pg_namespace b on a.typnamespace = b.oid 
@@ -35,7 +40,7 @@ where a.typtype = 'e' order by oid asc";
                 });
             }, System.Data.CommandType.Text, _sqltext);
 
-            string _fileName = Path.Combine(modelpath, "_Enums.cs");
+            string _fileName = Path.Combine(modelPath, "_Enums.cs");
             using (StreamWriter writer = new StreamWriter(File.Create(_fileName), System.Text.Encoding.UTF8))
             {
                 writer.WriteLine("using System;");
@@ -62,7 +67,7 @@ where a.typtype = 'e' order by oid asc";
             GenerateMapping(list);
         }
 
-        public static void GenerateMapping(List<EnumTypeInfo> list)
+        public void GenerateMapping(List<EnumTypeInfo> list)
         {
             string _fileName = Path.Combine(rootPath, "_startup.cs");
             using (StreamWriter writer = new StreamWriter(File.Create(_fileName), System.Text.Encoding.UTF8))
@@ -90,6 +95,10 @@ where a.typtype = 'e' order by oid asc";
                     writer.WriteLine("\t\t\tType[] jsonTypes = { typeof(JToken), typeof(JObject), typeof(JArray) };");
                     writer.WriteLine("\t\t\tNpgsqlNameTranslator translator = new NpgsqlNameTranslator();");
                     writer.WriteLine("\t\t\tNpgsqlConnection.GlobalTypeMapper.UseJsonNet(jsonTypes);");
+                    foreach (var item in plugins)
+                    {
+                        writer.WriteLine($"\t\t\t{item.Mapper}");
+                    }
                     foreach (var item in list)
                     {
                         writer.WriteLine($"\t\t\tNpgsqlConnection.GlobalTypeMapper.MapEnum<{item.TypeName.ToUpperPascal()}>(\"{item.NspName}.{item.TypeName}\", translator);");
