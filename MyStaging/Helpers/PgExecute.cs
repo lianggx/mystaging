@@ -342,6 +342,30 @@ namespace MyStaging.Helpers
             }
         }
 
+        public virtual void ExecuteDataReaderPipe(Action<DbDataReader> action, CommandType commandType, string commandText, DbParameter[] parameters)
+        {
+            DbCommand command = null;
+            DbDataReader reader = null;
+            try
+            {
+                command = PrepareCommand(commandType, commandText, parameters);
+                OpenConnection(command);
+                reader = command.ExecuteReader();
+                action?.Invoke(reader);
+            }
+            catch (Exception ex)
+            {
+                ExceptionOutPut(command, ex);
+                throw;
+            }
+            finally
+            {
+                if (reader != null)
+                    reader.Close();
+                Clear(command);
+            }
+        }
+
         /// <summary>
         ///  输出异常信息
         /// </summary>

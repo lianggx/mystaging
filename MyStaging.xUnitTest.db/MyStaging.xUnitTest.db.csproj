@@ -4,8 +4,7 @@
 		<Authors></Authors>
 		 <Company></Company>
 	</PropertyGroup>
-
 	<ItemGroup>
-		<PackageReference Include="MyStaging" Version="2.*" />
+	  <ProjectReference Include="..\MyStaging\MyStaging.csproj" />
 	</ItemGroup>
 </Project>

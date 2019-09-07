@@ -18,6 +18,7 @@ namespace MyStaging.xUnitTest
 			Type[] jsonTypes = { typeof(JToken), typeof(JObject), typeof(JArray) };
 			NpgsqlNameTranslator translator = new NpgsqlNameTranslator();
 			NpgsqlConnection.GlobalTypeMapper.UseJsonNet(jsonTypes);
+
 			NpgsqlConnection.GlobalTypeMapper.MapEnum<Et_data_state>("public.et_data_state", translator);
 			NpgsqlConnection.GlobalTypeMapper.MapEnum<Et_role>("public.et_role", translator);
 		}

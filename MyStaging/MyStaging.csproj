@@ -8,8 +8,8 @@
     <Copyright>MIT</Copyright>
     <PackageLicenseUrl>https://github.com/lianggx/mystaging/blob/master/LICENSE</PackageLicenseUrl>
     <PackageProjectUrl>https://github.com/lianggx/mystaging</PackageProjectUrl>
-    <Version>2.0.2</Version>
-    <PackageReleaseNotes>优化Expression，检测表达式，抛出详细异常信息</PackageReleaseNotes>
+    <Version>2.1.0</Version>
+    <PackageReleaseNotes>添加对查询Pipelining的支持</PackageReleaseNotes>
     <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
   </PropertyGroup>
 

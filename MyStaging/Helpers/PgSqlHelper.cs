@@ -13,6 +13,8 @@ using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Linq;
 using System.Text;
+using MyStaging.Mapping;
+using MyStaging.Interface;
 
 namespace MyStaging.Helpers
 {
@@ -64,9 +66,8 @@ namespace MyStaging.Helpers
         /// <param name="connectionSlaves">从库连接池总大小，如果不指定（默认 -1），如果没有设定 maximum pool size 的值,则从库中读取 maximum pool size 设定的值进行累计</param>
         public static void InitConnection(StagingOptions options)
         {
-            if (options == null) throw new ArgumentNullException(nameof(StagingOptions));
-            if (string.IsNullOrEmpty(options.ConnectionMaster))
-                throw new ArgumentNullException("connectionString not null");
+            CheckNotNull.NotNull(options, nameof(options));
+            CheckNotNull.NotEmpty(options.ConnectionMaster, nameof(options.ConnectionMaster));
 
             Options = options;
 
@@ -86,7 +87,6 @@ namespace MyStaging.Helpers
 
             if (options.CacheOptions != null && options.CacheOptions.Cache != null)
             {
-                Console.WriteLine("options.CacheOptions.Cache:{0}", options.CacheOptions.Cache == null);
                 CacheManager = new CacheManager(options.CacheOptions);
             }
         }
@@ -338,6 +338,69 @@ namespace MyStaging.Helpers
                 InstanceMaster.RollBackTransaction();
                 WriteLog(ex);
                 throw;
+            }
+        }
+
+        /// <summary>
+        ///  封装多个查询结果集，以管道的形式
+        /// </summary>
+        /// <param name="master">是否在主库执行查询</param>
+        /// <param name="contexts">查询上下文对象</param>
+        /// <returns></returns>
+        public static List<List<dynamic>> ExecutePipeLine(bool master, params IQueryPipe[] contexts)
+        {
+            CheckNotNull.NotEmpty(contexts, nameof(contexts));
+
+            StringBuilder sb = new StringBuilder();
+            List<DbParameter> parameters = new List<DbParameter>();
+            foreach (var ctx in contexts)
+            {
+                sb.AppendLine(ctx.CommandText);
+                sb.Append(";");
+                parameters.AddRange(ctx.ParamList);
+            }
+
+            var cmdText = sb.ToString();
+            int pipeLine = contexts.Length;
+            List<List<dynamic>> result = new List<List<dynamic>>();
+            if (master)
+            {
+                CheckNotNull.NotNull(InstanceMaster, nameof(InstanceMaster));
+
+                InstanceMaster.ExecuteDataReaderPipe(dr =>
+                {
+                    ExcutePipeResult(contexts, dr, pipeLine, result);
+
+                }, CommandType.Text, cmdText, parameters.ToArray());
+            }
+            else
+            {
+                CheckNotNull.NotNull(InstanceSlave, nameof(InstanceSlave));
+
+                InstanceSlave.ExecuteDataReaderPipe(dr =>
+                {
+                    ExcutePipeResult(contexts, dr, pipeLine, result);
+
+                }, CommandType.Text, cmdText, parameters.ToArray());
+            }
+
+            return result;
+        }
+
+        private static void ExcutePipeResult(IQueryPipe[] contexts, DbDataReader dr, int pipeLine, List<List<dynamic>> result)
+        {
+            for (int i = 0; i < pipeLine; i++)
+            {
+                List<dynamic> list = new List<dynamic>();
+                var ctx = contexts[i];
+                var builder = new DynamicBuilder(ctx.PipeResultType).CreateBuilder(dr);
+                while (dr.Read())
+                {
+                    var obj = ctx.ReadObj(builder, dr, ctx.PipeResultType);
+                    list.Add(obj);
+                };
+                dr.NextResult();
+                result.Add(list);
             }
         }
     }

@@ -1,4 +1,5 @@
 ﻿using MyStaging.Common;
+using MyStaging.Interface;
 using MyStaging.Mapping;
 using Newtonsoft.Json.Linq;
 using Npgsql;
@@ -19,7 +20,7 @@ namespace MyStaging.Helpers
     ///  数据库查询上下文对象
     /// </summary>
     /// <typeparam name="T"></typeparam>
-    public class QueryContext<T> where T : class, new()
+    public class QueryContext<T> : IQueryPipe where T : class, new()
     {
         private const string masterAlisName = "a";
 
@@ -367,6 +368,18 @@ namespace MyStaging.Helpers
             return ExecuteReader<TResult>(this.commandtext);
         }
 
+        public IQueryPipe ToPipe(int page = 1, int size = 10, params string[] fields) => ToPipe<T>(page, size, fields);
+
+        public IQueryPipe ToPipe<TResult>(int page = 1, int size = 10, params string[] fields)
+        {
+            this.Page(page, size);
+            ResetFields(fields);
+            PipeResultType = typeof(TResult);
+            return this;
+        }
+
+        public Type PipeResultType { get; set; }
+
         private void ResetFields(params string[] fields)
         {
             Fields.Clear();
@@ -394,43 +407,17 @@ namespace MyStaging.Helpers
         {
             List<TResult> list = new List<TResult>();
             DynamicBuilder<TResult> builder = null;
-            void action(DbDataReader dr)
-            {
-
-                TResult obj = default(TResult);
-                Type objType = typeof(TResult);
-                bool isTuple = objType.Namespace == "System" && objType.Name.StartsWith("ValueTuple`");
-                bool isEnum = objType.IsEnum;
-                if (isTuple)
-                {
-                    int columnIndex = -1;
-                    obj = (TResult)GetValueTuple(objType, dr, ref columnIndex);
-                }
-                else if (IsValueType(objType) || isEnum)
-                {
-                    obj = (TResult)GetValueType(objType, dr);
-                }
-                else if (objType.Namespace != null && objType.Namespace.StartsWith("Newtonsoft"))
-                {
-                    obj = (TResult)GetJToken(dr);
-                }
-                else
-                {
-                    if (builder == null)
-                    {
-                        builder = DynamicBuilder<TResult>.CreateBuilder(dr);
-                    }
-                    obj = builder.Build(dr);
-                }
-                list.Add(obj);
-
-            }
-
+            Type objType = typeof(TResult);
             try
             {
                 if (Master)
                 {
-                    PgSqlHelper.ExecuteDataReader(action, CommandType.Text, cmdText, command =>
+                    PgSqlHelper.ExecuteDataReader(dr =>
+                    {
+                        var obj = ReadObj<TResult>(ref builder, dr, objType);
+                        list.Add(obj);
+                    }
+                    , CommandType.Text, cmdText, command =>
                     {
                         this.Command = command;
                         this.Connection = command?.Connection;
@@ -438,7 +425,12 @@ namespace MyStaging.Helpers
                 }
                 else
                 {
-                    PgSqlHelper.ExecuteDataReaderSlave(action, CommandType.Text, cmdText, command =>
+                    PgSqlHelper.ExecuteDataReaderSlave(dr =>
+                    {
+                        var obj = ReadObj<TResult>(ref builder, dr, objType);
+                        list.Add(obj);
+                    }
+                    , CommandType.Text, cmdText, command =>
                      {
                          this.Command = command;
                          this.Connection = command?.Connection;
@@ -450,6 +442,63 @@ namespace MyStaging.Helpers
                 this.Clear();
             }
             return list;
+        }
+
+        private bool IsTuple(Type type) => type.Namespace == "System" && type.Name.StartsWith("ValueTuple`");
+
+        public TResult ReadObj<TResult>(ref DynamicBuilder<TResult> builder, DbDataReader dr, Type objType)
+        {
+            TResult obj = default(TResult);
+            bool isTuple = IsTuple(objType);
+            bool isEnum = objType.IsEnum;
+            if (isTuple)
+            {
+                int columnIndex = -1;
+                obj = (TResult)GetValueTuple(objType, dr, ref columnIndex);
+            }
+            else if (IsValueType(objType) || isEnum)
+            {
+                obj = (TResult)GetValueType(objType, dr);
+            }
+            else if (objType.Namespace != null && objType.Namespace.StartsWith("Newtonsoft"))
+            {
+                obj = (TResult)GetJToken(dr);
+            }
+            else
+            {
+                if (builder == null)
+                {
+                    builder = DynamicBuilder<TResult>.CreateBuilder(dr);
+                }
+                obj = builder.Build(dr);
+            }
+            return obj;
+        }
+
+        public object ReadObj(DynamicBuilder builder, DbDataReader dr, Type objType)
+        {
+            object obj = null;
+            bool isTuple = IsTuple(objType);
+            bool isEnum = objType.IsEnum;
+            if (isTuple)
+            {
+                int columnIndex = -1;
+                obj = GetValueTuple(objType, dr, ref columnIndex);
+            }
+            else if (IsValueType(objType) || isEnum)
+            {
+                obj = GetValueType(objType, dr);
+            }
+            else if (objType.Namespace != null && objType.Namespace.StartsWith("Newtonsoft"))
+            {
+                obj = GetJToken(dr);
+            }
+            else
+            {
+                obj = builder.Build(dr);
+            }
+
+            return obj;
         }
 
         /// <summary>
@@ -922,8 +971,8 @@ namespace MyStaging.Helpers
         /// <returns></returns>
         public QueryContext<T> AddParameter(NpgsqlParameter[] parameters)
         {
-            if (parameters == null || parameters.Length == 0)
-                throw new ArgumentException("参数不能为空", "parameters");
+            CheckNotNull.NotEmpty(parameters, nameof(parameters));
+
             ParamList.AddRange(parameters);
             return this;
         }
@@ -935,8 +984,7 @@ namespace MyStaging.Helpers
         /// <returns></returns>
         public QueryContext<T> AddParameter(NpgsqlParameter parameter)
         {
-            if (parameter == null)
-                throw new ArgumentException("参数不能为空", "parameter");
+            CheckNotNull.NotNull(parameter, nameof(parameter));
 
             ParamList.Add(parameter);
             return this;
@@ -1024,7 +1072,7 @@ namespace MyStaging.Helpers
         /// <summary>
         ///  获取或者设置参数列表
         /// </summary>
-        protected List<NpgsqlParameter> ParamList { get; set; } = new List<NpgsqlParameter>();
+        public List<NpgsqlParameter> ParamList { get; set; } = new List<NpgsqlParameter>();
 
         /// <summary>
         ///  获取或者设置表连接查询列表

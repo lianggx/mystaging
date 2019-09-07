@@ -4,6 +4,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using MyStaging.Common;
 using MyStaging.Helpers;
+using MyStaging.Mapping;
 using MyStaging.xUnitTest.DAL;
 using MyStaging.xUnitTest.Model;
 using MyStaging.xUnitTest.Model.Schemas;
@@ -47,23 +48,7 @@ namespace MyStaging.xUnitTest
         [Fact]
         public void MultiTest()
         {
-            try
-            {
-                //PgSqlHelper.InstanceMaster.BeginTransaction();
-                for (int i = 0; i < 1000000; i++)
-                {
-                    var user = User.Context.Where(f => f.Age == 18).ToOne();
-                    user.UpdateBuilder.SetAge(19).SaveChange();
-                }
-                //throw new ArgumentException("aaa");
 
-                //PgSqlHelper.InstanceMaster.CommitTransaction();
-            }
-            catch (Exception e)
-            {
-                //PgSqlHelper.InstanceMaster.BeginTransaction();
-            }
-            return;
             List<UserModel> list = new List<UserModel>();
             List<Task> tasks = new List<Task>();
             for (int i = 0; i < 10000; i++)
@@ -117,7 +102,6 @@ namespace MyStaging.xUnitTest
                   });
                 tasks.Add(task);
             }
-
             Task.WaitAll(tasks.ToArray());
         }
 
@@ -143,6 +127,15 @@ namespace MyStaging.xUnitTest
             };
             var result = User.Insert(user);
             Assert.Equal(user.Id, result.Id);
+        }
+
+        [Fact]
+        public void Query200000()
+        {
+            int total = 200000;
+            var list2 = User.Context.Page(1, total).ToList<UserViewModel>();
+
+            Assert.Equal(total, list2.Count);
         }
 
         [Fact]
@@ -200,12 +193,22 @@ namespace MyStaging.xUnitTest
         }
 
         [Fact]
+        public void ToPipe()
+        {
+            var user = User.Context.OrderBy(f => f.Createtime).Where(f => f.Age == 18).ToPipe();
+            var user2 = User.Context.OrderBy(f => f.Createtime).Where(f => f.Age == 38).ToPipe();
+            var articles = Article.Context.ToPipe();
+
+            var result = PgSqlHelper.ExecutePipeLine(true, user, user2, articles);
+
+            Assert.Equal("5d6e36bc953f702910000007", result[2][0].Userid);
+        }
+
+        [Fact]
         public void ToOne()
         {
-            string hash = Sha256Hash("123456");
-            var user = User.Context.OrderBy(f => f.Createtime).ToOne();
-
-            Assert.Equal(hash, user.Password);
+            var user = User.Context.OrderBy(f => f.Createtime).Where(f => f.Age == 18).ToOne();
+            Assert.Equal(18, user.Age);
         }
 
         [Fact]

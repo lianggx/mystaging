@@ -24,10 +24,9 @@ namespace MyStaging.Mapping
     [AttributeUsage(AttributeTargets.Property | AttributeTargets.Class, Inherited = true)]
     public class PropertyMappingAttribute : ColumnAttribute
     {
-        /// <summary>
-        ///  获取或者设置字段名称
-        /// </summary>
-        public string FieldName { get; set; }
+        public PropertyMappingAttribute(string name) : base(name)
+        {
+        }
 
         /// <summary>
         ///  获取或者设置字段类型

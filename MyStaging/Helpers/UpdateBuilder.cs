@@ -1,4 +1,5 @@
-﻿using MyStaging.Helpers;
+﻿using MyStaging.Common;
+using MyStaging.Helpers;
 using NpgsqlTypes;
 using System;
 using System.Collections.Generic;
@@ -140,11 +141,8 @@ namespace MyStaging.Helpers
                 }
             }
 
-            if (this.setList.Count == 0)
-                throw new ArgumentException("fields to be updated must be provided!");
-
-            if (this.WhereList.Count == 0)
-                throw new ArgumentException("The update operation must specify where conditions!");
+            CheckNotNull.NotEmpty(setList, "Fields to be updated must be provided!");
+            CheckNotNull.NotEmpty(WhereList, "The update operation must specify where conditions!");
 
             this.ToString();
 

@@ -1,4 +1,5 @@
-﻿using MyStaging.Helpers;
+﻿using MyStaging.Common;
+using MyStaging.Helpers;
 using NpgsqlTypes;
 using System;
 using System.Collections.Generic;
@@ -36,8 +37,7 @@ namespace MyStaging.Helpers
                 }
             }
 
-            if (this.WhereList.Count == 0)
-                throw new ArgumentException("The delete operation must specify where conditions!");
+            CheckNotNull.NotEmpty(this.WhereList, "The delete operation must specify where conditions!");
 
             this.ToString();
             var affrows = 0;
