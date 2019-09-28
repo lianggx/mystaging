@@ -632,7 +632,7 @@ namespace MyStaging.Helpers
         /// </summary>
         /// <param name="predicate">查询表达式</param>
         /// <returns></returns>
-        public QueryContext<T> Where(Expression<Func<T, bool>> predicate) => Where<T>(predicate);
+        public QueryContext<T> Where(Expression<Func<T, bool>> predicate) => Where<T>(null, predicate);
 
         /// <summary>
         ///  增加查询条件
@@ -646,6 +646,7 @@ namespace MyStaging.Helpers
         ///  增加查询条件
         /// </summary>
         /// <typeparam name="TResult">查询表达式的对象</typeparam>
+        /// <param name="alisName">alisName</param>
         /// <param name="predicate">查询表达式</param>
         /// <returns></returns>
         public QueryContext<T> Where<TResult>(string alisName, Expression<Func<TResult, bool>> predicate)

@@ -152,17 +152,16 @@ namespace MyStaging.App.DAL
                 writer.WriteLine("\t{");
                 writer.WriteLine($"\t\tpublic static {schemaName} Instance => new {schemaName}();");
                 writer.WriteLine();
-                writer.WriteLine($"\t\tprivate static Dictionary<string, SchemaModel> schemas {{ get; }}");
+                //  writer.WriteLine($"\t\tprivate static Dictionary<string, SchemaModel> schemas {{ get; }}");
                 writer.WriteLine();
-                writer.WriteLine($"\t\tpublic Dictionary<string, SchemaModel> SchemaSet => schemas;");
+
                 writer.WriteLine();
-                writer.WriteLine($"\t\tprivate static List<PropertyInfo> properties;");
+                // writer.WriteLine($"\t\tprivate static List<PropertyInfo> properties;");
                 writer.WriteLine();
-                writer.WriteLine($"\t\tpublic List<PropertyInfo> Properties => properties;");
-                writer.WriteLine();
-                writer.WriteLine($"\t\tstatic {schemaName}()");
-                writer.WriteLine("\t\t{");
-                writer.WriteLine("\t\t\tschemas = new Dictionary<string, SchemaModel>");
+
+                // writer.WriteLine($"\t\tstatic {schemaName}()");
+                // writer.WriteLine("\t\t{");
+                writer.WriteLine($"\t\tpublic Dictionary<string, SchemaModel> SchemaSet => new Dictionary<string, SchemaModel>");
                 writer.WriteLine("\t\t\t{");
                 for (int i = 0; i < fieldList.Count; i++)
                 {
@@ -179,8 +178,10 @@ namespace MyStaging.App.DAL
                     writer.WriteLine("\t\t\t\t" + line + (i + 1 == fieldList.Count ? "" : ","));
                 }
                 writer.WriteLine("\t\t\t};");
-                writer.WriteLine($"\t\t\tproperties = ContractUtils.GetProperties(typeof({modelName}));");
-                writer.WriteLine("\t\t}");
+                writer.WriteLine($"\t\tpublic List<PropertyInfo> Properties => ContractUtils.GetProperties(typeof({modelName}));");
+                writer.WriteLine();
+                // writer.WriteLine($"\t\t\tproperties = ContractUtils.GetProperties(typeof({modelName}));");
+                //  writer.WriteLine("\t\t}");
                 writer.WriteLine("\t}");
                 writer.WriteLine("}");
             }

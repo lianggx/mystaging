@@ -11,17 +11,10 @@ namespace MyStaging.xUnitTest.Model.Schemas
 	{
 		public static UserSchema Instance => new UserSchema();
 
-		private static Dictionary<string, SchemaModel> schemas { get; }
 
-		public Dictionary<string, SchemaModel> SchemaSet => schemas;
 
-		private static List<PropertyInfo> properties;
 
-		public List<PropertyInfo> Properties => properties;
-
-		static UserSchema()
-		{
-			schemas = new Dictionary<string, SchemaModel>
+		public Dictionary<string, SchemaModel> SchemaSet => new Dictionary<string, SchemaModel>
 			{
 				{"id", new SchemaModel{ FieldName = "id", DbType =  NpgsqlDbType.Varchar, Size = -1 ,Primarykey = true} },
 				{"loginname", new SchemaModel{ FieldName = "loginname", DbType =  NpgsqlDbType.Varchar, Size = 255} },
@@ -32,7 +25,7 @@ namespace MyStaging.xUnitTest.Model.Schemas
 				{"money", new SchemaModel{ FieldName = "money", DbType =  NpgsqlDbType.Numeric, Size = -1} },
 				{"createtime", new SchemaModel{ FieldName = "createtime", DbType =  NpgsqlDbType.Timestamp, Size = 8} }
 			};
-			properties = ContractUtils.GetProperties(typeof(UserModel));
-		}
+		public List<PropertyInfo> Properties => ContractUtils.GetProperties(typeof(UserModel));
+
 	}
 }
