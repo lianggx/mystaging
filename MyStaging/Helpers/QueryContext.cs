@@ -8,7 +8,6 @@ using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.Common;
-using System.Diagnostics;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
@@ -25,7 +24,7 @@ namespace MyStaging.Helpers
         private const string masterAlisName = "a";
 
         /// <summary>
-        ///  设置当前查询的 limit 和 offset 
+        ///  设置当前查询的 limit 和 offset
         /// </summary>
         /// <param name="page"></param>
         /// <param name="size"></param>
@@ -584,7 +583,6 @@ namespace MyStaging.Helpers
                 PgSqlHelper.ExecuteDataReader(dr =>
                 {
                     restult = DynamicBuilder<T>.CreateBuilder(dr).Build(dr);
-
                 }, CommandType.Text, this.commandtext, this.ParamList.ToArray());
             }
             finally
@@ -838,6 +836,8 @@ namespace MyStaging.Helpers
             // condition
             if (WhereExpressionList.Count > 0)
             {
+                this.ParamList.Clear();
+                this.WhereList.Clear();
                 foreach (var item in WhereExpressionList)
                 {
                     DbExpressionVisitor expression = new DbExpressionVisitor();
@@ -929,7 +929,7 @@ namespace MyStaging.Helpers
         ///  增加一个查询参数
         /// </summary>
         /// <param name="field">数据库字段</param>
-        /// <param name="dbType">字段类型</param>        
+        /// <param name="dbType">字段类型</param>
         /// <param name="value">字段指定的值</param>
         /// <param name="size">字段长度</param>
         /// <returns></returns>
