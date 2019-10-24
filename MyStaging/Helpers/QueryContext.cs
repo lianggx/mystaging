@@ -284,6 +284,7 @@ namespace MyStaging.Helpers
                     this.Connection = command?.Connection;
                 }, this.ParamList.ToArray());
             }
+            Clear();
             return (TResult)result;
         }
 
@@ -836,8 +837,7 @@ namespace MyStaging.Helpers
             // condition
             if (WhereExpressionList.Count > 0)
             {
-                this.ParamList.Clear();
-                this.WhereList.Clear();
+                Clear();
                 foreach (var item in WhereExpressionList)
                 {
                     DbExpressionVisitor expression = new DbExpressionVisitor();
@@ -1064,7 +1064,6 @@ namespace MyStaging.Helpers
         {
             this.ParamList.Clear();
             this.WhereList.Clear();
-            this.WhereExpressionList.Clear();
         }
 
         #region Properties
