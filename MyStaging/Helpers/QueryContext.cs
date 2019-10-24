@@ -837,7 +837,7 @@ namespace MyStaging.Helpers
             // condition
             if (WhereExpressionList.Count > 0)
             {
-                Clear();
+                this.WhereList.Clear();
                 foreach (var item in WhereExpressionList)
                 {
                     DbExpressionVisitor expression = new DbExpressionVisitor();
