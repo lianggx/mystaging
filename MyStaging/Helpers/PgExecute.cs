@@ -377,7 +377,7 @@ namespace MyStaging.Helpers
                 return;
 
             DbParameterCollection coll = command.Parameters;
-            ex.Data["DbConnection"] = command.Connection;
+            ex.Data["DbConnection"] = command.Connection.ConnectionString;
             string ps = string.Empty;
             string sql = command.CommandText;
             if (coll != null)
