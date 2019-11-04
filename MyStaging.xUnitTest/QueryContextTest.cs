@@ -138,10 +138,50 @@ namespace MyStaging.xUnitTest
             Assert.Equal(total, list2.Count);
         }
 
+        public class UserDto
+        {
+            public int Age { get; set; }
+            public string Nickname { get; set; }
+        }
+
+        public class UserDtoBase
+        {
+            public UserDto Dto { get; set; }
+        }
+
+        [Fact]
+        public void ExpressionTest()
+        {
+            UserDtoBase dtoBase = new UserDtoBase()
+            {
+                Dto = new UserDto()
+                {
+                    Age = 18,
+                    Nickname = "lgx"
+                }
+            };
+
+            var context = User.Context.InnerJoin<ArticleModel>("b", (a, b) => a.Id == b.Userid)
+                             .Where(e => e.Age == dtoBase.Dto.Age && e.Nickname == dtoBase.Dto.Nickname)
+                             .Page(1, 10);
+            context.ToSQL();
+            var sql = context.ToSQL();
+            output.WriteLine(sql);
+        }
+
         [Fact]
         public void ToList()
         {
-            var list2 = User.Context.InnerJoin<ArticleModel>("b", (a, b) => a.Id == b.Userid).OrderByDescing(f => f.Createtime).Page(1, 10).ToList<UserViewModel>("a.id,a.nickname,a.password");
+            UserDto dto = new UserDto()
+            {
+                Age = 18
+            };
+            var context = User.Context.InnerJoin<ArticleModel>("b", (a, b) => a.Id == b.Userid)
+                             .Where(e => e.Age == dto.Age && e.Nickname == dto.Nickname)
+                             .OrderByDescing(f => f.Createtime)
+                             .Page(1, 10);
+
+            var list2 = context.ToList<UserViewModel>("a.id,a.nickname,a.password");
 
             List<Task> tasks = new List<Task>();
             for (int i = 0; i < 50; i++)

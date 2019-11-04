@@ -266,7 +266,7 @@ namespace MyStaging.Helpers
         {
             Fields.Clear();
             Fields.Add(field);
-            string cmdText = ToString();
+            string cmdText = ToSQL();
             object result = null;
             if (Master)
             {
@@ -395,7 +395,7 @@ namespace MyStaging.Helpers
                 }
             }
 
-            ToString();
+            ToSQL();
         }
 
         /// <summary>
@@ -811,7 +811,7 @@ namespace MyStaging.Helpers
         ///  将查询命令和条件转换为 SQL 语句
         /// </summary>
         /// <returns></returns>
-        public override string ToString()
+        public string ToSQL()
         {
             Type mastertype = typeof(T);
             string tableName = MyStagingUtils.GetMapping(mastertype);
@@ -837,7 +837,6 @@ namespace MyStaging.Helpers
             // condition
             if (WhereExpressionList.Count > 0)
             {
-                this.WhereList.Clear();
                 foreach (var item in WhereExpressionList)
                 {
                     DbExpressionVisitor expression = new DbExpressionVisitor();

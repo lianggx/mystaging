@@ -39,7 +39,7 @@ namespace MyStaging.Helpers
 
             CheckNotNull.NotEmpty(this.WhereList, "The delete operation must specify where conditions!");
 
-            this.ToString();
+            this.ToSQL();
             var affrows = 0;
             try
             {
@@ -57,7 +57,7 @@ namespace MyStaging.Helpers
         ///  重写方法
         /// </summary>
         /// <returns></returns>
-        public override string ToString()
+        public new string ToSQL()
         {
             string tableName = MyStagingUtils.GetMapping(typeof(T));
             this.CommandText = $"DELETE FROM {tableName} a {"WHERE " + string.Join("\nAND ", WhereList)}";
