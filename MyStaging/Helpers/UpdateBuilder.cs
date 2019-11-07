@@ -144,7 +144,7 @@ namespace MyStaging.Helpers
             CheckNotNull.NotEmpty(setList, "Fields to be updated must be provided!");
             CheckNotNull.NotEmpty(WhereList, "The update operation must specify where conditions!");
 
-            this.ToString();
+            this.ToSQL();
 
             int affrows = 0;
             if (OnChanged != null)
