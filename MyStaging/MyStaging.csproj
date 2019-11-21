@@ -8,7 +8,7 @@
     <Copyright>MIT</Copyright>
     <PackageLicenseUrl>https://github.com/lianggx/mystaging/blob/master/LICENSE</PackageLicenseUrl>
     <PackageProjectUrl>https://github.com/lianggx/mystaging</PackageProjectUrl>
-    <Version>2.1.7</Version>
+    <Version>2.1.8</Version>
     <PackageReleaseNotes>添加对查询Pipelining的支持</PackageReleaseNotes>
     <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
   </PropertyGroup>
@@ -21,7 +21,7 @@
     <PackageReference Include="Microsoft.Extensions.Caching.Memory" Version="2.2.0" />
     <PackageReference Include="Microsoft.Extensions.Logging" Version="2.1.1" />
     <PackageReference Include="Newtonsoft.Json" Version="11.0.2" />
-    <PackageReference Include="Npgsql" Version="4.0.9" />
+    <PackageReference Include="Npgsql" Version="4.1.2" />
     <PackageReference Include="Npgsql.Json.NET" Version="4.0.9" />
     <PackageReference Include="System.ComponentModel.Annotations" Version="4.5.0" />
     <PackageReference Include="System.Reflection.Emit.ILGeneration" Version="4.3.0" />

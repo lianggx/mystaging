@@ -33,6 +33,11 @@ namespace MyStaging.Helpers
         /// </summary>
         public partial class MasterExecute : PgExecute
         {
+            /// <summary>
+            /// 
+            /// </summary>
+            /// <param name="logger"></param>
+            /// <param name="connectionString"></param>
             public MasterExecute(ILogger logger, ConnectionStringConfiguration connectionString) : base(logger, connectionString) { }
         }
 
@@ -41,6 +46,11 @@ namespace MyStaging.Helpers
         /// </summary>
         public partial class SlaveExecute : PgExecute
         {
+            /// <summary>
+            /// 
+            /// </summary>
+            /// <param name="logger"></param>
+            /// <param name="connectionString"></param>
             public SlaveExecute(ILogger logger, List<ConnectionStringConfiguration> connectionString) : base(logger, connectionString) { }
         }
 
@@ -54,16 +64,20 @@ namespace MyStaging.Helpers
         /// </summary>
         public static PgExecute InstanceSlave { get; set; }
 
+        /// <summary>
+        ///  缓存管理
+        /// </summary>
         public static CacheManager CacheManager { get; set; } = null;
+
+        /// <summary>
+        ///  脚手架设置选项
+        /// </summary>
         public static StagingOptions Options { get; set; }
 
         /// <summary>
         ///  初始化数据库连接
         /// </summary>
-        /// <param name="logger">日志组件</param>
-        /// <param name="connectionMaster">可读写数据库连接</param>
-        /// <param name="connectionStringSlave">从库数据库连接</param>
-        /// <param name="connectionSlaves">从库连接池总大小，如果不指定（默认 -1），如果没有设定 maximum pool size 的值,则从库中读取 maximum pool size 设定的值进行累计</param>
+        /// <param name="options"></param>
         public static void InitConnection(StagingOptions options)
         {
             CheckNotNull.NotNull(options, nameof(options));
@@ -115,8 +129,8 @@ namespace MyStaging.Helpers
         /// <summary>
         ///  刷新数据库连接
         /// </summary>
-        /// <param name="connS"></param>
-        /// <param name="poolSize"></param>
+        /// <param name="connectionMaster"></param>
+        /// <param name="connectionSlaves"></param>
         public static void Refresh(string connectionMaster, string[] connectionSlaves = null)
         {
             ConnectionStringConfiguration conn = new ConnectionStringConfiguration()
@@ -133,7 +147,10 @@ namespace MyStaging.Helpers
         /// <summary>
         ///  此函数只能在读写数据库连接中进行
         /// </summary>
-        /// <param name="action"></param>
+        /// <param name="commandType"></param>
+        /// <param name="commandText"></param>
+        /// <param name="commandParameters"></param>
+        /// <returns></returns>
         public static object ExecuteScalar(CommandType commandType, string commandText, params DbParameter[] commandParameters)
         {
             return InstanceMaster.ExecuteScalar(commandType, commandText, null, commandParameters);
@@ -142,7 +159,11 @@ namespace MyStaging.Helpers
         /// <summary>
         ///  此函数只能在读写数据库连接中进行
         /// </summary>
-        /// <param name="action"></param>
+        /// <param name="commandType"></param>
+        /// <param name="commandText"></param>
+        /// <param name="onExecuted"></param>
+        /// <param name="commandParameters"></param>
+        /// <returns></returns>
         public static object ExecuteScalar(CommandType commandType, string commandText, Action<DbCommand> onExecuted = null, params DbParameter[] commandParameters)
         {
             return InstanceMaster.ExecuteScalar(commandType, commandText, onExecuted, commandParameters);
@@ -151,7 +172,10 @@ namespace MyStaging.Helpers
         /// <summary>
         ///  此函数只能在读写数据库连接中进行
         /// </summary>
-        /// <param name="action"></param>
+        /// <param name="commandType"></param>
+        /// <param name="commandText"></param>
+        /// <param name="commandParameters"></param>
+        /// <returns></returns>
         public static int ExecuteNonQuery(CommandType commandType, string commandText, params DbParameter[] commandParameters)
         {
             return ExecuteNonQuery(commandType, commandText, null, commandParameters);
@@ -160,7 +184,11 @@ namespace MyStaging.Helpers
         /// <summary>
         ///  此函数只能在读写数据库连接中进行
         /// </summary>
-        /// <param name="action"></param>
+        /// <param name="commandType"></param>
+        /// <param name="commandText"></param>
+        /// <param name="onExecuted"></param>
+        /// <param name="commandParameters"></param>
+        /// <returns></returns>
         public static int ExecuteNonQuery(CommandType commandType, string commandText, Action<DbCommand> onExecuted = null, params DbParameter[] commandParameters)
         {
             return InstanceMaster.ExecuteNonQuery(commandType, commandText, onExecuted, commandParameters);
@@ -170,6 +198,9 @@ namespace MyStaging.Helpers
         ///  此函数只能在读写数据库连接中进行
         /// </summary>
         /// <param name="action"></param>
+        /// <param name="commandType"></param>
+        /// <param name="commandText"></param>
+        /// <param name="commandParameters"></param>
         public static void ExecuteDataReader(Action<DbDataReader> action, CommandType commandType, string commandText, params DbParameter[] commandParameters)
         {
             ExecuteDataReader(action, commandType, commandText, null, commandParameters);
@@ -179,6 +210,10 @@ namespace MyStaging.Helpers
         ///  此函数只能在读写数据库连接中进行
         /// </summary>
         /// <param name="action"></param>
+        /// <param name="commandType"></param>
+        /// <param name="commandText"></param>
+        /// <param name="onExecuted"></param>
+        /// <param name="commandParameters"></param>
         public static void ExecuteDataReader(Action<DbDataReader> action, CommandType commandType, string commandText, Action<DbCommand> onExecuted = null, params DbParameter[] commandParameters)
         {
             InstanceMaster.ExecuteDataReader(action, commandType, commandText, onExecuted, commandParameters);
@@ -187,7 +222,10 @@ namespace MyStaging.Helpers
         /// <summary>
         ///  此函数只能在从库数据库连接中进行
         /// </summary>
-        /// <param name="action"></param>
+        /// <param name="commandType"></param>
+        /// <param name="commandText"></param>
+        /// <param name="commandParameters"></param>
+        /// <returns></returns>
         public static object ExecuteScalarSlave(CommandType commandType, string commandText, params DbParameter[] commandParameters)
         {
             return ExecuteScalarSlave(commandType, commandText, null, commandParameters);
@@ -196,7 +234,11 @@ namespace MyStaging.Helpers
         /// <summary>
         ///  此函数只能在从库数据库连接中进行
         /// </summary>
-        /// <param name="action"></param>
+        /// <param name="commandType"></param>
+        /// <param name="commandText"></param>
+        /// <param name="onExecuted"></param>
+        /// <param name="commandParameters"></param>
+        /// <returns></returns>
         public static object ExecuteScalarSlave(CommandType commandType, string commandText, Action<DbCommand> onExecuted = null, params DbParameter[] commandParameters)
         {
             object result = null;
@@ -233,6 +275,9 @@ namespace MyStaging.Helpers
         ///  此函数只能在从库数据库连接中进行
         /// </summary>
         /// <param name="action"></param>
+        /// <param name="commandType"></param>
+        /// <param name="commandText"></param>
+        /// <param name="commandParameters"></param>
         public static void ExecuteDataReaderSlave(Action<DbDataReader> action, CommandType commandType, string commandText, params DbParameter[] commandParameters)
         {
             ExecuteDataReaderSlave(action, commandType, commandText, null, commandParameters);
@@ -242,6 +287,10 @@ namespace MyStaging.Helpers
         ///  此函数只能在从库数据库连接中进行
         /// </summary>
         /// <param name="action"></param>
+        /// <param name="commandType"></param>
+        /// <param name="commandText"></param>
+        /// <param name="onExecuted"></param>
+        /// <param name="commandParameters"></param>
         public static void ExecuteDataReaderSlave(Action<DbDataReader> action, CommandType commandType, string commandText, Action<DbCommand> onExecuted = null, params DbParameter[] commandParameters)
         {
             void Transfer(Exception ex)
@@ -275,7 +324,10 @@ namespace MyStaging.Helpers
         /// <summary>
         ///  此函数只能在从库数据库连接中进行
         /// </summary>
-        /// <param name="action"></param>
+        /// <param name="commandType"></param>
+        /// <param name="commandText"></param>
+        /// <param name="commandParameters"></param>
+        /// <returns></returns>
         public static int ExecuteNonQuerySlave(CommandType commandType, string commandText, params DbParameter[] commandParameters)
         {
             return ExecuteNonQuery(commandType, commandText, null, commandParameters);
@@ -284,7 +336,11 @@ namespace MyStaging.Helpers
         /// <summary>
         ///  此函数只能在从库数据库连接中进行
         /// </summary>
-        /// <param name="action"></param>
+        /// <param name="commandType"></param>
+        /// <param name="commandText"></param>
+        /// <param name="onExecuted"></param>
+        /// <param name="commandParameters"></param>
+        /// <returns></returns>
         public static int ExecuteNonQuerySlave(CommandType commandType, string commandText, Action<DbCommand> onExecuted = null, params DbParameter[] commandParameters)
         {
             return InstanceSlave.ExecuteNonQuery(commandType, commandText, onExecuted, commandParameters);
@@ -301,6 +357,7 @@ namespace MyStaging.Helpers
             Console.ForegroundColor = ConsoleColor.White;
             Options.Logger?.LogError(message);
         }
+
         private static void WriteLog(Exception ex)
         {
             StringBuilder sb = new StringBuilder();
@@ -335,8 +392,8 @@ namespace MyStaging.Helpers
             }
             catch (Exception ex)
             {
-                InstanceMaster.RollBackTransaction();
                 WriteLog(ex);
+                InstanceMaster.RollBackTransaction();
                 throw;
             }
         }
