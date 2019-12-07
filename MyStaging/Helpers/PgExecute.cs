@@ -27,7 +27,10 @@ namespace MyStaging.Helpers
         /// </summary>
         public ILogger _logger = null;
 
-        private ConcurrentDictionary<int, DbTransaction> _trans = new ConcurrentDictionary<int, DbTransaction>();
+        /// <summary>
+        ///  获取事务集
+        /// </summary>
+        public ConcurrentDictionary<int, DbTransaction> Trans = new ConcurrentDictionary<int, DbTransaction>();
 
         /// <summary>
         ///  默认构造函数
@@ -78,8 +81,8 @@ namespace MyStaging.Helpers
             get
             {
                 int tid = Thread.CurrentThread.ManagedThreadId;
-                if (_trans.ContainsKey(tid) && _trans[tid] != null)
-                    return _trans[tid];
+                if (Trans.ContainsKey(tid) && Trans[tid] != null)
+                    return Trans[tid];
                 return null;
             }
         }
@@ -445,10 +448,10 @@ namespace MyStaging.Helpers
 
             DbTransaction tran = Connection.BeginTransaction();
             int tid = Thread.CurrentThread.ManagedThreadId;
-            if (_trans.ContainsKey(tid))
+            if (Trans.ContainsKey(tid))
                 CommitTransaction();
             else
-                _trans.TryAdd(tid, tran);
+                Trans.TryAdd(tid, tran);
 
             return tran;
         }
@@ -470,7 +473,7 @@ namespace MyStaging.Helpers
         public virtual DbTransaction CommitTransaction(bool iscommit)
         {
             int tid = Thread.CurrentThread.ManagedThreadId;
-            if (_trans.TryRemove(tid, out DbTransaction tran))
+            if (Trans.TryRemove(tid, out DbTransaction tran))
             {
                 using (var connection = tran.Connection)
                 {

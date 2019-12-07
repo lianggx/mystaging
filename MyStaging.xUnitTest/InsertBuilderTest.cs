@@ -4,7 +4,9 @@ using MyStaging.Helpers;
 using MyStaging.xUnitTest.DAL;
 using MyStaging.xUnitTest.Model;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Data.Common;
 using System.Diagnostics;
 using System.Text;
 using Xunit;
@@ -84,5 +86,45 @@ namespace MyStaging.xUnitTest
             Assert.Equal(total, rows);
         }
 
+
+        [Fact]
+        public void Transaction()
+        {
+            UserModel user = null;
+            UserModel result = null;
+            DbTransaction tran = null;
+            DbConnection conn = null;
+            ConcurrentDictionary<int, DbTransaction> trans = null;
+
+            try
+            {
+                tran = PgSqlHelper.InstanceMaster.BeginTransaction();
+                conn = tran.Connection;
+                trans = PgSqlHelper.InstanceMaster.Trans;
+                user = new UserModel()
+                {
+                    Age = 18,
+                    Createtime = DateTime.Now,
+                    Id = ObjectId.NewId().ToString(),
+                    Loginname = Guid.NewGuid().ToString("N").Substring(0, 8),
+                    Money = 0,
+                    Nickname = "北极熊",
+                    Password = "123456",
+                    Sex = true
+                };
+                result = User.Insert(user);
+                throw new ArgumentNullException();
+                PgSqlHelper.InstanceMaster.CommitTransaction();
+            }
+            catch (Exception ex)
+            {
+                PgSqlHelper.InstanceMaster.RollBackTransaction();
+            }
+            finally
+            {
+
+            }
+            Assert.Equal(user.Id, result.Id);
+        }
     }
 }
