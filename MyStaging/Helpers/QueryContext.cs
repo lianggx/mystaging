@@ -284,7 +284,7 @@ namespace MyStaging.Helpers
                     this.Connection = command?.Connection;
                 }, this.ParamList.ToArray());
             }
-            Clear();
+            // Clear();
             return (TResult)result;
         }
 
