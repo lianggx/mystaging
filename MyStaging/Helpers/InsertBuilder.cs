@@ -46,7 +46,7 @@ namespace MyStaging.Helpers
         public T Insert(T model)
         {
             this.models.Add(model);
-            this.ToSQL();
+            this.ToString();
             this.CommandText += " RETURNING *;";
             return base.InsertOnReader(this.CommandText);
         }
@@ -73,7 +73,7 @@ namespace MyStaging.Helpers
         /// <returns></returns>
         public int SaveChange()
         {
-            this.ToSQL();
+            this.ToString();
             var affrows = base.ExecuteNonQuery(this.CommandText);
             return affrows;
         }
@@ -82,7 +82,7 @@ namespace MyStaging.Helpers
         ///  重写方法
         /// </summary>
         /// <returns></returns>
-        public new string ToSQL()
+        public override string ToString()
         {
             if (this.models.Count == 0)
                 throw new ArgumentOutOfRangeException("No items.");
