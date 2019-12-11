@@ -380,7 +380,6 @@ namespace MyStaging.Helpers
                 return;
 
             DbParameterCollection coll = command.Parameters;
-            ex.Data["DbConnection"] = command.Connection.ConnectionString;
             string ps = string.Empty;
             string sql = command.CommandText;
             if (coll != null)
@@ -399,11 +398,15 @@ namespace MyStaging.Helpers
                     sql = sql.Replace("@" + para.ParameterName, val);
                 }
             }
-            if (_logger != null)
-                _logger.LogError(new EventId(111111), ex, "数据库执行出错：===== \n {0}\n{1}\n{2}", sql, coll, ps);
-            else
-                Console.WriteLine("数据库执行出错：===== \n {0}\n{1}\n{2}", sql, coll, ps);
 
+            ex.Data["DbConnection"] = command.Connection.ConnectionString;
+            ex.Data["CommandText"] = sql;
+            ex.Data["Parameters"] = ps;
+
+            if (_logger != null)
+                _logger.LogError(new EventId(111111), ex, "数据库执行出错：===== \n {0}\n{1}", sql, ps);
+            else
+                Console.WriteLine("数据库执行出错：===== \n {0}\n{1}", sql, ps);
         }
 
         /// <summary>

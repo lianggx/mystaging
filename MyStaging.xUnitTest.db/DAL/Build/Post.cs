@@ -16,14 +16,6 @@ namespace MyStaging.xUnitTest.DAL
 	public partial class Post : QueryContext<PostModel>
 	{
 		public static Post Context { get { return new Post(); } }
-		public Post WhereRoleAny(params Et_role[] role)
-		{
-			 if (role == null || role.Length == 0) return this;
-			 string text = JoinTo(role, "et_role");
-			 base.Where($"role @> array[{text}]");
-			 return this;
-		}
-
 
 		public static InsertBuilder<PostModel> InsertBuilder => new InsertBuilder<PostModel>(PostSchema.Instance);
 		public static PostModel Insert(PostModel model) => InsertBuilder.Insert(model);
@@ -82,24 +74,14 @@ namespace MyStaging.xUnitTest.DAL
 				base.SetField("content", NpgsqlDbType.Jsonb, content, -1);
 				return this;
 			}
-			public PostUpdateBuilder SetState(Et_data_state state)
+			public PostUpdateBuilder SetState(Et_data_state? state)
 			{
 				base.SetField("state", state, 4);
 				return this;
 			}
-			public PostUpdateBuilder SetRole(Et_role[] role)
+			public PostUpdateBuilder SetRole(Et_role? role)
 			{
-				base.SetField("role", role, -1);
-				return this;
-			}
-			public PostUpdateBuilder SetRoleAppend(Et_role role)
-			{
-				base.SetArrayAppend("role", role, -1);
-				return this;
-			}
-			public PostUpdateBuilder SetRoleRemove(Et_role role)
-			{
-				base.SetArrayRemove("role", role, -1);
+				base.SetField("role", role, 4);
 				return this;
 			}
 			public PostUpdateBuilder SetText(JToken text)

@@ -11,17 +11,14 @@ namespace MyStaging.xUnitTest.Model.Schemas
 	{
 		public static PostSchema Instance => new PostSchema();
 
-
-
-
-		public Dictionary<string, SchemaModel> SchemaSet => new Dictionary<string, SchemaModel>
+		public List<SchemaModel> SchemaSet => new List<SchemaModel>
 			{
-				{"id", new SchemaModel{ FieldName = "id", DbType =  NpgsqlDbType.Uuid, Size = 16 ,Primarykey = true} },
-				{"title", new SchemaModel{ FieldName = "title", DbType =  NpgsqlDbType.Varchar, Size = 255} },
-				{"content", new SchemaModel{ FieldName = "content", DbType =  NpgsqlDbType.Jsonb, Size = -1} },
-				{"state", new SchemaModel{ FieldName = "state", DbType = null, Size = 4} },
-				{"role", new SchemaModel{ FieldName = "role", DbType = null, Size = -1} },
-				{"text", new SchemaModel{ FieldName = "text", DbType =  NpgsqlDbType.Json, Size = -1} }
+				new SchemaModel{ FieldName = "id", DbType =  NpgsqlDbType.Uuid, Size = 16 ,Primarykey = true},
+				new SchemaModel{ FieldName = "title", DbType =  NpgsqlDbType.Varchar, Size = 255},
+				new SchemaModel{ FieldName = "content", DbType =  NpgsqlDbType.Jsonb, Size = -1},
+				new SchemaModel{ FieldName = "state", DbType = null, Size = 4},
+				new SchemaModel{ FieldName = "role", DbType = null, Size = 4},
+				new SchemaModel{ FieldName = "text", DbType =  NpgsqlDbType.Json, Size = -1}
 			};
 		public List<PropertyInfo> Properties => ContractUtils.GetProperties(typeof(PostModel));
 

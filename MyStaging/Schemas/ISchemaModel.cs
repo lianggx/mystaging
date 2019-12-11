@@ -7,7 +7,7 @@ namespace MyStaging.Schemas
 {
     public interface ISchemaModel
     {
-        Dictionary<string, SchemaModel> SchemaSet { get; }
+        List<SchemaModel> SchemaSet { get; }
         List<PropertyInfo> Properties { get; }
     }
 }

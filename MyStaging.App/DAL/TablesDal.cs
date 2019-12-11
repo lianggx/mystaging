@@ -153,15 +153,15 @@ namespace MyStaging.App.DAL
                 writer.WriteLine($"\t\tpublic static {schemaName} Instance => new {schemaName}();");
                 writer.WriteLine();
                 //  writer.WriteLine($"\t\tprivate static Dictionary<string, SchemaModel> schemas {{ get; }}");
-                writer.WriteLine();
+                //writer.WriteLine();
 
-                writer.WriteLine();
+                //writer.WriteLine();
                 // writer.WriteLine($"\t\tprivate static List<PropertyInfo> properties;");
-                writer.WriteLine();
+                // writer.WriteLine();
 
                 // writer.WriteLine($"\t\tstatic {schemaName}()");
                 // writer.WriteLine("\t\t{");
-                writer.WriteLine($"\t\tpublic Dictionary<string, SchemaModel> SchemaSet => new Dictionary<string, SchemaModel>");
+                writer.WriteLine($"\t\tpublic List<SchemaModel> SchemaSet => new List<SchemaModel>");
                 writer.WriteLine("\t\t\t{");
                 for (int i = 0; i < fieldList.Count; i++)
                 {
@@ -174,7 +174,7 @@ namespace MyStaging.App.DAL
                         primarykey = " ,Primarykey = true";
                     }
                     var type = fi.PgDbType.HasValue ? $" NpgsqlDbType.{fi.PgDbType}{ap}" : "null";
-                    var line = $"{{\"{fi.Field}\", new SchemaModel{{ FieldName = \"{fi.Field}\", DbType = {type}, Size = {fi.Length}{primarykey}}} }}";
+                    var line = $"new SchemaModel{{ FieldName = \"{fi.Field}\", DbType = {type}, Size = {fi.Length}{primarykey}}}";
                     writer.WriteLine("\t\t\t\t" + line + (i + 1 == fieldList.Count ? "" : ","));
                 }
                 writer.WriteLine("\t\t\t};");

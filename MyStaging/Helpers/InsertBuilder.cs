@@ -95,9 +95,9 @@ namespace MyStaging.Helpers
 
             string fieldsName = string.Empty;
             var fieldCollection = this.schema.SchemaSet;
-            foreach (var key in fieldCollection.Keys)
+            foreach (var field in fieldCollection)
             {
-                fieldsName += "\"" + key + "\",";
+                fieldsName += "\"" + field.FieldName + "\",";
             }
 
             fieldsName = fieldsName.Remove(fieldsName.Length - 1, 1);
@@ -108,26 +108,24 @@ namespace MyStaging.Helpers
                 var mObj = this.models[i];
                 string piNames = string.Empty;
 
-                for (int j = 0; j < this.schema.Properties.Count; j++)
+                foreach (var field in fieldCollection)
                 {
-                    PropertyInfo pi = this.schema.Properties[j];
-                    var key = pi.Name.ToLower();
-                    if (fieldCollection.ContainsKey(key))
-                    {
-                        var piName = $"@{key}_{i}";
-                        piNames += piName + ",";
-                        var sm = fieldCollection[key];
-                        var value = pi.GetValue(mObj);
-                        if (sm.Primarykey || defaultValueField.ContainsKey(key))
-                        {
-                            if (value == null
-                                || value.Equals(Guid.Empty)
-                                || zeroTime.Equals(value))
-                                value = CreateDefaultValue(sm);
-                        }
+                    PropertyInfo pi = this.schema.Properties.Where(f => f.Name.ToLower() == field.FieldName.ToLower()).FirstOrDefault();
+                    if (pi == null)
+                        throw new KeyNotFoundException($"数据库字段名称：{field.FieldName} 在实体对象 {mObj.GetType().Name} 上未找到对应属性！");
 
-                        base.AddParameter(piName, sm.DbType, value, sm.Size);
+                    var piName = $"@{field.FieldName}_{i}";
+                    piNames += piName + ",";
+                    var value = pi.GetValue(mObj);
+                    if (field.Primarykey || defaultValueField.ContainsKey(field.FieldName))
+                    {
+                        if (value == null
+                            || value.Equals(Guid.Empty)
+                            || zeroTime.Equals(value))
+                            value = CreateDefaultValue(field);
                     }
+
+                    base.AddParameter(piName, field.DbType, value, field.Size);
                 }
 
                 piNames = piNames.Remove(piNames.Length - 1, 1);

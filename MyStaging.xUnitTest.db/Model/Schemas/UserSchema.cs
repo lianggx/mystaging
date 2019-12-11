@@ -11,19 +11,16 @@ namespace MyStaging.xUnitTest.Model.Schemas
 	{
 		public static UserSchema Instance => new UserSchema();
 
-
-
-
-		public Dictionary<string, SchemaModel> SchemaSet => new Dictionary<string, SchemaModel>
+		public List<SchemaModel> SchemaSet => new List<SchemaModel>
 			{
-				{"id", new SchemaModel{ FieldName = "id", DbType =  NpgsqlDbType.Varchar, Size = -1 ,Primarykey = true} },
-				{"loginname", new SchemaModel{ FieldName = "loginname", DbType =  NpgsqlDbType.Varchar, Size = 255} },
-				{"password", new SchemaModel{ FieldName = "password", DbType =  NpgsqlDbType.Varchar, Size = 255} },
-				{"nickname", new SchemaModel{ FieldName = "nickname", DbType =  NpgsqlDbType.Varchar, Size = 255} },
-				{"sex", new SchemaModel{ FieldName = "sex", DbType =  NpgsqlDbType.Boolean, Size = 1} },
-				{"age", new SchemaModel{ FieldName = "age", DbType =  NpgsqlDbType.Integer, Size = 4} },
-				{"money", new SchemaModel{ FieldName = "money", DbType =  NpgsqlDbType.Numeric, Size = -1} },
-				{"createtime", new SchemaModel{ FieldName = "createtime", DbType =  NpgsqlDbType.Timestamp, Size = 8} }
+				new SchemaModel{ FieldName = "id", DbType =  NpgsqlDbType.Varchar, Size = -1 ,Primarykey = true},
+				new SchemaModel{ FieldName = "loginname", DbType =  NpgsqlDbType.Varchar, Size = 255},
+				new SchemaModel{ FieldName = "password", DbType =  NpgsqlDbType.Varchar, Size = 255},
+				new SchemaModel{ FieldName = "nickname", DbType =  NpgsqlDbType.Varchar, Size = 255},
+				new SchemaModel{ FieldName = "sex", DbType =  NpgsqlDbType.Boolean, Size = 1},
+				new SchemaModel{ FieldName = "age", DbType =  NpgsqlDbType.Integer, Size = 4},
+				new SchemaModel{ FieldName = "money", DbType =  NpgsqlDbType.Numeric, Size = -1},
+				new SchemaModel{ FieldName = "createtime", DbType =  NpgsqlDbType.Timestamp, Size = 8}
 			};
 		public List<PropertyInfo> Properties => ContractUtils.GetProperties(typeof(UserModel));
 
