@@ -29,6 +29,8 @@ namespace MyStaging.xUnitTest.Model
 
 		public DateTime Createtime { get; set; }
 
+		public decimal Wealth { get; set; }
+
 		[NonDbColumnMapping, JsonIgnore] public MyStaging.xUnitTest.DAL.User.UserUpdateBuilder UpdateBuilder { get { return new MyStaging.xUnitTest.DAL.User.UserUpdateBuilder(model =>{MyStaging.Helpers.MyStagingUtils.CopyProperty<UserModel>(this, model); PgSqlHelper.CacheManager?.RemoveItemCache<UserModel>(this.Id); }, this.Id); } }
 
 		public UserModel Insert() { return MyStaging.xUnitTest.DAL.User.Insert(this); }

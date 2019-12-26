@@ -20,7 +20,8 @@ namespace MyStaging.xUnitTest.Model.Schemas
 				new SchemaModel{ FieldName = "sex", DbType =  NpgsqlDbType.Boolean, Size = 1},
 				new SchemaModel{ FieldName = "age", DbType =  NpgsqlDbType.Integer, Size = 4},
 				new SchemaModel{ FieldName = "money", DbType =  NpgsqlDbType.Numeric, Size = -1},
-				new SchemaModel{ FieldName = "createtime", DbType =  NpgsqlDbType.Timestamp, Size = 8}
+				new SchemaModel{ FieldName = "createtime", DbType =  NpgsqlDbType.Timestamp, Size = 8},
+				new SchemaModel{ FieldName = "wealth", DbType =  NpgsqlDbType.Money, Size = 8}
 			};
 		public List<PropertyInfo> Properties => ContractUtils.GetProperties(typeof(UserModel));
 

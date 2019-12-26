@@ -3,6 +3,7 @@ using MyStaging.Common;
 using MyStaging.Helpers;
 using MyStaging.xUnitTest.DAL;
 using MyStaging.xUnitTest.Model;
+using Npgsql;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -34,7 +35,7 @@ namespace MyStaging.xUnitTest
         [Fact]
         public void Insert()
         {
-            for (int i = 0; i < 10; i++)
+            for (int i = 0; i < 1; i++)
             {
                 Stopwatch sw = new Stopwatch();
                 sw.Start();
@@ -47,8 +48,12 @@ namespace MyStaging.xUnitTest
                     Money = 100,
                     Nickname = Guid.NewGuid().ToString("N"),
                     Password = "123456",
-                    Sex = true
+                    Sex = true,
+                    Wealth = 100
                 }.Insert();
+
+                model.UpdateBuilder.SetWealth(200).SaveChange();
+                model.UpdateBuilder.SetIncrement("wealth", 1).SaveChange();
                 sw.Stop();
 
                 output.WriteLine("执行时间：{0}", sw.ElapsedMilliseconds);

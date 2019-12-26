@@ -8,7 +8,7 @@
     <Copyright>MIT</Copyright>
     <PackageLicenseUrl>https://github.com/lianggx/mystaging/blob/master/LICENSE</PackageLicenseUrl>
     <PackageProjectUrl>https://github.com/lianggx/mystaging</PackageProjectUrl>
-    <Version>2.1.10</Version>
+    <Version>2.1.11</Version>
     <PackageReleaseNotes>添加对查询Pipelining的支持</PackageReleaseNotes>
     <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
   </PropertyGroup>

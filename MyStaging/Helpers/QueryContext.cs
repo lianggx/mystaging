@@ -285,7 +285,14 @@ namespace MyStaging.Helpers
                 }, this.ParamList.ToArray());
             }
             // Clear();
-            return (TResult)result;
+            if (result == null)
+            {
+                return default(TResult);
+            }
+            else
+            {
+                return (TResult)result;
+            }
         }
 
         /// <summary>

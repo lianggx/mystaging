@@ -99,6 +99,11 @@ namespace MyStaging.xUnitTest.DAL
 				base.SetField("createtime", NpgsqlDbType.Timestamp, createtime, 8);
 				return this;
 			}
+			public UserUpdateBuilder SetWealth(decimal wealth)
+			{
+				base.SetField("wealth", NpgsqlDbType.Money, wealth, 8);
+				return this;
+			}
 		}
 
 	}
