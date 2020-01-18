@@ -264,6 +264,11 @@ namespace MyStaging.Helpers
         /// <returns></returns>
         public TResult ToScalar<TResult>(string field)
         {
+            if (!string.IsNullOrEmpty(GroupByText))
+            {
+                throw new ArgumentException("聚合查询不允许使用 GROUP BY 条件！");
+            }
+
             Fields.Clear();
             Fields.Add(field);
             string cmdText = ToSQL();
