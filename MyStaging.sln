@@ -5,8 +5,8 @@ VisualStudioVersion = 16.0.29709.97
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "docs", "docs", "{B7538478-F175-44FC-8BB7-35B308458C1A}"
 	ProjectSection(SolutionItems) = preProject
-		..\doc\mystaging.sql = ..\doc\mystaging.sql
-		..\doc\README.md = ..\doc\README.md
+		doc\mystaging.sql = doc\mystaging.sql
+		doc\README.md = doc\README.md
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{D8A84CB8-E1D8-4E53-8AA0-64A0B5EF52DC}"
@@ -15,13 +15,13 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "test", "test", "{EDBEFAA2-E
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "examples", "examples", "{05B860F5-AC6E-4D15-A9A5-11DC1FF8DD16}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MyStaging.App", "..\src\MyStaging.App\MyStaging.App.csproj", "{3B946685-9265-42F6-A1EF-CCB1418D25CD}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MyStaging.App", "src\MyStaging.App\MyStaging.App.csproj", "{3B946685-9265-42F6-A1EF-CCB1418D25CD}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MyStaging", "..\src\MyStaging\MyStaging.csproj", "{F2E539E5-8AC6-48D4-8149-51FE6695DFC0}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MyStaging", "src\MyStaging\MyStaging.csproj", "{F2E539E5-8AC6-48D4-8149-51FE6695DFC0}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MyStaging.xUnitTest", "..\test\MyStaging.xUnitTest\MyStaging.xUnitTest.csproj", "{2E729A8B-4776-476A-AEE6-B6AB8BA95AC5}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MyStaging.xUnitTest", "test\MyStaging.xUnitTest\MyStaging.xUnitTest.csproj", "{2E729A8B-4776-476A-AEE6-B6AB8BA95AC5}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MyStaging.xUnitTest.db", "..\test\MyStaging.xUnitTest.db\MyStaging.xUnitTest.db.csproj", "{CAFC39DB-03E8-4CF5-9365-87FC6C0E6C18}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MyStaging.xUnitTest.db", "test\MyStaging.xUnitTest.db\MyStaging.xUnitTest.db.csproj", "{CAFC39DB-03E8-4CF5-9365-87FC6C0E6C18}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
