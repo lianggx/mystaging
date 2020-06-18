@@ -35,7 +35,7 @@ namespace MyStaging.xUnitTest.Model
 
 		public TimeSpan? Updatetime { get; set; }
 
-		[NonDbColumnMapping, JsonIgnore] public MyStaging.xUnitTest.DAL.Topic.TopicUpdateBuilder UpdateBuilder { get { return new MyStaging.xUnitTest.DAL.Topic.TopicUpdateBuilder(model =>{MyStaging.Helpers.MyStagingUtils.CopyProperty<TopicModel>(this, model); PgSqlHelper.CacheManager?.RemoveItemCache<TopicModel>(this.Id.ToString()); }, this.Id); } }
+		[NonDbColumnMapping, JsonIgnore] public MyStaging.xUnitTest.DAL.Topic.TopicUpdateBuilder UpdateBuilder { get { return new MyStaging.xUnitTest.DAL.Topic.TopicUpdateBuilder(model =>{MyStaging.Helpers.MyStagingUtils.CopyProperty<TopicModel>(this, model); ContextManager.CacheManager?.RemoveItemCache<TopicModel>(this.Id.ToString()); }, this.Id); } }
 
 		public TopicModel Insert() { return MyStaging.xUnitTest.DAL.Topic.Insert(this); }
 

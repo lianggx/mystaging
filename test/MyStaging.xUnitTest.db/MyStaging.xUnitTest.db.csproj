@@ -5,6 +5,6 @@
 		 <Company></Company>
 	</PropertyGroup>
 	<ItemGroup>
-	  <ProjectReference Include="..\..\src\MyStaging\MyStaging.csproj" />
+	  <ProjectReference Include="..\..\src\MyStaging.PostgreSQL\MyStaging.PostgreSQL.csproj" />
 	</ItemGroup>
 </Project>

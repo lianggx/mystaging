@@ -13,7 +13,7 @@ namespace MyStaging.xUnitTest
 	{
 		public static void Init(StagingOptions options)
 		{
-			PgSqlHelper.InitConnection(options);
+			ContextManager.InitConnection(options);
 
 			Type[] jsonTypes = { typeof(JToken), typeof(JObject), typeof(JArray) };
 			NpgsqlNameTranslator translator = new NpgsqlNameTranslator();

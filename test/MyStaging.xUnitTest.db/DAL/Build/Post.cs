@@ -1,23 +1,19 @@
-﻿using System;
-using System.Linq;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
-using MyStaging;
-using MyStaging.Helpers;
-using MyStaging.Common;
-using NpgsqlTypes;
-using System.Linq.Expressions;
-using System.Collections.Generic;
+﻿using MyStaging.Helpers;
+using MyStaging.PostgreSQL;
 using MyStaging.xUnitTest.Model;
-using MyStaging.xUnitTest.Model.Schemas;
+using Newtonsoft.Json.Linq;
+using NpgsqlTypes;
+using System;
+using System.Collections.Generic;
+using System.Linq.Expressions;
 
 namespace MyStaging.xUnitTest.DAL
 {
-	public partial class Post : QueryContext<PostModel>
+	public partial class Post : PgDbContext<PostModel>
 	{
 		public static Post Context { get { return new Post(); } }
 
-		public static InsertBuilder<PostModel> InsertBuilder => new InsertBuilder<PostModel>(PostSchema.Instance);
+		public static InsertBuilder<PostModel> InsertBuilder => new InsertBuilder<PostModel>();
 		public static PostModel Insert(PostModel model) => InsertBuilder.Insert(model);
 		public static int InsertRange(List<PostModel> models) => InsertBuilder.InsertRange(models).SaveChange();
 
@@ -25,9 +21,9 @@ namespace MyStaging.xUnitTest.DAL
 		public static int Delete(Guid id)
 		{
 			var affrows = DeleteBuilder.Where(f => f.Id == id).SaveChange();
-			if (affrows > 0) PgSqlHelper.CacheManager?.RemoveItemCache<PostModel>(id.ToString());
+			if (affrows > 0) ContextManager.CacheManager?.RemoveItemCache<PostModel>(id.ToString());
 			return affrows;
-			}
+		}
 
 		public static PostUpdateBuilder UpdateBuilder => new PostUpdateBuilder();
 		public static PostUpdateBuilder Update(Guid id)
@@ -61,32 +57,32 @@ namespace MyStaging.xUnitTest.DAL
 			}
 			public PostUpdateBuilder SetId(Guid id)
 			{
-				base.SetField("id", NpgsqlDbType.Uuid, id, 16);
+				base.SetField("id", id);
 				return this;
 			}
 			public PostUpdateBuilder SetTitle(string title)
 			{
-				base.SetField("title", NpgsqlDbType.Varchar, title, 255);
+				base.SetField("title", title);
 				return this;
 			}
 			public PostUpdateBuilder SetContent(JToken content)
 			{
-				base.SetField("content", NpgsqlDbType.Jsonb, content, -1);
+				base.SetField("content", content);
 				return this;
 			}
 			public PostUpdateBuilder SetState(Et_data_state? state)
 			{
-				base.SetField("state", state, 4);
+				base.SetField("state", state);
 				return this;
 			}
 			public PostUpdateBuilder SetRole(Et_role? role)
 			{
-				base.SetField("role", role, 4);
+				base.SetField("role", role);
 				return this;
 			}
 			public PostUpdateBuilder SetText(JToken text)
 			{
-				base.SetField("text", NpgsqlDbType.Json, text, -1);
+				base.SetField("text", text);
 				return this;
 			}
 		}

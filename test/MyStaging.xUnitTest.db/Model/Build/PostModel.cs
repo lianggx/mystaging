@@ -25,7 +25,7 @@ namespace MyStaging.xUnitTest.Model
 
 		public JToken Text { get; set; }
 
-		[NonDbColumnMapping, JsonIgnore] public MyStaging.xUnitTest.DAL.Post.PostUpdateBuilder UpdateBuilder { get { return new MyStaging.xUnitTest.DAL.Post.PostUpdateBuilder(model =>{MyStaging.Helpers.MyStagingUtils.CopyProperty<PostModel>(this, model); PgSqlHelper.CacheManager?.RemoveItemCache<PostModel>(this.Id.ToString()); }, this.Id); } }
+		[NonDbColumnMapping, JsonIgnore] public MyStaging.xUnitTest.DAL.Post.PostUpdateBuilder UpdateBuilder { get { return new MyStaging.xUnitTest.DAL.Post.PostUpdateBuilder(model =>{MyStaging.Helpers.MyStagingUtils.CopyProperty<PostModel>(this, model); ContextManager.CacheManager?.RemoveItemCache<PostModel>(this.Id.ToString()); }, this.Id); } }
 
 		public PostModel Insert() { return MyStaging.xUnitTest.DAL.Post.Insert(this); }
 

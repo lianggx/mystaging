@@ -4,9 +4,12 @@
     <TargetFramework>netcoreapp3.1</TargetFramework>
 
     <IsPackable>false</IsPackable>
+
+    <RepositoryUrl></RepositoryUrl>
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Caching.CSRedis" Version="3.6.5" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="15.7.0" />
     <PackageReference Include="System.Text.Encoding.CodePages" Version="4.5.1" />
     <PackageReference Include="xunit" Version="2.3.1" />
@@ -16,7 +19,11 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\MyStaging\MyStaging.csproj" />
-    <ProjectReference Include="..\MyStaging.xUnitTest.db\MyStaging.xUnitTest.db.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Core\" />
+    <Folder Include="Mapping\" />
   </ItemGroup>
 
 </Project>

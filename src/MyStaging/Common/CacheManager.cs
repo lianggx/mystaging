@@ -7,13 +7,16 @@ using System.Threading.Tasks;
 using System.Linq;
 using MyStaging.Mapping;
 using System.Reflection;
+using System.Data.Common;
+using System.Data;
 
 namespace MyStaging.Common
 {
     public class CacheManager
     {
         private readonly CacheOptions cacheOpt = null;
-        private static JsonSerializerSettings JSON_SETTING = new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore };
+        private readonly static JsonSerializerSettings JSON_SETTING = new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore };
+
         public CacheManager(CacheOptions options)
         {
             this.cacheOpt = options ?? throw new ArgumentNullException(nameof(CacheOptions));
@@ -49,20 +52,20 @@ namespace MyStaging.Common
             }
         }
 
-        public T GetItemCache<T>(IList<Npgsql.NpgsqlParameter> parameters)
+        public TResult GetItemCache<TResult, TParameter>(IList<TParameter> parameters) where TParameter : DbParameter
         {
-            T obj = default(T);
-            // 缓存 key 不得超出主键数量
-            var pk = typeof(T).GetProperties().Where(f => f.GetCustomAttribute<PrimaryKeyAttribute>() != null).Count();
-            if (parameters.Count > 0 && parameters.Count <= pk)
+            TResult obj = default(TResult);
+            //仅针对主键进行缓存，无主键不缓存
+            var pkCount = typeof(TResult).GetProperties().Where(f => f.GetCustomAttribute<PrimaryKeyAttribute>() != null).Count();
+            if (parameters?.Count == pkCount && pkCount > 0)
             {
-                var id = GetKeys<T>(parameters);
-                var key = FormatKey<T>(id);
+                var id = GetKeys<TParameter>(parameters);
+                var key = FormatKey<TResult>(id);
                 var data = this.cacheOpt.Cache.Get(key);
                 if (data != null)
                 {
                     var json = Encoding.UTF8.GetString(data);
-                    obj = JsonConvert.DeserializeObject<T>(json, JSON_SETTING);
+                    obj = JsonConvert.DeserializeObject<TResult>(json, JSON_SETTING);
                 }
             }
 
@@ -75,7 +78,7 @@ namespace MyStaging.Common
             this.cacheOpt.Cache.Remove(key);
         }
 
-        private static string GetKeys<T>(IList<Npgsql.NpgsqlParameter> parameters)
+        private static string GetKeys<TParameter>(IList<TParameter> parameters) where TParameter : DbParameter
         {
             var id = string.Empty;
             foreach (var p in parameters)

@@ -1,18 +1,33 @@
 ﻿using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Logging;
+using MyStaging.Core;
+using MyStaging.Interface;
 using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace MyStaging.Common
 {
     public class StagingOptions
     {
+        public StagingOptions(string name, string master, params string[] slaves)
+        {
+            if (string.IsNullOrEmpty(name))
+                throw new ArgumentNullException(nameof(name));
+
+            if (string.IsNullOrEmpty(master))
+                throw new ArgumentNullException(nameof(master));
+
+            this.Master = master;
+            this.Slaves = slaves;
+            this.Name = name;
+        }
+
+        public string Name { get; }
         public ILogger Logger { get; set; }
-        public string ConnectionMaster { get; set; }
-        public string[] ConnectionSlaves { get; set; }
-        public int SlavesMaxPool { get; set; } = -1;
+        public IStagingConnection Connection { get; set; }
         public CacheOptions CacheOptions { get; set; }
+        public string Provider { get; set; }
+        public string Master { get; set; }
+        public string[] Slaves { get; set; }
     }
 
     public class CacheOptions

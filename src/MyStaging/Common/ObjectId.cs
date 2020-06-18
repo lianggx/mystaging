@@ -138,7 +138,7 @@ namespace MyStaging.Common
         /// <returns></returns>
         public int CompareTo(ObjectId other)
         {
-            if (ReferenceEquals(other, null))
+            if (other is null)
                 return 1;
             for (int i = 0; i < this.hexData.Length; i++)
             {
@@ -161,7 +161,7 @@ namespace MyStaging.Common
         }
 
         /// <summary>
-        ///  运算符重载 <
+        ///  运算符重载 
         /// </summary>
         /// <param name="a"></param>
         /// <param name="b"></param>
@@ -172,7 +172,7 @@ namespace MyStaging.Common
         }
 
         /// <summary>
-        ///  运算符重载 <=
+        ///  运算符重载
         /// </summary>
         /// <param name="a"></param>
         /// <param name="b"></param>
@@ -191,6 +191,10 @@ namespace MyStaging.Common
         public static bool operator ==(ObjectId a, ObjectId b)
         {
             return a.Equals(b);
+        }
+        public override bool Equals(object obj)
+        {
+            return base.Equals(obj);
         }
 
         /// <summary>
@@ -229,8 +233,6 @@ namespace MyStaging.Common
         /// <summary>
         ///  获取一个长度为 24 位的值为 000000000000000000000000 的编号
         /// </summary>
-        /// <param name="a"></param>
-        /// <param name="b"></param>
         /// <returns></returns>
         public static ObjectId Empty { get { return new ObjectId("000000000000000000000000"); } }
 

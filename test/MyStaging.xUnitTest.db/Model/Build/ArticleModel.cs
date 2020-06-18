@@ -27,7 +27,7 @@ namespace MyStaging.xUnitTest.Model
 		private UserModel user = null;
 		[ForeignKeyMapping(name: "userid"), JsonIgnore] public UserModel User { get { if (user == null) user = MyStaging.xUnitTest.DAL.User.Context.Where(f => f.Id == this.Userid).ToOne(); return user; } }
 
-		[NonDbColumnMapping, JsonIgnore] public MyStaging.xUnitTest.DAL.Article.ArticleUpdateBuilder UpdateBuilder { get { return new MyStaging.xUnitTest.DAL.Article.ArticleUpdateBuilder(model =>{MyStaging.Helpers.MyStagingUtils.CopyProperty<ArticleModel>(this, model); PgSqlHelper.CacheManager?.RemoveItemCache<ArticleModel>(this.Id + "" + this.Userid); }, this.Id,this.Userid); } }
+		[NonDbColumnMapping, JsonIgnore] public MyStaging.xUnitTest.DAL.Article.ArticleUpdateBuilder UpdateBuilder { get { return new MyStaging.xUnitTest.DAL.Article.ArticleUpdateBuilder(model =>{MyStaging.Helpers.MyStagingUtils.CopyProperty<ArticleModel>(this, model); ContextManager.CacheManager?.RemoveItemCache<ArticleModel>(this.Id + "" + this.Userid); }, this.Id,this.Userid); } }
 
 		public ArticleModel Insert() { return MyStaging.xUnitTest.DAL.Article.Insert(this); }
 
