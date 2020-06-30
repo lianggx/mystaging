@@ -13,15 +13,12 @@ namespace Pgsql
         PgsqlDbContext userContext;
         public void Start()
         {
-            options = new StagingOptions("user", connectionString)
-            {
-                Provider = "MyStaging.PostgreSQL"
-            };
-              userContext = new PgsqlDbContext(options);
+            options = new StagingOptions("user", connectionString);
+            userContext = new PgsqlDbContext(options);
 
-            //Insert();
-            //Delete();
-            //Update();
+            Insert();
+            Delete();
+            Update();
             Select();
         }
 
@@ -40,7 +37,7 @@ namespace Pgsql
                     IP = "127.0.0.1",
                     loginname = "lgx",
                     money = 0,
-                    role = Et_role.普通成员,
+                    role = et_role.普通成员,
                     sex = true,
                     wealth = 0
                 };
@@ -74,14 +71,16 @@ namespace Pgsql
         }
         private void Select()
         {
-            for (int i = 0; i < 10; i++)
+            for (int i = 1; i < 10; i++)
             {
-              
-                var userId = "5df09d4db5ee485ac0000004";
-             //   var user = userContext.User.Select.Where(f => f.id == userId).ToOne();
-                var users = userContext.User.Select.ToList();
+                var userId = "5ddc9d8eb5ee485e50000001";
+                var sum = userContext.User.Select.Sum<long>(f => f.age);
+                Console.WriteLine(sum);
+                var user = userContext.User.Select.Where(f => f.id == userId).ToOne();
+             //   var users = userContext.User.Select.ToList();
                 //Console.WriteLine("userid=={0}", user.id);
-                Console.WriteLine("users=={0}--", users.Count);
+             //   Console.WriteLine("users=={0}--", users.Count);
+                //users.Clear();
             }
         }
     }

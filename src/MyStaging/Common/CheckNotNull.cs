@@ -6,48 +6,32 @@ namespace MyStaging.Common
 {
     public class CheckNotNull
     {
-        public static T NotNull<T>(T model, string parameterName)
+        public static void NotNull<T>(T model, string parameterName)
         {
             if (model == null)
-                throw new ArgumentNullException(nameof(model));
-
-            return model;
+                throw new ArgumentNullException(parameterName);
         }
 
-        public static IReadOnlyList<T> NotEmpty<T>(IReadOnlyList<T> value, string parameterName)
+        public static void NotEmpty<T>(IReadOnlyList<T> value, string parameterName)
         {
             NotNull(value, parameterName);
 
             if (value.Count == 0)
             {
-                NotEmpty(parameterName, nameof(parameterName));
-
                 throw new ArgumentException(parameterName);
             }
-
-            return value;
         }
 
-        public static string NotEmpty(string value, string parameterName)
+        public static void NotEmpty(string value, string parameterName)
         {
-            Exception e = null;
             if (value is null)
             {
-                e = new ArgumentNullException(parameterName);
+                throw new ArgumentNullException(parameterName);
             }
             else if (value.Trim().Length == 0)
             {
-                e = new ArgumentException(parameterName);
+                throw new ArgumentException(parameterName);
             }
-
-            if (e != null)
-            {
-                NotEmpty(parameterName, nameof(parameterName));
-
-                throw e;
-            }
-
-            return value;
         }
     }
 }

@@ -1,12 +1,11 @@
-﻿using MyStaging.Mapping;
-using System;
-using System.ComponentModel.DataAnnotations.Schema;
+﻿using System;
+using System.ComponentModel.DataAnnotations;
 
 namespace MyStaging.xUnitTest.Models
 {
     public partial class UserModel
     {
-        [PrimaryKey]
+        [Key]
         public string id { get; set; }
         public string loginname { get; set; }
         public string password { get; set; }

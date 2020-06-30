@@ -1,7 +1,6 @@
 ﻿using MyStaging.Common;
 using MyStaging.Core;
 using MyStaging.Interface.Core;
-using MyStaging.Mapping;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -121,14 +120,24 @@ namespace MyStaging.PostgreSQL.Core
 
             this.ToSQL();
             this.CommandText += " RETURNING *;";
-            T model = default;
-            dbContext.ByMaster().Execute.ExecuteDataReader(dr =>
+            var properties = MyStagingUtils.GetDbFields(typeof(T));
+            using var reader = dbContext.ByMaster().Execute.ExecuteDataReader(CommandType.Text, CommandText, this.Parameters.ToArray());
+            try
             {
-                model = DynamicBuilder<T>.CreateBuilder(dr).Build(dr);
-            }, CommandType.Text, CommandText, this.Parameters.ToArray());
-
-            Clear();
-            return model;
+                reader.Read();
+                T obj = (T)Activator.CreateInstance(typeof(T));
+                foreach (var pi in properties)
+                {
+                    var value = reader[pi.Name];
+                    if (value != DBNull.Value)
+                        pi.SetValue(obj, value);
+                }
+                return obj;
+            }
+            finally
+            {
+                Clear();
+            }
         }
 
         /// <summary>

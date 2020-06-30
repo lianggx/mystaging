@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace MyStaging.Gen.Tool.Models
+namespace MyStaging.Metadata
 {
     public class EnumTypeInfo
     {

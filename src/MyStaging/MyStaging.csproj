@@ -4,12 +4,12 @@
     <Authors>ron.liang</Authors>
     <Company>lianggx@foxmail.com</Company>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-    <Description>这是一个 .netcore+pgsql 的脚手架，可以一键生成实体对象和业务层接口，让开发人员无需关注底层变动，专注编写业务代码，它可以让你使用 .netcore的新特性，基于 pgsql 数据库，可以在项目中自由的使用 lambda 表达式编写业务，同时支持自定义的 sql 语句。</Description>
+    <Description>这是一个 .netcore的脚手架，支持DbFirst和CodeFirst，让开发人员无需关注底层变动，专注编写业务代码，它可以让你使用 .netcore的新特性，支持多种数据库，可以在项目中自由的使用 lambda 表达式编写业务，同时支持自定义的 sql 语句。</Description>
     <Copyright>MIT</Copyright>
     <PackageLicenseUrl></PackageLicenseUrl>
     <PackageProjectUrl>https://github.com/lianggx/mystaging</PackageProjectUrl>
-    <Version>2.1.13</Version>
-    <PackageReleaseNotes>添加对查询Pipelining的支持</PackageReleaseNotes>
+    <Version>3.0.0</Version>
+    <PackageReleaseNotes>全新架构改动，支持多库/多路上下文，支持 DbFirst/CodeFirst。旧版本请使用2.1.10版本。</PackageReleaseNotes>
     <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
     <PackageLicenseFile>LICENSE</PackageLicenseFile>
     <PackageIcon />
@@ -34,8 +34,6 @@
     <PackageReference Include="Microsoft.Extensions.Logging" Version="2.1.1" />
     <PackageReference Include="Newtonsoft.Json" Version="11.0.2" />
     <PackageReference Include="System.ComponentModel.Annotations" Version="4.5.0" />
-    <PackageReference Include="System.Reflection.Emit.ILGeneration" Version="4.3.0" />
-    <PackageReference Include="System.Reflection.Emit.Lightweight" Version="4.3.0" />
   </ItemGroup>
 
   <ItemGroup>

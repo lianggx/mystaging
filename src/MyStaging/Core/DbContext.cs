@@ -30,9 +30,10 @@ namespace MyStaging.Core
                     if (SERVICES.Count > 0)
                         return;
 
-                    var fileName = options.Provider + ".dll";
+                    var fileName = "MyStaging." + options.Provider + ".dll";
                     var providerFile = System.IO.Directory.GetFiles(System.IO.Directory.GetCurrentDirectory(), fileName, SearchOption.AllDirectories).FirstOrDefault();
-                    CheckNotNull.NotNull(providerFile, fileName);
+                    if (string.IsNullOrEmpty(providerFile))
+                        throw new FileNotFoundException(fileName);
 
                     var assembly = Assembly.LoadFrom(providerFile);
                     var types = assembly.GetTypes();
@@ -63,23 +64,30 @@ namespace MyStaging.Core
         }
     }
 
-    public abstract class DbContext : IDisposable
+    public abstract class DbContext 
     {
+        public DbContext(StagingOptions options, ProviderType provider)
+        {
+            options.Provider = provider;
+            Initializer(options);
+        }
+
         public DbContext(StagingOptions options)
+        {
+            Initializer(options);
+        }
+
+        public void Initializer(StagingOptions options)
         {
             CheckNotNull.NotNull(options, nameof(options));
             CheckNotNull.NotNull(options.Name, nameof(options.Name));
+
             Options = options;
             if (options.CacheOptions != null && options.CacheOptions.Cache != null)
             {
                 CacheManager = new CacheManager(options.CacheOptions);
             }
 
-            Initializer();
-        }
-
-        public void Initializer()
-        {
             InternalDbContext.Initializer(Options);
             var properties = this.GetType().GetProperties();
             foreach (var pi in properties)
@@ -275,25 +283,6 @@ namespace MyStaging.Core
                     tran.Rollback();
             }
             return tran;
-        }
-
-        private bool disposed = false;
-        public virtual void Dispose()
-        {
-            Dispose(true);
-            //GC.SuppressFinalize(this);
-        }
-
-        public void Dispose(bool disposing)
-        {
-            if (!disposed)
-            {
-                if (disposed)
-                {
-                    //GC.Collect();
-                }
-            }
-            disposed = true;
         }
     }
 }

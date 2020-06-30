@@ -3,11 +3,13 @@ using MyStaging.PostgreSQL;
 using Newtonsoft.Json.Linq;
 using Pgsql.Model;
 using System;
+using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading;
+using System.Threading.Tasks;
 
 namespace Pgsql
 {
@@ -30,9 +32,9 @@ namespace Pgsql
 
         static void Test()
         {
-            ContextTest ct = new ContextTest();
-            for (int i = 0; i < 10; i++)
+            for (int i = 0; i < 5; i++)
             {
+                ContextTest ct = new ContextTest();
                 var thread = new Thread(new ThreadStart(ct.Start));
                 thread.IsBackground = true;
                 thread.Start();

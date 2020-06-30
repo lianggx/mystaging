@@ -6,11 +6,14 @@
     <AssemblyName>MyStaging.Gen</AssemblyName>
     <ApplicationIcon />
     <StartupObject></StartupObject>
-    <Version>2.1.10</Version>
+    <Version>3.0.0</Version>
     <PackageLicenseFile>LICENSE</PackageLicenseFile>
     <PackageId>MyStaging.Gen</PackageId>
     <Authors>MyStaging.Gen</Authors>
     <Product>MyStaging.Gen</Product>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <PackAsTool>true</PackAsTool>
+    <ToolCommandName>mystaging.gen</ToolCommandName>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
@@ -24,11 +27,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\MyStaging.MySql\MyStaging.MySql.csproj" />
-    <ProjectReference Include="..\MyStaging.PostgreSQL\MyStaging.PostgreSQL.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
     <None Update="build.bat">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
@@ -36,6 +34,14 @@
       <Pack>True</Pack>
       <PackagePath></PackagePath>
     </None>
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\MyStaging\MyStaging.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Properties\" />
   </ItemGroup>
 
 </Project>

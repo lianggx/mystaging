@@ -1,15 +1,11 @@
 ﻿using Microsoft.Extensions.Logging;
-using MyStaging.Common;
-using MyStaging.Mapping;
 using System;
-using System.Collections;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Data;
 using System.Data.Common;
 using System.Net.Sockets;
 using System.Reflection;
-using System.Threading;
 using System.Threading.Tasks;
 
 namespace MyStaging.Core
@@ -283,6 +279,69 @@ namespace MyStaging.Core
             }
         }
 
+        public DbDataReader ExecuteDataReader(CommandType commandType, string commandText, params DbParameter[] parameters)
+        {
+            DbCommand command = null;
+            try
+            {
+                command = PrepareCommand(commandType, commandText, parameters);
+                OpenConnection(command);
+                return command.ExecuteReader();
+            }
+            catch (Exception ex)
+            {
+                ExceptionOutPut(command, ex);
+                throw ex;
+            }
+        }
+
+        public List<TResult> ExecuteDataReader<TResult>(CommandType commandType, string commandText, params DbParameter[] parameters)
+        {
+            List<TResult> list = new List<TResult>();
+            DbCommand command = null;
+            try
+            {
+                command = PrepareCommand(commandType, commandText, parameters);
+                OpenConnection(command);
+
+                var objType = typeof(TResult);
+                var properties = new List<PropertyInfo>();
+                var pis = objType.GetProperties();
+                for (int j = 0; j < pis.Length; j++)
+                {
+                    if (pis[j].GetCustomAttribute(typeof(NotMappedAttribute)) == null)
+                    {
+                        properties.Add(pis[j]);
+                    }
+                }
+
+                using var reader = command.ExecuteReader();
+                while (reader.Read())
+                {
+                    TResult obj = (TResult)Activator.CreateInstance(objType);
+                    foreach (var pi in properties)
+                    {
+                        var value = reader[pi.Name];
+                        if (value != DBNull.Value)
+                            pi.SetValue(obj, value);
+                    }
+
+                    list.Add(obj);
+                };
+            }
+            catch (Exception ex)
+            {
+                ExceptionOutPut(command, ex);
+                throw ex;
+            }
+            finally
+            {
+                Clear(command);
+            }
+
+            return list;
+        }
+
         /// <summary>
         ///  执行查询，并从返回的流中读取数据，传入委托中
         /// </summary>
@@ -402,7 +461,6 @@ namespace MyStaging.Core
                     this.Connection.Close();
                 }
                 cmd.Parameters?.Clear();
-                cmd.Dispose();
             }
         }
     }

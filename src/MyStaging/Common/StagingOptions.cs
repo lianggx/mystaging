@@ -25,7 +25,7 @@ namespace MyStaging.Common
         public ILogger Logger { get; set; }
         public IStagingConnection Connection { get; set; }
         public CacheOptions CacheOptions { get; set; }
-        public string Provider { get; set; }
+        public ProviderType Provider { get; set; }
         public string Master { get; set; }
         public string[] Slaves { get; set; }
     }

@@ -2,13 +2,12 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace MyStaging.Gen.Tool.Models
+namespace MyStaging.Metadata
 {
-    public class ProjectConfig
+    public class GeneralConfig
     {
         public string OutputDir { get; set; }
         public string ProjectName { get; set; }
-        public string ConnectionString { get; set; }
-        public string Provider { get; set; }
+        public string ModelPath { get; set; }
     }
 }

@@ -1,20 +1,15 @@
-﻿using MyStaging.Mapping;
-using Newtonsoft.Json.Linq;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Data;
-using System.Data.Common;
 using System.Linq.Expressions;
 using System.Reflection;
-using System.Reflection.Emit;
-using System.Text;
 
 namespace MyStaging.Common
 {
     public class MyStagingUtils
     {
-        public static List<PropertyInfo> GetProperties(Type type)
+        public static List<PropertyInfo> GetDbFields(Type type)
         {
             var properties = new List<PropertyInfo>();
             var pis = type.GetProperties();
@@ -71,171 +66,6 @@ namespace MyStaging.Common
             }
         }
 
-        private static readonly MethodInfo getValueMethod = typeof(IDataRecord).GetMethod("get_Item", new Type[] { typeof(int) });
-        private static readonly MethodInfo isDBNullMethod = typeof(IDataRecord).GetMethod("IsDBNull", new Type[] { typeof(int) });
-
-        public static Delegate CreateDynamicDelegate(Type targetType, IDataRecord dr, Type load)
-        {
-            DynamicMethod method = new DynamicMethod("DynamicCreate", targetType, new Type[] { typeof(IDataRecord) }, targetType, true);
-            ILGenerator generator = method.GetILGenerator();
-
-            LocalBuilder result = generator.DeclareLocal(targetType);
-            generator.Emit(OpCodes.Newobj, targetType.GetConstructor(Type.EmptyTypes));
-            generator.Emit(OpCodes.Stloc, result);
-
-            PropertyInfo[] pis = targetType.GetProperties();
-            IDictionary<string, PropertyInfo> drNameList = new Dictionary<string, PropertyInfo>();
-            for (int i = 0; i < pis.Length; i++)
-            {
-                PropertyInfo pi = pis[i];
-                drNameList[pi.Name.ToLower()] = pi;
-            }
-            for (int i = 0; i < dr.FieldCount; i++)
-            {
-                string fieldName = dr.GetName(i).ToLower();
-                if (drNameList.ContainsKey(fieldName) == false)
-                    continue;
-
-                PropertyInfo propertyInfo = drNameList[fieldName];
-                Label endIfLabel = generator.DefineLabel();
-
-                if (propertyInfo != null && propertyInfo.GetSetMethod() != null)
-                {
-                    generator.Emit(OpCodes.Ldarg_0);
-                    generator.Emit(OpCodes.Ldc_I4, i);
-                    generator.Emit(OpCodes.Callvirt, isDBNullMethod);
-                    generator.Emit(OpCodes.Brtrue, endIfLabel);
-
-                    generator.Emit(OpCodes.Ldloc, result);
-                    generator.Emit(OpCodes.Ldarg_0);
-                    generator.Emit(OpCodes.Ldc_I4, i);
-                    generator.Emit(OpCodes.Callvirt, getValueMethod);
-
-                    Type memberType = propertyInfo.PropertyType;
-                    Type nullUnderlyingType = Nullable.GetUnderlyingType(memberType);
-                    Type unboxType = nullUnderlyingType ?? memberType;
-                    bool isEnum = unboxType.GetTypeInfo().IsEnum;
-                    if (unboxType == typeof(byte[]) || unboxType == typeof(string))
-                    {
-                        generator.Emit(OpCodes.Castclass, memberType);
-                    }
-                    else if (isEnum)
-                    {
-                        generator.Emit(OpCodes.Unbox_Any, memberType);
-                    }
-                    else if (unboxType == typeof(char))
-                    {
-                        generator.Emit(OpCodes.Call, typeof(Convert).GetMethod("ToChar", new Type[] { typeof(object) }));
-                    }
-                    else if (unboxType == typeof(JToken))
-                    {
-                        generator.Emit(OpCodes.Call, typeof(JToken).GetMethod("Parse", new Type[] { typeof(string) }));
-                    }
-                    else
-                    {
-                        generator.Emit(OpCodes.Unbox_Any, dr.GetFieldType(i));
-                        if (nullUnderlyingType != null)
-                        {
-                            generator.Emit(OpCodes.Newobj, memberType.GetConstructor(new[] { nullUnderlyingType }));
-                        }
-                    }
-
-                    generator.Emit(OpCodes.Callvirt, propertyInfo.GetSetMethod());
-                    generator.MarkLabel(endIfLabel);
-                }
-            }
-
-            generator.Emit(OpCodes.Ldloc, result);
-            generator.Emit(OpCodes.Ret);
-            return method.CreateDelegate(load);
-        }
-
-        public static T ConvertEnum<V, T>(V obj)
-        {
-            if (obj == null)
-                return default;
-
-            var targetType = typeof(T);
-            if (targetType.AssemblyQualifiedName.StartsWith("System.Nullable`1"))
-            {
-                targetType = targetType.GenericTypeArguments[0];
-            }
-
-            Object value = Enum.Parse(targetType, obj.ToString());
-            if (value == null)
-            {
-                return default;
-            }
-            return (T)value;
-        }
-
-        protected static bool IsTuple(Type type) => type.Namespace == "System" && type.Name.StartsWith("ValueTuple`");
-
-        public static TResult ReadObj<TResult>(ref DynamicBuilder<TResult> builder, DbDataReader dr, Type objType)
-        {
-            bool isTuple = IsTuple(objType);
-            bool isEnum = objType.IsEnum;
-            TResult obj;
-            if (isTuple)
-            {
-                int columnIndex = -1;
-                obj = (TResult)GetValueTuple(objType, dr, ref columnIndex);
-            }
-            else if (IsValueType(objType) || isEnum)
-            {
-                obj = (TResult)GetValueType(objType, dr);
-            }
-            else if (objType.Namespace != null && objType.Namespace.StartsWith("Newtonsoft"))
-            {
-                obj = (TResult)GetJToken(dr);
-            }
-            else
-            {
-                if (builder == null)
-                {
-                    builder = DynamicBuilder<TResult>.CreateBuilder(dr);
-                }
-                obj = builder.Build(dr);
-            }
-            return obj;
-        }
-
-        public static object ReadObj(DynamicBuilder builder, DbDataReader dr, Type objType)
-        {
-            bool isTuple = IsTuple(objType);
-            bool isEnum = objType.IsEnum;
-            object obj;
-            if (isTuple)
-            {
-                int columnIndex = -1;
-                obj = GetValueTuple(objType, dr, ref columnIndex);
-            }
-            else if (IsValueType(objType) || isEnum)
-            {
-                obj = GetValueType(objType, dr);
-            }
-            else if (objType.Namespace != null && objType.Namespace.StartsWith("Newtonsoft"))
-            {
-                obj = GetJToken(dr);
-            }
-            else
-            {
-                obj = builder.Build(dr);
-            }
-
-            return obj;
-        }
-
-        /// <summary>
-        ///  检查查询结果对象是否为元组类型
-        /// </summary>
-        /// <param name="type"></param>
-        /// <returns></returns>
-        protected static bool IsValueType(Type type)
-        {
-            return (type.Namespace == "System" && type.Name.StartsWith("String")) || (type.BaseType == typeof(ValueType));
-        }
-
         /// <summary>
         ///  将查询结果转换为元组对象
         /// </summary>
@@ -264,35 +94,6 @@ namespace MyStaging.Common
             dbValue = dbValue is DBNull ? null : dbValue;
 
             return dbValue;
-        }
-
-        /// <summary>
-        ///  从数据库流中读取值并转换为指定的对象类型
-        /// </summary>
-        /// <param name="objType">对象类型</param>
-        /// <param name="dr">查询流</param>
-        /// <returns></returns>
-        protected static object GetValueType(Type objType, IDataReader dr)
-        {
-            object dbValue = dr[0];
-            dbValue = dbValue is DBNull ? null : dbValue;
-            dbValue = Convert.ChangeType(dbValue, objType);
-
-            return dbValue;
-        }
-
-        /// <summary>
-        ///  将查询结果转换为 JToken 对象
-        /// </summary>
-        /// <param name="dr">查询流</param>
-        /// <returns></returns>
-        protected static object GetJToken(IDataReader dr)
-        {
-            object dbValue = dr[0];
-            if (dbValue is DBNull)
-                return null;
-            else
-                return JToken.Parse(dbValue.ToString());
         }
 
         /// <summary>

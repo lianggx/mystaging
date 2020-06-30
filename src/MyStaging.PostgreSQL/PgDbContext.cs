@@ -6,12 +6,7 @@ namespace MyStaging.PostgreSQL
 {
     public class PgDbContext : DbContext
     {
-        public PgDbContext(StagingOptions options) : base(options)
-        {
-
-        }
-
-        public override void Dispose()
+        public PgDbContext(StagingOptions options) : base(options, ProviderType.PostgreSQL)
         {
         }
     }

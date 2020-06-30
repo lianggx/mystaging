@@ -1,13 +1,11 @@
 ﻿using MyStaging.Common;
 using MyStaging.Core;
 using MyStaging.Interface.Core;
-using MyStaging.Mapping;
 using System;
 using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations.Schema;
+using System.ComponentModel.DataAnnotations;
 using System.Data;
 using System.Data.Common;
-using System.Linq;
 using System.Reflection;
 using System.Text;
 
@@ -34,13 +32,24 @@ namespace MyStaging.PostgreSQL.Core
             this.models.Add(model);
             this.ToSQL();
             CommandText += " RETURNING *;";
-            dbContext.Execute.ExecuteDataReader(dr =>
+            var properties = MyStagingUtils.GetDbFields(typeof(T));
+            using var reader = dbContext.ByMaster().Execute.ExecuteDataReader(CommandType.Text, CommandText, this.Parameters.ToArray());
+            try
             {
-                model = DynamicBuilder<T>.CreateBuilder(dr).Build(dr);
-            }, CommandType.Text, CommandText, Parameters.ToArray());
-
-            this.models.Clear();
-            return model;
+                reader.Read();
+                T obj = (T)Activator.CreateInstance(typeof(T));
+                foreach (var pi in properties)
+                {
+                    var value = reader[pi.Name];
+                    if (value != DBNull.Value)
+                        pi.SetValue(obj, value);
+                }
+                return obj;
+            }
+            finally
+            {
+                this.Clear();
+            }
         }
 
         /// <summary>
@@ -78,8 +87,8 @@ namespace MyStaging.PostgreSQL.Core
             sqlBuilder.Append($"INSERT INTO {tableName}");
 
             string fieldsName = string.Empty;
-            var pis = MyStagingUtils.GetProperties(typeof(T));
-            foreach (var p in pis)
+            var properties = MyStagingUtils.GetDbFields(typeof(T));
+            foreach (var p in properties)
             {
                 fieldsName += "\"" + p.Name + "\",";
             }
@@ -90,12 +99,12 @@ namespace MyStaging.PostgreSQL.Core
             for (int i = 0; i < models.Count; i++)
             {
                 string paramNameString = string.Empty;
-                foreach (var pi in pis)
+                foreach (var pi in properties)
                 {
                     var paramName = $"@{pi.Name}_{i}";
                     paramNameString += paramName + ",";
                     var value = pi.GetValue(models[i]);
-                    var primaryKey = pi.GetCustomAttribute<PrimaryKeyAttribute>() != null;
+                    var primaryKey = pi.GetCustomAttribute<KeyAttribute>() != null;
                     if (primaryKey || defaultValueField.ContainsKey(pi.Name.ToLower()))
                     {
                         if (value == null
@@ -132,6 +141,13 @@ namespace MyStaging.PostgreSQL.Core
             }
 
             return defaultValue;
+        }
+
+        public virtual void Clear()
+        {
+            this.models.Clear();
+            this.Parameters.Clear();
+            this.CommandText = null;
         }
 
         public List<DbParameter> Parameters { get; set; } = new List<DbParameter>();

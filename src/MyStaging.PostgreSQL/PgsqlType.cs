@@ -1,4 +1,5 @@
-﻿using NpgsqlTypes;
+﻿using System;
+using NpgsqlTypes;
 using System.Collections.Generic;
 using MyStaging.Common;
 
@@ -23,10 +24,8 @@ namespace MyStaging.PostgreSQL
                 { "smallint", "short"},
                 { "int2", "short"},
                 { "money", "decimal"},
-                { "decimal", "decimal"},
                 { "numeric", "decimal"},
                 { "real", "decimal"},
-                { "double","double"},
                 { "float4","double"},
                 { "float8","double"},
                 { "int8", "long"},
@@ -34,10 +33,9 @@ namespace MyStaging.PostgreSQL
                 { "bigserial", "long"},
                 { "name", "string"},
                 { "varchar", "string"},
-                { "char", "string"},
                 { "bpchar", "string"},
                 { "text", "string"},
-                { "boolean", "bool" },
+                { "bool", "bool" },
                 { "bytea", "byte[]" },
                 { "bit", "byte" },
                 { "timetz", "DateTimeOffset" },
@@ -61,12 +59,73 @@ namespace MyStaging.PostgreSQL
                 { "xml", "System.Xml.Linq.XDocument"},
                 { "varbit", "System.Collections.BitArray"}
         };
-        private readonly static Dictionary<string, NpgsqlDbType?> dbTypes = new Dictionary<string, NpgsqlDbType?> {
+        private readonly static Dictionary<string, string> dbTypes = new Dictionary<string, string> {
+                { "Guid","uuid" },
+                { "Int16", "int2"},
+                { "Int32", "int4"},
+                { "Int64", "int8"},
+                { "UInt16", "int2"},
+                { "UInt32", "int4"},
+                { "UInt64", "int8"},
+                { "Decimal", "numeric"},
+                { "Double","float8"},
+                { "Single","float4"},
+                { "Boolean", "bool" },
+                { "Byte","bit" },
+                { "SByte","bytea" },
+                { "Char","char" },
+                { "String","varchar" },
+                { "DateTimeOffset","timetz" },
+                { "TimeSpan","interval"},
+                { "DateTime", "timestamp"},
+                { "JToken", "jsonb"},
+                { "Object", "geometry"},
+                { "NpgsqlPath", "path"},
+                { "NpgsqlLine", "line"},
+                { "NpgsqlPolygon", "polygon"},
+                { "NpgsqlCircle", "circle"},
+                { "NpgsqlPoint", "point"},
+                { "NpgsqlBox", "box"},
+                { "NpgsqlLSeg", "lseg"},
+                { "IPAddress", "inet"},
+                { "PhysicalAddress", "macaddr"},
+                { "XDocument", "xml"},
+                { "BitArray", "varbit"}
+        };
+        private readonly static Dictionary<string, string> contrastTypes = new Dictionary<string, string> {
+                { "uuid", "Guid" },
+                { "int4", "int"},
+                { "int2", "short"},
+                { "real", "decimal"},
+                { "int8", "long"},
+                { "varchar", "string"},
+                { "bool", "boolean" },
+                { "bytea", "byte[]" },
+                { "bit", "byte" },
+                { "timetz", "DateTimeOffset" },
+                { "interval", "TimeSpan"},
+                { "timestamp", "DateTime"},
+                { "jsonb", "JToken"},
+                { "geometry", "object"},
+                { "path", "NpgsqlPath"},
+                { "line", "NpgsqlLine"},
+                { "polygon", "NpgsqlPolygon"},
+                { "circle", "NpgsqlCircle"},
+                { "point", "NpgsqlPoint"},
+                { "box", "NpgsqlBox"},
+                { "lseg", "NpgsqlLSeg"},
+                { "inet", "System.Net.IPAddress"},
+                { "macaddr", "System.Net.NetworkInformation.PhysicalAddress"},
+                { "xml", "System.Xml.Linq.XDocument"},
+                { "varbit", "System.Collections.BitArray"}
+        };
+        private readonly static Dictionary<string, NpgsqlDbType?> npgsqlDbTypes = new Dictionary<string, NpgsqlDbType?> {
                 { "e", null },
                 { "int2", NpgsqlDbType.Integer},
                 { "int4", NpgsqlDbType.Integer},
                 { "int8", NpgsqlDbType.Bigint},
                 { "bool", NpgsqlDbType.Boolean},
+                { "char", NpgsqlDbType.Char},
                 { "bpchar", NpgsqlDbType.Char},
                 { "float4", NpgsqlDbType.Double},
                 { "float8", NpgsqlDbType.Double},
@@ -82,15 +141,39 @@ namespace MyStaging.PostgreSQL
                 return type;
         }
 
-        public static NpgsqlDbType? SwitchToDbType(string type)
+        public static NpgsqlDbType? SwitchToNpgsqlDbType(string type)
         {
-            if (dbTypes.ContainsKey(type))
+            if (npgsqlDbTypes.ContainsKey(type))
             {
-                return dbTypes[type];
+                return npgsqlDbTypes[type];
             }
             else if (System.Enum.TryParse<NpgsqlDbType>(type.ToUpperPascal(), out NpgsqlDbType dbType))
                 return dbType;
 
+            return null;
+        }
+
+        public static string ContrastType(string type)
+        {
+            foreach (var k in contrastTypes.Keys)
+            {
+                if (k == type)
+                {
+                    return contrastTypes[k];
+                }
+            }
+            return null;
+        }
+
+        public static string GetDbType(string csType)
+        {
+            foreach (var k in dbTypes.Keys)
+            {
+                if (k == csType)
+                {
+                    return dbTypes[k];
+                }
+            }
             return null;
         }
     }

@@ -2,12 +2,10 @@
 using MyStaging.Core;
 using MyStaging.Interface;
 using MyStaging.Interface.Core;
-using MyStaging.Mapping;
 using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.Common;
-using System.Diagnostics;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Text;
@@ -262,14 +260,8 @@ namespace MyStaging.PostgreSQL.Core
             string cmdText = ToSQL();
             SQLExecute execute = byMaster ? dbContext.ByMaster().Execute : dbContext.Execute;
             object result = execute.ExecuteScalar(CommandType.Text, cmdText, Parameters.ToArray());
-            if (result == null)
-            {
-                return default;
-            }
-            else
-            {
-                return (TResult)result;
-            }
+
+            return result == null ? default : (TResult)result;
         }
 
         /// <summary>
@@ -373,23 +365,28 @@ namespace MyStaging.PostgreSQL.Core
         /// <returns></returns>
         public List<TResult> ExecuteReader<TResult>(string cmdText)
         {
+            var objType = typeof(TResult);
+            var properties = MyStagingUtils.GetDbFields(typeof(TResult));
             List<TResult> list = new List<TResult>();
-            Type objType = typeof(TResult);
-            try
+            SQLExecute execute = byMaster ? dbContext.ByMaster().Execute : dbContext.Execute;
+            using var reader = execute.ExecuteDataReader(CommandType.Text, cmdText, Parameters.ToArray());
+            while (reader.Read())
             {
-                DynamicBuilder<TResult> builder = null;
-                SQLExecute execute = byMaster ? dbContext.ByMaster().Execute : dbContext.Execute;
-                execute.ExecuteDataReader(dr =>
+                TResult obj = (TResult)Activator.CreateInstance(objType);
+                foreach (var pi in properties)
                 {
-                    var obj = MyStagingUtils.ReadObj<TResult>(ref builder, dr, objType);
-                    list.Add(obj);
+                    var value = reader[pi.Name];
+                    if (value == DBNull.Value)
+                        continue;
+                    else
+                        pi.SetValue(obj, value);
                 }
-                , CommandType.Text, cmdText, Parameters.ToArray());
-            }
-            finally
-            {
-                this.Clear();
-            }
+
+                list.Add(obj);
+            };
+
+            this.Clear();
+
             return list;
         }
 
@@ -784,24 +781,24 @@ namespace MyStaging.PostgreSQL.Core
         public object ExecuteScalarSlave(CommandType commandType, string commandText, params DbParameter[] commandParameters)
         {
             object result = null;
-            void Transfer(Exception ex)
+            void Transfer()
             {
                 dbContext.Execute.ExecuteScalar(commandType, commandText, commandParameters);
             }
 
             try
             {
-                Transfer(null);
+                Transfer();
             }
             catch (System.TimeoutException te)
             {
                 dbContext.WriteLog(te);
-                Transfer(te);
+                Transfer();
             }
             catch (System.Net.Sockets.SocketException ex)
             {
                 dbContext.WriteLog(ex);
-                Transfer(ex);
+                Transfer();
             }
             return result;
         }
@@ -888,15 +885,28 @@ namespace MyStaging.PostgreSQL.Core
             {
                 List<dynamic> list = new List<dynamic>();
                 var ctx = contexts[i];
-                var builder = new DynamicBuilder(ctx.ResultType).CreateBuilder(dr);
                 while (dr.Read())
                 {
-                    var obj = MyStagingUtils.ReadObj(builder, dr, ctx.ResultType);
+                    var obj = ReadObj(dr, ctx.ResultType);
                     list.Add(obj);
                 };
                 dr.NextResult();
                 result.Add(list);
             }
+        }
+
+        private object ReadObj(DbDataReader reader, Type type)
+        {
+            var properties = MyStagingUtils.GetDbFields(type);
+            reader.Read();
+            var obj = Activator.CreateInstance(type);
+            foreach (var pi in properties)
+            {
+                var value = reader[pi.Name];
+                if (value != DBNull.Value)
+                    pi.SetValue(obj, value);
+            }
+            return obj;
         }
     }
 }

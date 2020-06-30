@@ -10,7 +10,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\src\MyStaging.PostgreSQL\MyStaging.PostgreSQL.csproj" />
+    <Folder Include="Models\" />
+    <PackageReference Include="MyStaging.PostgreSQL" Version="3.0.0"/>
   </ItemGroup>
-
 </Project>

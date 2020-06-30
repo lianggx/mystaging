@@ -1,7 +1,12 @@
-﻿using MyStaging.Gen.Tool;
-using MyStaging.Gen.Tool.Models;
+﻿using MyStaging.Metadata;
 using System;
 using System.Reflection;
+using System.Text;
+using System.Linq;
+using System.Collections;
+using System.IO;
+using System.Diagnostics;
+using MyStaging.Interface;
 
 namespace MyStaging.App
 {
@@ -9,76 +14,138 @@ namespace MyStaging.App
     {
         static void Main(string[] args)
         {
-            //if (args == null || args.Length == 0)
-            //{
-            //    Console.WriteLine("try --help");
-            //    return;
-            //}
+            Drawing();
+            if (args.Length == 0)
+                return;
 
-            //if (args[0] == "--help")
-            //{
-            //    Console.WriteLine("Use the following parameters to create a project using Mystaging.App,The parameter name ignore case");
-            //    Console.WriteLine("-h [host/ip] required");
-            //    Console.WriteLine("-p [port]  required");
-            //    Console.WriteLine("-u [database access username]  required");
-            //    Console.WriteLine("-a [database auth password]  required");
-            //    Console.WriteLine("-d [database]  required");
-            //    Console.WriteLine("-pool [maxinum pool size numbric,default 32] optional");
-            //    Console.WriteLine("-proj [the project build name]  required");
-            //    Console.WriteLine("-0 [the project output path]  required");
-            //    return;
-            //}
+            ProjectConfig config = GetConfig(args);
+            if (config == null)
+                return;
 
-            //string projName = string.Empty, outPutPath = string.Empty;
-            //StringBuilder connection = new StringBuilder();
-            //for (int i = 0; i < args.Length; i++)
-            //{
-            //    var item = args[i].ToLower();
-            //    switch (item)
-            //    {
-            //        case "-h": connection.Append($"host={args[i + 1]};"); break;
-            //        case "-p": connection.Append($"port={args[i + 1]};"); break;
-            //        case "-u": connection.Append($"username={args[i + 1]};"); break;
-            //        case "-a": connection.Append($"password={args[i + 1]};"); break;
-            //        case "-d": connection.Append($"database={args[i + 1]};"); break;
-            //        case "-pool": connection.Append($"maximum pool size={args[i + 1]};"); break;
-            //        case "-proj": projName = args[i + 1]; break;
-            //        case "-o": outPutPath = args[i + 1]; break;
-            //    }
-            //    i++;
-            //}
-
-            var config = new ProjectConfig
+            try
             {
-                OutputDir = @"D:\MyGitHub\mystaging\examples\Pgsql",
-                ProjectName = "Pgsql",
-                ConnectionString = "Host=127.0.0.1;Port=5432;Username=postgres;Password=postgres;Database=mystaging;Pooling=true;Maximum Pool Size=10;",
-                Provider = "MyStaging.PostgreSQL"
-            };
+                IGeneralFactory factory = CreateGeneral(config);
 
-            //try
-            //{
+                if (config.Mode == GeneralMode.Db)
+                    factory.DbFirst(config);
+                else
+                    factory.CodeFirst(config);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("{0}\n{1}", ex.Message, ex.StackTrace);
+            }
+
+            Console.WriteLine("success.");
+        }
+
+        static void Drawing()
+        {
+            Console.WriteLine("欢迎使用 MyStaging.Gen");
+            Console.WriteLine();
+            Console.WriteLine("////////////////////////////////////////////////////////");
+            Console.WriteLine("///                                                  ///");
+            Console.WriteLine("///                        | |      (_)              ///");
+            Console.WriteLine("///    _ __ ___  _   _ ___| |_ __ _ _ _ __   __ _    ///");
+            Console.WriteLine(@"///   | '_ ` _ \| | | / __| __/ _` | | '_ \ / _` |   ///");
+            Console.WriteLine(@"///   | | | | | | |_| \__ \ || (_| | | | | | (_| |   ///");
+            Console.WriteLine(@"///   |_| |_| |_|\__, |___/\__\__,_|_|_| |_|\__, |   ///");
+            Console.WriteLine("///               __/ |                      __/ |   ///");
+            Console.WriteLine("///              |___/                      |___/    ///");
+            Console.WriteLine("///                                                  ///");
+            Console.WriteLine("////////////////////////////////////////////////////////");
+            Console.WriteLine();
+
+            Help();
+            Console.WriteLine("查看帮助请使用命令 mystaging.gen --help");
+            Console.WriteLine();
+        }
+
+        static void Help()
+        {
+            Console.WriteLine("要使用 MyStaging.Gen 请跟进下面的参数说明，执行创建实体对象映射.");
+            Console.WriteLine();
+            Console.WriteLine("--help 查看帮助");
+            Console.WriteLine("-m [mode，db[DbFirst]/code[CodeFirst]，默认为 DbFirst");
+            Console.WriteLine("-t [dbtype[Mysql/PostgreSQL]，数据库提供程序]  required");
+            Console.WriteLine("-d [database，数据库连接字符串] required");
+            Console.WriteLine("-p [project，项目名称]  required");
+            Console.WriteLine("-o [output，实体对象输出路径]，默认为 {project}/Models");
+            Console.WriteLine();
+            Console.WriteLine("==============示例==============");
+            Console.WriteLine("  CodeFirst：");
+            Console.WriteLine("  mystaging.gen -m code -t PostgreSQL -p Pgsql -d \"Host=127.0.0.1;Port=5432;Username=postgres;Password=postgres;Database=mystaging;\"");
+            Console.WriteLine();
+            Console.WriteLine("  DbFirst：");
+            Console.WriteLine("  mystaging.gen -m db -t PostgreSQL -p Pgsql -d \"Host=127.0.0.1;Port=5432;Username=postgres;Password=postgres;Database=mystaging;\"");
+            Console.WriteLine("================================");
+            Console.WriteLine();
+        }
+
+        static ProjectConfig GetConfig(string[] args)
+        {
+            if (args[0] == "--help")
+            {
+                Help();
+                return null;
+            }
+
+            var config = new ProjectConfig();
+            string mode = "db";
+            for (int i = 0; i < args.Length; i++)
+            {
+                var item = args[i].ToLower();
+                switch (item)
+                {
+                    case "-d": config.ConnectionString = args[i + 1]; break;
+                    case "-p": config.ProjectName = args[i + 1]; break;
+                    case "-o": config.OutputDir = args[i + 1]; break;
+                    case "-t": config.Provider = args[i + 1]; break;
+                    case "-m": mode = args[i + 1].ToLower(); break;
+                }
+                i++;
+            }
+
+            MyStaging.Common.CheckNotNull.NotEmpty(config.ConnectionString, "-d 参数必须提供");
+            MyStaging.Common.CheckNotNull.NotEmpty(config.ProjectName, "-p 参数必须提供");
+            MyStaging.Common.CheckNotNull.NotEmpty(config.Provider, "-t 参数必须提供");
+            MyStaging.Common.CheckNotNull.NotEmpty(mode, "-m 参数必须提供");
+
+            if (mode != "db" && mode != "code")
+            {
+                Console.WriteLine("-m 参数错误，必须为 db 或者 code");
+                return null;
+            }
+
+            config.Mode = mode == "db" ? GeneralMode.Db : GeneralMode.Code;
+            if (config.Mode == GeneralMode.Db && string.IsNullOrEmpty(config.OutputDir))
+            {
+                config.OutputDir = config.ProjectName;
+            }
+
+            return config;
+        }
+
+        static IGeneralFactory CreateGeneral(ProjectConfig config)
+        {
+            var fileName = "MyStaging." + config.Provider + ".dll";
+            var dir = System.IO.Directory.GetCurrentDirectory();
+            var providerFile = System.IO.Directory.GetFiles(dir, fileName, SearchOption.AllDirectories).FirstOrDefault();
+            if (string.IsNullOrEmpty(providerFile))
+                throw new FileNotFoundException(fileName);
+
             IGeneralFactory factory = null;
-            var types = Assembly.LoadFrom("MyStaging.PostgreSQL.dll").GetTypes();
+            var types = Assembly.LoadFrom(providerFile).GetTypes();
             foreach (var t in types)
             {
                 if (t.GetInterface(typeof(IGeneralFactory).Name) != null)
                 {
                     factory = (IGeneralFactory)Activator.CreateInstance(t);
+                    break;
                 }
             }
 
-            factory.Build(config);
-            //}
-            //catch (Exception ex)
-            //{
-            //    Console.WriteLine("{0}\n{1}",ex.Message,ex.StackTrace);
-            //    throw ex;
-            //}
-
-            Console.WriteLine("success.....");
+            return factory;
         }
     }
 }
-
-
