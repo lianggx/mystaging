@@ -16,6 +16,15 @@
 ////////////////////////////////////////////////////////
 ```
 
+# 在包管理控制台安装 MyStaging.Gen 到 dotnet tool 命令集
+  MyStaging.Gen 是一个独立的数据库迁移组件，其本质上是一个控制台程序，你可以单独下载这个包到本地，也可以将他注册到 dotnet tool ，注册到 dotnet tool 后，你就可以在 visual studio 中使用命令进行数据库的迁移工作。
+  
+* 安装
+
+```
+dotnet tool install -g MyStaging.Gen
+```
+
 要使用 MyStaging.Gen 请跟进下面的参数说明，执行创建实体对象映射.
 
 ```
@@ -35,3 +44,14 @@
   mystaging.gen -m db -t PostgreSQL -p Pgsql -d "Host=127.0.0.1;Port=5432;Username=postgres;Password=postgres;Database=mystaging;"
 ================================
 ```
+
+# 如何选择数据库提供程序
+ MyStaging 提供了多种数据库的支持，目前提供了 PostgreSQL/Mysql 的支持，后续将陆续开发更多提供程序，比如基于 PostgreSQL 进行开发的程序，那么可以选择引用包 MyStaing.PostgreSQL。
+ 
+| 数据库 | 提供程序 |
+|-----|-----|
+| PostgreSQL | MyStaing.PostgreSQL  |
+| Mysql | MyStaging.Mysql   |
+
+
+更多示例，请访问 /examples
