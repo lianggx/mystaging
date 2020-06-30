@@ -1,10 +1,36 @@
-# mystaging介绍
-* 这是一个 .netcore+pgsql 的脚手架，可以一键生成实体对象和业务层接口，让开发人员无需关注底层变动，专注编写业务代码，它可以让你使用 .netcore3.1的新特性，基于 pgsql 数据库，可以在项目中自由的使用 lambda 表达式编写业务，同时支持自定义的 sql 语句。
+# 欢迎使用 MyStaging
 
-**特性**
-* mystaging，非常的小巧，下面将介绍 mystaging 的项目框架。
-* 一键生成，无需编写实体模型代码
-* 支持数据库枚举类型自动映射生成
-* 支持视图自动生成实体模型和业务操作接口
-* 该项目目前处于起步阶段，可能不适用于大型项目，请结合业务需要酌情使用
+ MyStaging 是一款基于 .NETCore 平台的 ORM 中间件，提供简单易用的接入工具，支持 DbFirst/CodeFirst，并支持多种数据库类型，和 EF 不同的是，对单个项目的多路上下文支持中引进了主从数据库概念，查询默认从库，也可以指定主库，删除/修改/新增操作默认走主库，地层还提供了对单个查询数据的分布式缓存操作，可以自由灵活配置，目前 MyStaging 还在持续完善中，欢迎加入 Star/Contributors/Fork。
 
+```
+////////////////////////////////////////////////////////
+///                                                  ///
+///                        | |      (_)              ///
+///    _ __ ___  _   _ ___| |_ __ _ _ _ __   __ _    ///
+///   | '_ ` _ \| | | / __| __/ _` | | '_ \ / _` |   ///
+///   | | | | | | |_| \__ \ || (_| | | | | | (_| |   ///
+///   |_| |_| |_|\__, |___/\__\__,_|_|_| |_|\__, |   ///
+///               __/ |                      __/ |   ///
+///              |___/                      |___/    ///
+///                                                  ///
+////////////////////////////////////////////////////////
+```
+
+要使用 MyStaging.Gen 请跟进下面的参数说明，执行创建实体对象映射.
+
+--help 查看帮助
+-m [mode，db[DbFirst]/code[CodeFirst]，默认为 DbFirst
+-t [dbtype[Mysql/PostgreSQL]，数据库提供程序]  required
+-d [database，数据库连接字符串] required
+-p [project，项目名称]  required
+-o [output，实体对象输出路径]，默认为 {project}/Models
+
+```
+==============示例==============
+  CodeFirst：
+  mystaging.gen -m code -t PostgreSQL -p Pgsql -d "Host=127.0.0.1;Port=5432;Username=postgres;Password=postgres;Database=mystaging;"
+
+  DbFirst：
+  mystaging.gen -m db -t PostgreSQL -p Pgsql -d "Host=127.0.0.1;Port=5432;Username=postgres;Password=postgres;Database=mystaging;"
+================================
+```
