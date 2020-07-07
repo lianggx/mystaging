@@ -119,19 +119,6 @@ namespace MyStaging.PostgreSQL
                 { "xml", "System.Xml.Linq.XDocument"},
                 { "varbit", "System.Collections.BitArray"}
         };
-        private readonly static Dictionary<string, NpgsqlDbType?> npgsqlDbTypes = new Dictionary<string, NpgsqlDbType?> {
-                { "e", null },
-                { "int2", NpgsqlDbType.Integer},
-                { "int4", NpgsqlDbType.Integer},
-                { "int8", NpgsqlDbType.Bigint},
-                { "bool", NpgsqlDbType.Boolean},
-                { "char", NpgsqlDbType.Char},
-                { "bpchar", NpgsqlDbType.Char},
-                { "float4", NpgsqlDbType.Double},
-                { "float8", NpgsqlDbType.Double},
-                { "interval",NpgsqlDbType.Interval },
-                { "macaddr", NpgsqlDbType.MacAddr}
-        };
 
         public static string SwitchToCSharp(string type)
         {
@@ -139,18 +126,6 @@ namespace MyStaging.PostgreSQL
                 return csharpTypes[type];
             else
                 return type;
-        }
-
-        public static NpgsqlDbType? SwitchToNpgsqlDbType(string type)
-        {
-            if (npgsqlDbTypes.ContainsKey(type))
-            {
-                return npgsqlDbTypes[type];
-            }
-            else if (System.Enum.TryParse<NpgsqlDbType>(type.ToUpperPascal(), out NpgsqlDbType dbType))
-                return dbType;
-
-            return null;
         }
 
         public static string ContrastType(string type)

@@ -13,6 +13,7 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Text;
+using MyStaging.DataAnnotations;
 
 namespace MyStaging.PostgreSQL.Generals
 {
@@ -40,7 +41,7 @@ namespace MyStaging.PostgreSQL.Generals
                 {
                     OutputDir = config.OutputDir,
                     ProjectName = config.ProjectName,
-                    ModelPath = Path.Combine(config.OutputDir, "Models")
+                    ModelPath = config.OutputDir
                 };
 
                 if (!Directory.Exists(Config.ModelPath))
@@ -159,41 +160,70 @@ SELECT table_name,'view' as type FROM INFORMATION_SCHEMA.views WHERE table_schem
             {
                 var oldFi = oldTable.Fields.Where(f => f.Name == newFi.Name).FirstOrDefault();
                 var notNull = newFi.NotNull ? "NOT NULL" : "NULL";
+                var realType = newFi.DbTypeFull ?? newFi.DbType;
                 if (oldFi == null)
                 {
-                    sb.AppendLine(alterSql + $" ADD {newFi.Name} {newFi.DbType}{GetLengthString(newFi)};");
-                    sb.AppendLine(alterSql + $" MODIFY {newFi.Name} {newFi.DbType} {notNull};");
+                    sb.AppendLine(alterSql + $" ADD {newFi.Name} {realType};");
+                    sb.AppendLine(alterSql + $" MODIFY {newFi.Name} {realType} {notNull};");
                 }
                 else
                 {
-                    if (oldFi.DbType != newFi.DbType || (oldFi.Length != newFi.Length && GetLengthString(newFi) != null))
-                        sb.AppendLine(alterSql + $" ALTER {newFi.Name} TYPE {newFi.DbType}{GetLengthString(newFi)};");
+                    if (oldFi.DbTypeFull != newFi.DbTypeFull)
+                        sb.AppendLine(alterSql + $" ALTER {newFi.Name} TYPE {realType};");
                     if (oldFi.NotNull != newFi.NotNull)
-                    {
-                        sb.AppendLine(alterSql + $" MODIFY {newFi.Name} {newFi.DbType} {notNull};");
-                    }
+                        sb.AppendLine(alterSql + $" MODIFY {newFi.Name} {realType} {notNull};");
                 }
             }
 
             // 检查旧约束
-            List<string> primaryKeys = new List<string>();
             foreach (var c in oldTable.Constraints)
             {
-                var constraint = newTable.Fields.Where(f => f.Name == c.Field).FirstOrDefault();
+                // PK
+                var constraint = newTable.Fields.Where(f => f.Name == c.Field && f.PrimaryKey).FirstOrDefault();
                 if (constraint == null)
                 {
                     sb.AppendLine(alterSql + $" DROP CONSTRAINT {c.Name};");
                 }
+
+                // SEQ
+                var seq = oldTable.Fields.Where(f => f.Name == c.Field && f.AutoIncrement).FirstOrDefault();
+                if (seq != null)
+                {
+                    // 旧 increment 在新的同步中被删除
+                    if (newTable.Fields.Where(f => f.Name == seq.Name && f.AutoIncrement).FirstOrDefault() == null)
+                    {
+                        var indexOf = seq.ColumnDefault.IndexOf("'") + 1;
+                        var lastIndexOf = seq.ColumnDefault.LastIndexOf("'");
+                        var seqName = seq.ColumnDefault.Substring(indexOf, lastIndexOf - indexOf);
+
+                        sb.AppendLine($"ALTER TABLE \"{oldTable.Schema}\".\"{oldTable.Name}\" ALTER COLUMN {seq.Name} SET DEFAULT null;");
+                        sb.AppendLine($"DROP SEQUENCE IF EXISTS {seqName};");
+                    }
+                }
             }
 
             // 检查新约束
-            var pks = newTable.Fields.Where(f => f.Identity);
-            foreach (var p in pks)
+            foreach (var fi in newTable.Fields)
             {
-                var constraint = oldTable.Constraints.Where(f => f.Field == p.Name).FirstOrDefault();
+                if (!fi.PrimaryKey)
+                    continue;
+
+                // PK
+                var constraint = oldTable.Constraints.Where(f => f.Field == fi.Name).FirstOrDefault();
                 if (constraint == null)
                 {
-                    sb.AppendLine(alterSql + $" ADD CONSTRAINT pk_{newTable.Name} PRIMARY KEY({p.Name});");
+                    sb.AppendLine(alterSql + $" ADD CONSTRAINT pk_{newTable.Name} PRIMARY KEY({fi.Name});");
+                }
+
+                // SEQ
+                if (fi.AutoIncrement)
+                {
+                    if (oldTable.Fields.Where(f => f.Name == fi.Name && f.AutoIncrement).FirstOrDefault() == null)
+                    {
+                        var seqName = $"{ newTable.Name }_{ fi.Name}_seq";
+                        sb.AppendLine($"CREATE SEQUENCE {seqName} START WITH 1;");
+                        sb.AppendLine($"ALTER TABLE \"{newTable.Schema}\".\"{newTable.Name}\" ALTER COLUMN {fi.Name} SET DEFAULT nextval('{seqName}'::regclass);");
+                    }
                 }
             }
         }
@@ -207,6 +237,13 @@ SELECT table_name,'view' as type FROM INFORMATION_SCHEMA.views WHERE table_schem
                 fi.Name = pi.Name;
                 var customAttributes = pi.GetCustomAttributes();
                 var genericAttrs = customAttributes.Select(f => f.GetType()).ToArray();
+                var pk = pi.GetCustomAttribute<PrimaryKeyAttribute>();
+                fi.PrimaryKey = pk != null;
+                if (fi.PrimaryKey)
+                {
+                    fi.AutoIncrement = pk.AutoIncrement;
+                }
+
                 if (pi.PropertyType.Name == "Nullable`1")
                 {
                     fi.NotNull = false;
@@ -217,31 +254,24 @@ SELECT table_name,'view' as type FROM INFORMATION_SCHEMA.views WHERE table_schem
                     fi.CsType = pi.PropertyType.Name;
                     if (pi.PropertyType == typeof(string))
                     {
-                        fi.NotNull = genericAttrs.Where(f => f == typeof(RequiredAttribute) || f == typeof(KeyAttribute)).FirstOrDefault() != null;
+                        fi.NotNull = fi.PrimaryKey || genericAttrs.Where(f => f == typeof(RequiredAttribute)).FirstOrDefault() != null;
                     }
                     else
                     {
                         fi.NotNull = pi.PropertyType.IsValueType;
                     }
                 }
-                fi.Identity = genericAttrs.Where(f => f == typeof(KeyAttribute)).FirstOrDefault() != null;
-                var lengthAttribute = customAttributes.Where(f => f.GetType() == typeof(StringLengthAttribute)).FirstOrDefault();
-                if (lengthAttribute != null)
-                {
-                    var lenAttribute = ((StringLengthAttribute)lengthAttribute);
-                    fi.Length = lenAttribute.MaximumLength;
-                    fi.Numeric_scale = lenAttribute.MinimumLength;
-                }
-                var dtAttribute = pi.GetCustomAttribute<DataTypeAttribute>();
-                if (dtAttribute != null)
-                {
-                    if (string.IsNullOrEmpty(dtAttribute.CustomDataType)) throw new KeyNotFoundException($"找不到属性{table.Name}.{pi.Name}的对应数据库类型，请为该属性设置DataTypeAttribute，并指定 CustomDataType 的值");
 
-                    fi.DbType = dtAttribute.CustomDataType;
+                var columnAttribute = customAttributes.Where(f => f.GetType() == typeof(ColumnAttribute)).FirstOrDefault();
+                if (columnAttribute != null)
+                {
+                    var colAttribute = ((ColumnAttribute)columnAttribute);
+                    fi.DbType = fi.DbTypeFull = colAttribute.TypeName;
                 }
                 else
                 {
                     fi.DbType = PgsqlType.GetDbType(fi.CsType.Replace("[]", ""));
+                    fi.DbTypeFull = GetFullDbType(fi);
                 }
                 fi.IsArray = fi.CsType.Contains("[]");
 
@@ -258,35 +288,48 @@ SELECT table_name,'view' as type FROM INFORMATION_SCHEMA.views WHERE table_schem
             {
                 var fi = table.Fields[i];
 
-                sb.AppendFormat("  \"{0}\" {1}{2}{3} {4} {5}{6}",
+                sb.AppendFormat("  \"{0}\" {1}{2} {3} {4} {5}",
                     fi.Name,
-                    fi.DbType,
-                    GetLengthString(fi),
+                    fi.DbTypeFull,
                     fi.IsArray ? "[]" : "",
-                    fi.Identity ? "PRIMARY KEY" : "",
-                    fi.Identity || fi.NotNull ? "NOT NULL" : "NULL",
+                    fi.PrimaryKey ? "PRIMARY KEY" : "",
+                    fi.PrimaryKey || fi.NotNull ? "NOT NULL" : "NULL",
                     (i + 1 == length) ? "" : ","
                     );
                 sb.AppendLine();
             }
             sb.AppendLine(")");
             sb.AppendLine("WITH (OIDS=FALSE);");
+
+            // SEQ
+            foreach (var fi in table.Fields)
+            {
+                if (!fi.AutoIncrement) continue;
+
+                var seqName = $"{ table.Name }_{ fi.Name}_seq";
+                sb.AppendLine($"--{seqName} SEQUENCE");
+                sb.AppendLine($"ALTER TABLE \"{table.Schema}\".\"{table.Name}\" ALTER COLUMN {fi.Name} SET DEFAULT null;");
+                sb.AppendLine($"DROP SEQUENCE IF EXISTS {seqName}_seq;");
+                sb.AppendLine($"CREATE SEQUENCE {seqName} START WITH 1;");
+                sb.AppendLine($"ALTER TABLE \"{table.Schema}\".\"{table.Name}\" ALTER COLUMN {fi.Name} SET DEFAULT nextval('{seqName}'::regclass);");
+                sb.AppendLine("-- SEQUENCE END");
+            }
         }
 
-        private string GetLengthString(DbFieldInfo fi)
+        private string GetFullDbType(DbFieldInfo fi)
         {
-            string lengthString = null;
+            string fullType = null;
             if (fi.Length > 0)
             {
                 if (fi.Length != 255 && fi.CsType == "String")
-                    lengthString = $"({fi.Length})";
+                    fullType = $"{fi.DbType}({fi.Length})";
                 else if (fi.CsType != "String" && fi.Numeric_scale > 0)
                 {
-                    lengthString = $"({fi.Length},{fi.Numeric_scale})";
+                    fullType = $"{fi.DbType}({fi.Length},{fi.Numeric_scale})";
                 }
             }
 
-            return lengthString;
+            return fullType;
         }
 
         public void GenerateMapping()
@@ -380,7 +423,7 @@ where a.typtype = 'e' order by oid asc";
 
                 foreach (var table in Tables)
                 {
-                    writer.WriteLine($"\t\tpublic DbSet<{table.Name.ToUpperPascal()}Model> {table.Name.ToUpperPascal()} {{ get; set; }}");
+                    writer.WriteLine($"\t\tpublic DbSet<{table.Name.ToUpperPascal()}> {table.Name.ToUpperPascal()} {{ get; set; }}");
                 }
 
                 writer.WriteLine("\t}"); // class end
@@ -418,6 +461,7 @@ where a.typtype = 'e' order by oid asc";
                                             ),0) numeric_scale
                                             ,e.typcategory
                                             ,f.udt_schema
+                                            ,f.column_default
                                                                             from  pg_class a 
                                                                             inner join pg_namespace b on a.relnamespace=b.oid
                                                                             inner join pg_attribute c on attrelid = a.oid
@@ -438,6 +482,7 @@ where a.typtype = 'e' order by oid asc";
                     NotNull = Convert.ToBoolean(dr["notnull"]),
                     Comment = dr["comment"].ToString(),
                     Numeric_scale = Convert.ToInt32(dr["numeric_scale"].ToString()),
+                    ColumnDefault = dr["column_default"].ToString(),
                 };
 
                 var udt_schema = dr["udt_schema"].ToString();
@@ -446,6 +491,7 @@ where a.typtype = 'e' order by oid asc";
                 fi.DbType = typcategory == "E" ? udt_schema + "." + dbtype : dbtype;
                 fi.IsArray = typcategory == "A";
                 fi.CsType = PgsqlType.SwitchToCSharp(dbtype);
+                fi.AutoIncrement = fi.ColumnDefault != null && fi.ColumnDefault.StartsWith("nextval('") && fi.ColumnDefault.EndsWith("'::regclass)");
 
                 string _notnull = "";
                 if (
@@ -463,6 +509,17 @@ where a.typtype = 'e' order by oid asc";
 
                 string _array = fi.IsArray ? "[]" : "";
                 fi.RelType = $"{fi.CsType}{_notnull}{_array}";
+
+                if (fi.RelType == "string" && (fi.Length != 0 && fi.Length != 255))
+                    fi.DbTypeFull = $"{fi.DbType}({fi.Length})";
+                else if (fi.Numeric_scale > 0)
+                {
+                    fi.DbTypeFull = ($"{fi.DbType}({fi.Length},{fi.Numeric_scale})");
+                }
+                else if (PgsqlType.ContrastType(fi.DbType) == null)
+                {
+                    fi.DbTypeFull = fi.DbType;
+                }
 
                 table.Fields.Add(fi);
             }, CommandType.Text, _sqltext);
@@ -488,7 +545,7 @@ where a.typtype = 'e' order by oid asc";
                 };
 
                 table.Constraints.Add(constaint);
-                table.Fields.Where(f => f.Name == constaint.Field).First().Identity = true;
+                table.Fields.Where(f => f.Name == constaint.Field).First().PrimaryKey = true;
 
             }, CommandType.Text, _sqltext);
         }

@@ -10,7 +10,14 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="ContextTest.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Folder Include="Models\" />
-    <PackageReference Include="MyStaging.PostgreSQL" Version="3.0.0"/>
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\MyStaging.PostgreSQL\MyStaging.PostgreSQL.csproj" />
   </ItemGroup>
 </Project>

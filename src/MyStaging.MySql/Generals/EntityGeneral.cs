@@ -1,4 +1,5 @@
-﻿using MyStaging.Common;
+﻿using MySql.Data.MySqlClient;
+using MyStaging.Common;
 using MyStaging.Core;
 using MyStaging.Metadata;
 using System;
@@ -7,8 +8,9 @@ using System.Collections.Generic;
 using System.Data;
 using System.IO;
 using System.Linq;
+using mysqlTypes = MySql.Data.Types;
 
-namespace MyStaging.PostgreSQL.Generals
+namespace MyStaging.MySql.Generals
 {
     public class EntityGeneral
     {
@@ -25,17 +27,16 @@ namespace MyStaging.PostgreSQL.Generals
 
         public void Create()
         {
-            string _classname = CreateName();
+            string _classname = this.table.Name.ToUpperPascal();
             string _fileName = $"{config.ModelPath}/{_classname}.cs";
             using StreamWriter writer = new StreamWriter(File.Create(_fileName), System.Text.Encoding.UTF8);
             writer.WriteLine("using System;");
             writer.WriteLine("using System.Linq;");
             writer.WriteLine("using Newtonsoft.Json;");
             writer.WriteLine("using Newtonsoft.Json.Linq;");
-            writer.WriteLine("using NpgsqlTypes;");
-            writer.WriteLine("using System.ComponentModel.DataAnnotations;");
+            writer.WriteLine("using MySql.Data.Types;");
             writer.WriteLine("using System.ComponentModel.DataAnnotations.Schema;");
-            writer.WriteLine("using MyStaging.DataAnnotations;");
+            writer.WriteLine("using System.ComponentModel.DataAnnotations;");
             writer.WriteLine();
             writer.WriteLine($"namespace {config.ProjectName}.Model");
             writer.WriteLine("{");
@@ -52,10 +53,8 @@ namespace MyStaging.PostgreSQL.Generals
                     writer.WriteLine("\t\t/// </summary>");
                 }
 
-                var autoincrement = fi.AutoIncrement ? "(AutoIncrement = true)" : "";
-
                 if (fi.PrimaryKey)
-                    writer.WriteLine($"\t\t[PrimaryKey{autoincrement}]");
+                    writer.WriteLine("\t\t[Key]");
                 if (fi.NotNull && fi.RelType == "string" && !fi.PrimaryKey)
                     writer.WriteLine("\t\t[Required]");
                 if (!string.IsNullOrEmpty(fi.DbTypeFull))
@@ -63,24 +62,10 @@ namespace MyStaging.PostgreSQL.Generals
 
                 writer.WriteLine($"\t\tpublic {fi.RelType} {fi.Name} {{ get; set; }}");
             }
+
             writer.WriteLine("\t}");
             writer.WriteLine("}");
             writer.Flush();
-        }
-
-        private string CreateName(string separator = "")
-        {
-            string className;
-            if (table.Schema == "public")
-            {
-                className = separator + table.Name.ToUpperPascal();
-            }
-            else
-            {
-                className = $"{table.Schema.ToUpperPascal()}{separator}{table.Name.ToUpperPascal()}";
-            }
-
-            return className;
         }
     }
 }

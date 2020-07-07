@@ -77,9 +77,9 @@ namespace Pgsql
                 var sum = userContext.User.Select.Sum<long>(f => f.age);
                 Console.WriteLine(sum);
                 var user = userContext.User.Select.Where(f => f.id == userId).ToOne();
-             //   var users = userContext.User.Select.ToList();
+                //   var users = userContext.User.Select.ToList();
                 //Console.WriteLine("userid=={0}", user.id);
-             //   Console.WriteLine("users=={0}--", users.Count);
+                //   Console.WriteLine("users=={0}--", users.Count);
                 //users.Clear();
             }
         }

@@ -1,6 +1,6 @@
-﻿using MyStaging.Common;
+﻿using MySql.Data.MySqlClient;
+using MyStaging.Common;
 using MyStaging.Core;
-using MyStaging.DataAnnotations;
 using MyStaging.Interface.Core;
 using System;
 using System.Collections.Generic;
@@ -10,7 +10,7 @@ using System.Data.Common;
 using System.Reflection;
 using System.Text;
 
-namespace MyStaging.PostgreSQL.Core
+namespace MyStaging.MySql.Core
 {
     public class InsertBuilder<T> : IInsertBuilder<T> where T : class
     {
@@ -91,7 +91,7 @@ namespace MyStaging.PostgreSQL.Core
             var properties = MyStagingUtils.GetDbFields(typeof(T));
             foreach (var p in properties)
             {
-                fieldsName += "\"" + p.Name + "\",";
+                fieldsName += $"`{p.Name}`,";
             }
 
             fieldsName = fieldsName.Remove(fieldsName.Length - 1, 1);
@@ -99,32 +99,25 @@ namespace MyStaging.PostgreSQL.Core
 
             for (int i = 0; i < models.Count; i++)
             {
-                string valueString = string.Empty;
+                string paramNameString = string.Empty;
                 foreach (var pi in properties)
                 {
                     var paramName = $"@{pi.Name}_{i}";
+                    paramNameString += paramName + ",";
                     var value = pi.GetValue(models[i]);
-                    var pk = pi.GetCustomAttribute<PrimaryKeyAttribute>();
-                    var hasPK = pk != null;
-                    if (hasPK && pk.AutoIncrement)
+                    var primaryKey = pi.GetCustomAttribute<KeyAttribute>() != null;
+                    if (primaryKey || defaultValueField.ContainsKey(pi.Name.ToLower()))
                     {
-                        valueString += "default,";
+                        if (value == null
+                            || value.Equals(Guid.Empty)
+                            || zeroTime.Equals(value))
+                            value = GetDefaultValue(pi);
                     }
-                    else
-                    {
-                        valueString += paramName + ",";
-                        if (hasPK || defaultValueField.ContainsKey(pi.Name.ToLower()))
-                        {
-                            if (value == null || value.Equals(Guid.Empty) || zeroTime.Equals(value))
-                                value = GetDefaultValue(pi);
-                        }
-
-                        Parameters.Add(new Npgsql.NpgsqlParameter(paramName, value));
-                    }
+                    Parameters.Add(new MySqlParameter(paramName, value));
                 }
 
-                valueString = valueString.Remove(valueString.Length - 1, 1);
-                sqlBuilder.Append($"({valueString}),");
+                paramNameString = paramNameString.Remove(paramNameString.Length - 1, 1);
+                sqlBuilder.Append($"({paramNameString}),");
             }
 
             sqlBuilder.Remove(sqlBuilder.Length - 1, 1);

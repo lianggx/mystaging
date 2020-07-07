@@ -1,1 +1,1 @@
-dotnet MyStaging.App.dll -h 127.0.0.1 -p 5432 -u postgres -a postgres -d mystaging -pool 50 -o D:\MyGitHub\mystaging -proj MyStaging.xUnitTest
+mystaging.gen -m code -t PostgreSQL -p Pgsql -d "Host=127.0.0.1;Port=5432;Username=postgres;Password=postgres;Database=mystaging;Pooling=true;Maximum Pool Size=10;"

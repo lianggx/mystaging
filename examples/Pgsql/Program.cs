@@ -1,15 +1,7 @@
-﻿using MyStaging.Common;
-using MyStaging.PostgreSQL;
-using Newtonsoft.Json.Linq;
-using Pgsql.Model;
+﻿using MyStaging.Interface;
+using MyStaging.PostgreSQL.Generals;
 using System;
-using System.Collections;
-using System.Collections.Concurrent;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
 using System.Threading;
-using System.Threading.Tasks;
 
 namespace Pgsql
 {
@@ -19,9 +11,23 @@ namespace Pgsql
         [STAThread]
         static void Main(string[] args)
         {
+            IGeneralFactory factory = new GeneralFactory();
+            factory.CodeFirst(new MyStaging.Metadata.ProjectConfig()
+            {
+                ConnectionString = "Host=127.0.0.1;Port=5432;Username=postgres;Password=postgres;Database=mystaging;",
+                Mode = MyStaging.Metadata.GeneralMode.Db,
+                OutputDir = @"D:\MyGitHub\mystaging\examples\Pgsql\Models",
+                ProjectName = "Pgsql",
+                Provider = "PostgreSQL"
+            });
 
+
+            //PgsqlDbContext context = new PgsqlDbContext(new MyStaging.Common.StagingOptions("Pgsql", "Host=127.0.0.1;Port=5432;Username=postgres;Password=postgres;Database=mystaging;"));
+
+            //var udt3 = new Model.Udt3() { id = 1 };
+            //context.Udt3.Insert.Add(udt3);
             // ct.Start();
-            Test();
+            //Test();
 
             //   Console.WriteLine(GC.GetTotalMemory(false)/1024);
             // GC.Collect();
@@ -32,13 +38,13 @@ namespace Pgsql
 
         static void Test()
         {
-            for (int i = 0; i < 5; i++)
-            {
-                ContextTest ct = new ContextTest();
-                var thread = new Thread(new ThreadStart(ct.Start));
-                thread.IsBackground = true;
-                thread.Start();
-            }
+            //for (int i = 0; i < 5; i++)
+            //{
+            //    ContextTest ct = new ContextTest();
+            //    var thread = new Thread(new ThreadStart(ct.Start));
+            //    thread.IsBackground = true;
+            //    thread.Start();
+            //}
         }
     }
 }

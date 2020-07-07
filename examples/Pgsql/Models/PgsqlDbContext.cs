@@ -23,10 +23,11 @@ namespace Pgsql
 			NpgsqlConnection.GlobalTypeMapper.MapEnum<et_role>("public.et_role", translator);
 		}
 
-		public DbSet<PostModel> Post { get; set; }
-		public DbSet<UserModel> User { get; set; }
-		public DbSet<TopicModel> Topic { get; set; }
-		public DbSet<ArticleModel> Article { get; set; }
+		public DbSet<User> User { get; set; }
+		public DbSet<Post> Post { get; set; }
+		public DbSet<Article> Article { get; set; }
+		public DbSet<Topic> Topic { get; set; }
+		public DbSet<Udt3> Udt3 { get; set; }
 	}
 	public partial class NpgsqlNameTranslator : INpgsqlNameTranslator
 	{
