@@ -290,7 +290,7 @@ SELECT table_name,'view' as type FROM INFORMATION_SCHEMA.views WHERE table_schem
 
                 sb.AppendFormat("  \"{0}\" {1}{2} {3} {4} {5}",
                     fi.Name,
-                    fi.DbTypeFull,
+                    fi.DbTypeFull ?? fi.DbType,
                     fi.IsArray ? "[]" : "",
                     fi.PrimaryKey ? "PRIMARY KEY" : "",
                     fi.PrimaryKey || fi.NotNull ? "NOT NULL" : "NULL",
@@ -307,9 +307,10 @@ SELECT table_name,'view' as type FROM INFORMATION_SCHEMA.views WHERE table_schem
                 if (!fi.AutoIncrement) continue;
 
                 var seqName = $"{ table.Name }_{ fi.Name}_seq";
+                sb.AppendLine();
                 sb.AppendLine($"--{seqName} SEQUENCE");
                 sb.AppendLine($"ALTER TABLE \"{table.Schema}\".\"{table.Name}\" ALTER COLUMN {fi.Name} SET DEFAULT null;");
-                sb.AppendLine($"DROP SEQUENCE IF EXISTS {seqName}_seq;");
+                sb.AppendLine($"DROP SEQUENCE IF EXISTS {seqName};");
                 sb.AppendLine($"CREATE SEQUENCE {seqName} START WITH 1;");
                 sb.AppendLine($"ALTER TABLE \"{table.Schema}\".\"{table.Name}\" ALTER COLUMN {fi.Name} SET DEFAULT nextval('{seqName}'::regclass);");
                 sb.AppendLine("-- SEQUENCE END");
