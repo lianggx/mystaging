@@ -5,6 +5,7 @@ using Newtonsoft.Json.Linq;
 using MySql.Data.Types;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.ComponentModel.DataAnnotations;
+using MyStaging.DataAnnotations;
 
 namespace Mysql.Model
 {
@@ -15,12 +16,11 @@ namespace Mysql.Model
         public Guid AID { get; set; }
         [Column(TypeName = "tinyint(1)")]
         public bool State { get; set; }
-        [Key]
+        [PrimaryKey(AutoIncrement = true)]
         public int id { get; set; }
-        [Key]
         public string userid { get; set; }
         public string title { get; set; }
-        public JToken content { get; set; }
+        public string content { get; set; }
         public DateTime createtime { get; set; }
         public int? age { get; set; }
         [Column(TypeName = "double(10,2)")]

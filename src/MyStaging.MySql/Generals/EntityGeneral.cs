@@ -37,6 +37,7 @@ namespace MyStaging.MySql.Generals
             writer.WriteLine("using MySql.Data.Types;");
             writer.WriteLine("using System.ComponentModel.DataAnnotations.Schema;");
             writer.WriteLine("using System.ComponentModel.DataAnnotations;");
+            writer.WriteLine("using MyStaging.DataAnnotations;");
             writer.WriteLine();
             writer.WriteLine($"namespace {config.ProjectName}.Model");
             writer.WriteLine("{");
@@ -53,8 +54,10 @@ namespace MyStaging.MySql.Generals
                     writer.WriteLine("\t\t/// </summary>");
                 }
 
+                var autoincrement = fi.AutoIncrement ? "(AutoIncrement = true)" : "";
+
                 if (fi.PrimaryKey)
-                    writer.WriteLine("\t\t[Key]");
+                    writer.WriteLine($"\t\t[PrimaryKey{autoincrement}]");
                 if (fi.NotNull && fi.RelType == "string" && !fi.PrimaryKey)
                     writer.WriteLine("\t\t[Required]");
                 if (!string.IsNullOrEmpty(fi.DbTypeFull))

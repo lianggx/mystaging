@@ -14,6 +14,7 @@ using System.Linq;
 using System.Reflection;
 using System.Text;
 using MySql.Data.MySqlClient;
+using MyStaging.DataAnnotations;
 
 namespace MyStaging.MySql.Generals
 {
@@ -136,51 +137,97 @@ FROM information_schema.`TABLES` WHERE TABLE_SCHEMA = '{schema}'";
 
         private void DumpAlter(TableInfo newTable, TableInfo oldTable, ref StringBuilder sb)
         {
-            var alterSql = $"ALTER TABLE {newTable.Schema}.{newTable.Name}";
+            var alterSql = $"ALTER TABLE `{newTable.Schema}`.`{newTable.Name}`";
 
             // 常规
             foreach (var newFi in newTable.Fields)
             {
                 var oldFi = oldTable.Fields.Where(f => f.Name == newFi.Name).FirstOrDefault();
-                var notNull = newFi.NotNull ? "NOT NULL" : "NULL";
-                var realType = newFi.DbTypeFull ?? newFi.DbType;
+                var notNull = newFi.NotNull ? " NOT NULL" : "";
+                var realType = MysqlType.GetRealType(newFi);
                 if (oldFi == null)
+                    sb.AppendLine($"{alterSql} ADD COLUMN `{newFi.Name}` {realType} {notNull};");
+                else if (oldFi.DbType != newFi.DbType || oldFi.NotNull != newFi.NotNull)
+                    sb.AppendLine($"{alterSql} MODIFY COLUMN `{newFi.Name}` {realType}{notNull};");
+            }
+
+            // 移除旧字段
+            foreach (var oldFi in oldTable.Fields)
+            {
+                if (newTable.Fields.Where(f => f.Name == oldFi.Name).FirstOrDefault() == null)
+                    sb.AppendLine($"{alterSql} DROP COLUMN `{oldFi.Name}`;");
+            }
+
+            // PRIMARY KEY
+            var changed = PKChanged(oldTable, newTable);
+            if (changed)
+            {
+                var newPk = newTable.Fields.Where(f => f.PrimaryKey).ToList();
+
+                if (newPk.Count > 0)
                 {
-                    sb.AppendLine(alterSql + $" ADD {newFi.Name} {realType};");
-                    sb.AppendLine(alterSql + $" MODIFY {newFi.Name} {realType} {notNull};");
-                }
-                else
-                {
-                    if (oldFi.DbTypeFull != newFi.DbTypeFull)
-                        sb.AppendLine(alterSql + $" ALTER {newFi.Name} TYPE {realType};");
-                    if (oldFi.NotNull != newFi.NotNull)
+                    // 删除数据库约束
+                    if (oldTable.Fields.Where(f => f.PrimaryKey).FirstOrDefault() != null)
                     {
-                        sb.AppendLine(alterSql + $" MODIFY {newFi.Name} {realType} {notNull};");
+                        var auto_increment = oldTable.Fields.Where(f => f.PrimaryKey && f.AutoIncrement).FirstOrDefault();
+                        if (auto_increment != null)
+                        {
+                            sb.AppendLine($"{alterSql} MODIFY COLUMN `{auto_increment.Name}` {auto_increment.DbType};");
+                        }
+                        sb.AppendLine($"{alterSql} DROP PRIMARY KEY;");
+                    }
+
+                    // 增加实体约束
+                    if (newPk.Count == 1)
+                    {
+                        var auto_increment = newPk[0].AutoIncrement ? " AUTO_INCREMENT" : "";
+                        sb.AppendLine($"{alterSql} MODIFY {newPk[0].Name} {newPk[0].DbType} PRIMARY KEY{auto_increment};");
+                    }
+                    else if (newPk.Count > 1)
+                    {
+                        var pks = string.Join(",", newPk.Select(f => "`" + f.Name + "`"));
+                        sb.AppendLine($"{alterSql} Add PRIMARY KEY({pks});");
+                    }
+                }
+            }
+        }
+
+        private bool PKChanged(TableInfo oldTable, TableInfo newTable)
+        {
+            bool changed = false;
+
+            // 检查数据库结构
+            foreach (var fi in oldTable.Fields)
+            {
+                if (!fi.PrimaryKey)
+                    continue;
+
+                // PK
+                if (newTable.Fields.Where(f => f.Name == fi.Name && f.PrimaryKey && f.AutoIncrement == fi.AutoIncrement).FirstOrDefault() == null)
+                {
+                    changed = true;
+                    break;
+                }
+            }
+
+            if (!changed)
+            {
+                // 检查实体结构
+                foreach (var fi in newTable.Fields)
+                {
+                    if (!fi.PrimaryKey)
+                        continue;
+
+                    // PK
+                    if (oldTable.Fields.Where(f => f.Name == fi.Name && f.PrimaryKey && f.AutoIncrement == fi.AutoIncrement).FirstOrDefault() == null)
+                    {
+                        changed = true;
+                        break;
                     }
                 }
             }
 
-            // 检查旧约束
-            List<string> primaryKeys = new List<string>();
-            foreach (var c in oldTable.Constraints)
-            {
-                var constraint = newTable.Fields.Where(f => f.Name == c.Field).FirstOrDefault();
-                if (constraint == null)
-                {
-                    sb.AppendLine(alterSql + $" DROP CONSTRAINT {c.Name};");
-                }
-            }
-
-            // 检查新约束
-            var pks = newTable.Fields.Where(f => f.PrimaryKey);
-            foreach (var p in pks)
-            {
-                var constraint = oldTable.Constraints.Where(f => f.Field == p.Name).FirstOrDefault();
-                if (constraint == null)
-                {
-                    sb.AppendLine(alterSql + $" ADD CONSTRAINT pk_{newTable.Name} PRIMARY KEY({p.Name});");
-                }
-            }
+            return changed;
         }
 
         private void SerializeField(TableInfo table, Type type)
@@ -201,27 +248,36 @@ FROM information_schema.`TABLES` WHERE TABLE_SCHEMA = '{schema}'";
                 {
                     fi.CsType = pi.PropertyType.Name;
                     if (pi.PropertyType == typeof(string))
-                    {
-                        fi.NotNull = genericAttrs.Where(f => f == typeof(RequiredAttribute) || f == typeof(KeyAttribute)).FirstOrDefault() != null;
-                    }
+                        fi.NotNull = genericAttrs.Where(f => f == typeof(RequiredAttribute) || f == typeof(PrimaryKeyAttribute)).FirstOrDefault() != null;
                     else
-                    {
                         fi.NotNull = pi.PropertyType.IsValueType;
-                    }
                 }
-                fi.PrimaryKey = genericAttrs.Where(f => f == typeof(KeyAttribute)).FirstOrDefault() != null;
+
+                fi.PrimaryKey = genericAttrs.Where(f => f == typeof(PrimaryKeyAttribute)).FirstOrDefault() != null;
+                if (fi.PrimaryKey)
+                {
+                    var pk = pi.GetCustomAttribute<PrimaryKeyAttribute>();
+                    fi.AutoIncrement = pk.AutoIncrement;
+                }
+
                 var columnAttribute = customAttributes.Where(f => f.GetType() == typeof(ColumnAttribute)).FirstOrDefault();
+
                 if (columnAttribute != null)
                 {
                     var colAttribute = ((ColumnAttribute)columnAttribute);
                     fi.DbType = fi.DbTypeFull = colAttribute.TypeName;
+                    if (colAttribute.TypeName != "char(36)" && colAttribute.TypeName != "tinyint(1)")
+                    {
+                        var zero = colAttribute.TypeName.IndexOf("(");
+                        if (zero > 0)
+                            fi.DbType = colAttribute.TypeName.Substring(0, zero);
+                    }
                 }
                 else
                 {
-                    fi.DbType = MysqlType.GetDbType(fi.CsType.Replace("[]", ""));
                     fi.DbTypeFull = GetFullDbType(fi);
+                    fi.DbType = MysqlType.GetDbType(fi.CsType);
                 }
-                fi.IsArray = fi.CsType.Contains("[]");
 
                 table.Fields.Add(fi);
             }
@@ -246,15 +302,12 @@ FROM information_schema.`TABLES` WHERE TABLE_SCHEMA = '{schema}'";
                     );
                 sb.AppendLine();
                 if (fi.PrimaryKey)
-                {
                     keys.Add(string.Format("`{0}`", fi.Name));
-                }
             }
 
             if (keys.Count() > 0)
-            {
                 sb.AppendLine($" ,PRIMARY KEY ({string.Join(", ", keys)})");
-            }
+
             sb.AppendLine(");");
         }
 
@@ -266,9 +319,7 @@ FROM information_schema.`TABLES` WHERE TABLE_SCHEMA = '{schema}'";
                 if (fi.Length != 255 && fi.CsType == "String")
                     fullType = $"{fi.DbType}({fi.Length})";
                 else if (fi.CsType != "String" && fi.Numeric_scale > 0)
-                {
                     fullType = $"{fi.DbType}({fi.Length},{fi.Numeric_scale})";
-                }
             }
 
             return fullType;
@@ -322,6 +373,7 @@ FROM information_schema.`TABLES` WHERE TABLE_SCHEMA = '{schema}'";
 	                                            END
                                             ,0) AS LENGTEH
                                             ,COALESCE(NUMERIC_SCALE,0) AS NUMERIC_SCALE
+                                            ,(EXTRA='auto_increment') as auto_increment
                                              from information_schema.`COLUMNS` where TABLE_SCHEMA='{table.Schema}' and TABLE_NAME='{table.Name}';";
 
             _sqltext = string.Format(_sqltext, table.Schema, table.Name);
@@ -335,26 +387,18 @@ FROM information_schema.`TABLES` WHERE TABLE_SCHEMA = '{schema}'";
                     NotNull = dr["IS_NULLABLE"].ToString() == "NO",
                     Comment = dr["COLUMN_COMMENT"].ToString(),
                     Numeric_scale = Convert.ToInt32(dr["NUMERIC_SCALE"].ToString()),
-                    DbType = dr["DATA_TYPE"].ToString()
+                    DbType = dr["DATA_TYPE"].ToString(),
+                    AutoIncrement = Convert.ToBoolean(dr["auto_increment"])
                 };
 
                 fi.CsType = MysqlType.SwitchToCSharp(fi.DbType);
                 if (!fi.NotNull && fi.CsType != "string" && fi.CsType != "byte[]" && fi.CsType != "JToken")
-                {
                     fi.RelType = $"{fi.CsType}?";
-                }
                 else
-                {
                     fi.RelType = fi.CsType;
-                }
 
-                if ((fi.RelType == "string" && (fi.Length != 0 && fi.Length != 255))
-                     || (fi.Numeric_scale > 0)
-                     || (MysqlType.ContrastType(fi.DbType) == null)
-                     )
-                {
+                if ((fi.RelType == "string" && fi.Length != 0 && fi.Length != 255) || (fi.Numeric_scale > 0) || (MysqlType.ContrastType(fi.DbType) == null))
                     fi.DbTypeFull = dr["COLUMN_TYPE"].ToString();
-                }
 
                 table.Fields.Add(fi);
             }, CommandType.Text, _sqltext);
@@ -383,22 +427,6 @@ FROM information_schema.`TABLES` WHERE TABLE_SCHEMA = '{schema}'";
         }
 
         #region Properties
-        public List<string> Filters { get; set; } = new List<string>() {
-               "geometry_columns",
-               "raster_columns",
-               "spatial_ref_sys",
-               "raster_overviews",
-               "us_gaz",
-               "topology",
-               "zip_lookup_all",
-               "pg_toast",
-               "pg_temp_1",
-               "pg_toast_temp_1",
-               "pg_catalog",
-               "information_schema",
-               "tiger",
-               "tiger_data"
-        };
         public GeneralConfig Config { get; set; }
         public List<TableInfo> Tables { get; set; }
         #endregion

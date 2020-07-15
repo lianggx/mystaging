@@ -1,6 +1,7 @@
 ﻿using MySql.Data.MySqlClient;
 using MyStaging.Common;
 using MyStaging.Core;
+using MyStaging.DataAnnotations;
 using MyStaging.Interface.Core;
 using System;
 using System.Collections.Generic;
@@ -9,6 +10,7 @@ using System.Data;
 using System.Data.Common;
 using System.Reflection;
 using System.Text;
+using System.Linq;
 
 namespace MyStaging.MySql.Core
 {
@@ -32,20 +34,37 @@ namespace MyStaging.MySql.Core
         {
             this.models.Add(model);
             this.ToSQL();
-            CommandText += " RETURNING *;";
+
             var properties = MyStagingUtils.GetDbFields(typeof(T));
-            using var reader = dbContext.ByMaster().Execute.ExecuteDataReader(CommandType.Text, CommandText, this.Parameters.ToArray());
+
+            // 检查自增
+            PropertyInfo autoIncrement = null;
+            foreach (var pi in properties)
+            {
+                var pk = pi.GetCustomAttribute<PrimaryKeyAttribute>();
+                if (pk != null && pk.AutoIncrement)
+                {
+                    autoIncrement = pi;
+                    break;
+                }
+            }
+
+            if (autoIncrement != null)
+            {
+                this.CommandText += "\n SELECT LAST_INSERT_ID();";
+            }
             try
             {
-                reader.Read();
-                T obj = (T)Activator.CreateInstance(typeof(T));
-                foreach (var pi in properties)
+                using var reader = dbContext.ByMaster().Execute.ExecuteDataReader(CommandType.Text, CommandText, this.Parameters.ToArray());
+                if (autoIncrement != null)
                 {
-                    var value = reader[pi.Name];
-                    if (value != DBNull.Value)
-                        pi.SetValue(obj, value);
+                    reader.Read();
+                    var value = reader[0];
+                    value = Convert.ChangeType(value, autoIncrement.PropertyType);
+                    autoIncrement.SetValue(model, value);
                 }
-                return obj;
+
+                return model;
             }
             finally
             {
@@ -99,30 +118,35 @@ namespace MyStaging.MySql.Core
 
             for (int i = 0; i < models.Count; i++)
             {
-                string paramNameString = string.Empty;
+                string valueString = string.Empty;
                 foreach (var pi in properties)
                 {
                     var paramName = $"@{pi.Name}_{i}";
-                    paramNameString += paramName + ",";
                     var value = pi.GetValue(models[i]);
-                    var primaryKey = pi.GetCustomAttribute<KeyAttribute>() != null;
-                    if (primaryKey || defaultValueField.ContainsKey(pi.Name.ToLower()))
+                    var pk = pi.GetCustomAttribute<PrimaryKeyAttribute>();
+                    var hasPK = pk != null;
+                    if (hasPK && pk.AutoIncrement)
                     {
-                        if (value == null
-                            || value.Equals(Guid.Empty)
-                            || zeroTime.Equals(value))
-                            value = GetDefaultValue(pi);
+                        valueString += "default,";
                     }
-                    Parameters.Add(new MySqlParameter(paramName, value));
+                    else
+                    {
+                        valueString += paramName + ",";
+                        if (hasPK || defaultValueField.ContainsKey(pi.Name.ToLower()))
+                        {
+                            if (value == null || value.Equals(Guid.Empty) || zeroTime.Equals(value))
+                                value = GetDefaultValue(pi);
+                        }
+                        Parameters.Add(new MySqlParameter(paramName, value));
+                    }
                 }
-
-                paramNameString = paramNameString.Remove(paramNameString.Length - 1, 1);
-                sqlBuilder.Append($"({paramNameString}),");
+                valueString = valueString.Remove(valueString.Length - 1, 1);
+                sqlBuilder.Append($"({valueString}),");
             }
 
             sqlBuilder.Remove(sqlBuilder.Length - 1, 1);
+            sqlBuilder.Append(";");
             CommandText = sqlBuilder.ToString();
-
             return CommandText;
         }
 

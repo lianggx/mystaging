@@ -153,7 +153,7 @@ SELECT table_name,'view' as type FROM INFORMATION_SCHEMA.views WHERE table_schem
 
         private void DumpAlter(TableInfo newTable, TableInfo oldTable, ref StringBuilder sb)
         {
-            var alterSql = $"ALTER TABLE {newTable.Schema}.{newTable.Name}";
+            var alterSql = $"ALTER TABLE \"{newTable.Schema}\".\"{newTable.Name}\"";
 
             // 常规
             foreach (var newFi in newTable.Fields)
@@ -163,15 +163,25 @@ SELECT table_name,'view' as type FROM INFORMATION_SCHEMA.views WHERE table_schem
                 var realType = newFi.DbTypeFull ?? newFi.DbType;
                 if (oldFi == null)
                 {
-                    sb.AppendLine(alterSql + $" ADD {newFi.Name} {realType};");
-                    sb.AppendLine(alterSql + $" MODIFY {newFi.Name} {realType} {notNull};");
+                    sb.AppendLine($"{alterSql} ADD \"{newFi.Name}\" {realType};");
+                    sb.AppendLine($"{alterSql} MODIFY \"{newFi.Name}\" {realType} {notNull};");
                 }
                 else
                 {
                     if (oldFi.DbTypeFull != newFi.DbTypeFull)
-                        sb.AppendLine(alterSql + $" ALTER {newFi.Name} TYPE {realType};");
+                        sb.AppendLine($"{alterSql} ALTER \"{newFi.Name}\" TYPE {realType};");
                     if (oldFi.NotNull != newFi.NotNull)
-                        sb.AppendLine(alterSql + $" MODIFY {newFi.Name} {realType} {notNull};");
+                        sb.AppendLine($"{alterSql} MODIFY \"{newFi.Name}\" {realType} {notNull};");
+                }
+            }
+
+            // 移除旧字段
+            foreach (var oldFi in oldTable.Fields)
+            {
+                var newFi = newTable.Fields.Where(f => f.Name == oldFi.Name).FirstOrDefault();
+                if (newFi == null)
+                {
+                    sb.AppendLine($"{alterSql} DROP COLUMN \"{oldFi.Name}\";");
                 }
             }
 
@@ -182,7 +192,7 @@ SELECT table_name,'view' as type FROM INFORMATION_SCHEMA.views WHERE table_schem
                 var constraint = newTable.Fields.Where(f => f.Name == c.Field && f.PrimaryKey).FirstOrDefault();
                 if (constraint == null)
                 {
-                    sb.AppendLine(alterSql + $" DROP CONSTRAINT {c.Name};");
+                    sb.AppendLine($"{alterSql} DROP CONSTRAINT {c.Name};");
                 }
 
                 // SEQ
@@ -196,7 +206,7 @@ SELECT table_name,'view' as type FROM INFORMATION_SCHEMA.views WHERE table_schem
                         var lastIndexOf = seq.ColumnDefault.LastIndexOf("'");
                         var seqName = seq.ColumnDefault.Substring(indexOf, lastIndexOf - indexOf);
 
-                        sb.AppendLine($"ALTER TABLE \"{oldTable.Schema}\".\"{oldTable.Name}\" ALTER COLUMN {seq.Name} SET DEFAULT null;");
+                        sb.AppendLine($"{alterSql} ALTER COLUMN {seq.Name} SET DEFAULT null;");
                         sb.AppendLine($"DROP SEQUENCE IF EXISTS {seqName};");
                     }
                 }
@@ -212,7 +222,7 @@ SELECT table_name,'view' as type FROM INFORMATION_SCHEMA.views WHERE table_schem
                 var constraint = oldTable.Constraints.Where(f => f.Field == fi.Name).FirstOrDefault();
                 if (constraint == null)
                 {
-                    sb.AppendLine(alterSql + $" ADD CONSTRAINT pk_{newTable.Name} PRIMARY KEY({fi.Name});");
+                    sb.AppendLine($"{alterSql} ADD CONSTRAINT pk_{newTable.Name} PRIMARY KEY({fi.Name});");
                 }
 
                 // SEQ
@@ -222,7 +232,7 @@ SELECT table_name,'view' as type FROM INFORMATION_SCHEMA.views WHERE table_schem
                     {
                         var seqName = $"{ newTable.Name }_{ fi.Name}_seq";
                         sb.AppendLine($"CREATE SEQUENCE {seqName} START WITH 1;");
-                        sb.AppendLine($"ALTER TABLE \"{newTable.Schema}\".\"{newTable.Name}\" ALTER COLUMN {fi.Name} SET DEFAULT nextval('{seqName}'::regclass);");
+                        sb.AppendLine($"ALTER TABLE \"{newTable.Schema}\".\"{newTable.Name}\" ALTER COLUMN \"{fi.Name}\" SET DEFAULT nextval('{seqName}'::regclass);");
                     }
                 }
             }

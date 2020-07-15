@@ -594,7 +594,8 @@ namespace MyStaging.MySql.Core
             string tableName = MyStagingUtils.GetMapping(mastertype);
             // master table
             StringBuilder sqlText = new StringBuilder();
-            sqlText.AppendLine($"SELECT {string.Join(",", Fields)} FROM  {tableName} {masterAlisName}");
+            var fields = string.Join(",", Fields);
+            sqlText.AppendLine($"SELECT {fields} FROM  {tableName} {masterAlisName}");
             // union
             int _index = 2;
             foreach (var item in UnionList)

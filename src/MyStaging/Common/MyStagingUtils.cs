@@ -38,7 +38,7 @@ namespace MyStaging.Common
                 tableName = mapping.Name;
                 if (!string.IsNullOrEmpty(mapping.Schema))
                 {
-                    tableName = mapping.Schema + "." + tableName;
+                    tableName = $"`{mapping.Schema}`.`{tableName}`";
                 }
             }
             else

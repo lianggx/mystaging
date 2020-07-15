@@ -14,5 +14,6 @@ namespace Mysql
 
 		public DbSet<Article> Article { get; set; }
 		public DbSet<M_type> M_type { get; set; }
+		public DbSet<Test_id> Test_id { get; set; }
 	}
 }

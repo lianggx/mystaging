@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using MyStaging.Metadata;
+using System.Collections.Generic;
 
 namespace MyStaging.MySql
 {
@@ -40,15 +41,15 @@ namespace MyStaging.MySql
         };
         private readonly static Dictionary<string, string> dbTypes = new Dictionary<string, string> {
                 { "Guid","char(36)" },
-                { "Int16", "short"},
+                { "Int16", "smallint"},
                 { "Int32", "int"},
                 { "Int64", "bigint"},
-                { "UInt16", "short"},
+                { "UInt16", "smallint"},
                 { "UInt32", "int"},
                 { "UInt64", "bigint"},
                 { "Decimal", "decimal"},
                 { "Double","double"},
-                { "Single","float4"},
+                { "Single","float"},
                 { "Boolean", "tinyint(1)" },
                 { "Byte","bit" },
                 { "SByte","tinyint" },
@@ -70,6 +71,7 @@ namespace MyStaging.MySql
                 { "varchar", "string"},
                 { "binary", "byte[]" },
                 { "bit", "byte" },
+                { "timestamp", "DateTime" },
                 { "datetime", "DateTime" },
                 { "time", "TimeSpan"},
                 { "json", "JToken"},
@@ -106,6 +108,12 @@ namespace MyStaging.MySql
                 }
             }
             return null;
+        }
+
+        public static string GetRealType(DbFieldInfo fi)
+        {
+            var realType = fi.DbTypeFull ?? fi.DbType;
+            return realType == "varchar" || realType == "char" ? realType + "(255)" : realType;
         }
     }
 }

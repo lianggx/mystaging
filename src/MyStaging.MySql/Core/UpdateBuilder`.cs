@@ -96,7 +96,6 @@ namespace MyStaging.MySql.Core
             CheckNotNull.NotEmpty(WhereConditions, "The update operation must specify where conditions!");
 
             this.ToSQL();
-            this.CommandText += " RETURNING *;";
             var properties = MyStagingUtils.GetDbFields(typeof(T));
             using var reader = dbContext.ByMaster().Execute.ExecuteDataReader(CommandType.Text, CommandText, this.Parameters.ToArray());
             try
@@ -124,8 +123,8 @@ namespace MyStaging.MySql.Core
         public override string ToSQL()
         {
             string tableName = MyStagingUtils.GetMapping(typeof(T));
-            this.CommandText = $"UPDATE `{tableName}` a SET {string.Join(",", this.setList)} {"WHERE " + string.Join("\nAND ", WhereConditions)}";
-
+            this.CommandText = $"UPDATE {tableName} a SET {string.Join(",", this.setList)} {"WHERE " + string.Join("\nAND ", WhereConditions)};";
+            this.CommandText += $"\n SELECT * FROM {tableName} {"WHERE " + string.Join("\nAND ", WhereConditions)};";
             return this.CommandText;
         }
 

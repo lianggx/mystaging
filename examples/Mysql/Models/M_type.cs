@@ -5,13 +5,14 @@ using Newtonsoft.Json.Linq;
 using MySql.Data.Types;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.ComponentModel.DataAnnotations;
+using MyStaging.DataAnnotations;
 
 namespace Mysql.Model
 {
 	[Table(name: "m_type", Schema = "mystaging")]
 	public partial class M_type
 	{
-		[Key]
+		[PrimaryKey]
 		public sbyte t1 { get; set; }
 		public short t2 { get; set; }
 		[Column(TypeName = "mediumint(9)")]
@@ -19,7 +20,7 @@ namespace Mysql.Model
 		public int? t4 { get; set; }
 		public int? t5 { get; set; }
 		public long? t6 { get; set; }
-		public ulong? t7 { get; set; }
+		public long? t7 { get; set; }
 		public double? t8 { get; set; }
 		public double? t9 { get; set; }
 		public float? t10 { get; set; }
@@ -33,8 +34,7 @@ namespace Mysql.Model
 		public TimeSpan? t16 { get; set; }
 		[Column(TypeName = "year(4)")]
 		public DateTime? t17 { get; set; }
-		[Column(TypeName = "timestamp(6)")]
-		public DateTime? t18 { get; set; }
+		public DateTime t18 { get; set; }
 		public DateTime? t19 { get; set; }
 		[Column(TypeName = "tinyblob")]
 		public byte[] t20 { get; set; }
@@ -52,18 +52,12 @@ namespace Mysql.Model
 		public string t26 { get; set; }
 		[Column(TypeName = "enum('')")]
 		public string t27 { get; set; }
-		public byte[] t29 { get; set; }
+		public long? t29 { get; set; }
 		[Column(TypeName = "varbinary(255)")]
 		public byte[] t30 { get; set; }
 		public JToken t39 { get; set; }
-		/// <summary>
-		/// BOOLEAN
-		/// </summary>
 		[Column(TypeName = "tinyint(1)")]
 		public bool? T40 { get; set; }
-		/// <summary>
-		/// GUID
-		/// </summary>
 		[Column(TypeName = "char(36)")]
 		public Guid? t41 { get; set; }
 	}
