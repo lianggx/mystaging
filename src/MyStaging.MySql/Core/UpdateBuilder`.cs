@@ -122,7 +122,7 @@ namespace MyStaging.MySql.Core
         /// <returns></returns>
         public override string ToSQL()
         {
-            string tableName = MyStagingUtils.GetMapping(typeof(T));
+            string tableName = MyStagingUtils.GetMapping(typeof(T), ProviderType.MySql);
             this.CommandText = $"UPDATE {tableName} a SET {string.Join(",", this.setList)} {"WHERE " + string.Join("\nAND ", WhereConditions)};";
             this.CommandText += $"\n SELECT * FROM {tableName} {"WHERE " + string.Join("\nAND ", WhereConditions)};";
             return this.CommandText;

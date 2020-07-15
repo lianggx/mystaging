@@ -83,7 +83,7 @@ namespace MyStaging.PostgreSQL.Core
 
             Parameters.Clear();
 
-            string tableName = MyStagingUtils.GetMapping(typeof(T));
+            string tableName = MyStagingUtils.GetMapping(typeof(T), ProviderType.PostgreSQL);
             StringBuilder sqlBuilder = new StringBuilder();
             sqlBuilder.Append($"INSERT INTO {tableName}");
 

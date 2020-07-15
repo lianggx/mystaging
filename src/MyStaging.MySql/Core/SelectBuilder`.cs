@@ -591,7 +591,7 @@ namespace MyStaging.MySql.Core
         public override string ToSQL()
         {
             Type mastertype = typeof(T);
-            string tableName = MyStagingUtils.GetMapping(mastertype);
+            string tableName = MyStagingUtils.GetMapping(mastertype, ProviderType.MySql);
             // master table
             StringBuilder sqlText = new StringBuilder();
             var fields = string.Join(",", Fields);
@@ -607,7 +607,7 @@ namespace MyStaging.MySql.Core
                     AliasUnion = item.UnionAlisName
                 };
                 expression.Visit(item.Body);
-                string unionTableName = MyStagingUtils.GetMapping(item.Model);
+                string unionTableName = MyStagingUtils.GetMapping(item.Model, ProviderType.MySql);
                 sqlText.AppendLine(item.UnionType.ToString().Replace("_", " ") + " " + unionTableName + " " + expression.AliasUnion + " ON " + expression.SqlText.Builder.ToString());
                 foreach (var p in expression.SqlText.Parameters)
                 {

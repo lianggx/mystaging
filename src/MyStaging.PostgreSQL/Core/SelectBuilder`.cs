@@ -585,7 +585,7 @@ namespace MyStaging.PostgreSQL.Core
         public override string ToSQL()
         {
             Type mastertype = typeof(T);
-            string tableName = MyStagingUtils.GetMapping(mastertype);
+            string tableName = MyStagingUtils.GetMapping(mastertype, ProviderType.PostgreSQL);
             // master table
             StringBuilder sqlText = new StringBuilder();
             sqlText.AppendLine($"SELECT {string.Join(",", Fields)} FROM  {tableName} {masterAlisName}");
@@ -600,7 +600,7 @@ namespace MyStaging.PostgreSQL.Core
                     AliasUnion = item.UnionAlisName
                 };
                 expression.Visit(item.Body);
-                string unionTableName = MyStagingUtils.GetMapping(item.Model);
+                string unionTableName = MyStagingUtils.GetMapping(item.Model, ProviderType.PostgreSQL);
                 sqlText.AppendLine(item.UnionType.ToString().Replace("_", " ") + " " + unionTableName + " " + expression.AliasUnion + " ON " + expression.SqlText.Builder.ToString());
                 foreach (var p in expression.SqlText.Parameters)
                 {

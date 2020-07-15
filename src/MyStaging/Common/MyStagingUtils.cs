@@ -1,4 +1,5 @@
-﻿using System;
+﻿using MyStaging.Metadata;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Data;
@@ -9,6 +10,11 @@ namespace MyStaging.Common
 {
     public class MyStagingUtils
     {
+        public static Dictionary<ProviderType, string> SQLSeparator = new Dictionary<ProviderType, string>
+        {
+            {ProviderType.MySql,"`" },
+            {ProviderType.PostgreSQL,"\"" },
+        };
         public static List<PropertyInfo> GetDbFields(Type type)
         {
             var properties = new List<PropertyInfo>();
@@ -27,24 +33,30 @@ namespace MyStaging.Common
         /// <summary>
         ///  根据传入的实体对象获得数据库架构级表的映射名称
         /// </summary>
-        /// <param name="t"></param>
         /// <returns></returns>
-        public static string GetMapping(Type t)
+        public static string GetMapping(Type t, ProviderType providerType)
         {
-            TypeInfo typeInfo = t.GetTypeInfo();
+            TypeInfo type = t.GetTypeInfo();
             string tableName;
-            if (typeInfo.GetCustomAttribute(typeof(TableAttribute)) is TableAttribute mapping)
+            if (type.GetCustomAttribute(typeof(TableAttribute)) is TableAttribute table)
             {
-                tableName = mapping.Name;
-                if (!string.IsNullOrEmpty(mapping.Schema))
-                {
-                    tableName = $"`{mapping.Schema}`.`{tableName}`";
-                }
+                tableName = GetTableName(table.Schema, table.Name, providerType);
             }
             else
                 throw new NotSupportedException("在表连接实体上找不到特性 TableAttribute ，请确认数据库实体模型");
 
             return tableName;
+        }
+
+        public static string GetTableName(TableInfo table, ProviderType providerType) => GetTableName(table.Schema, table.Name, providerType);
+
+        private static string GetTableName(string schema, string name, ProviderType providerType)
+        {
+            var separator = SQLSeparator[providerType];
+            if (string.IsNullOrEmpty(schema))
+                return $"{separator}{name}{separator}";
+            else
+                return $"{separator}{schema}{separator}.{separator}{name}{separator}";
         }
 
         /// <summary>

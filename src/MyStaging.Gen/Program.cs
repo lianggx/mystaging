@@ -120,7 +120,7 @@ namespace MyStaging.App
             config.Mode = mode == "db" ? GeneralMode.Db : GeneralMode.Code;
             if (config.Mode == GeneralMode.Db && string.IsNullOrEmpty(config.OutputDir))
             {
-                config.OutputDir = Path.Combine(config.ProjectName, "Models");
+                config.OutputDir = Path.Combine(config.ProjectName, "Model");
             }
 
             return config;

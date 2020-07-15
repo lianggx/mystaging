@@ -73,8 +73,8 @@ namespace MyStaging.PostgreSQL.Core
         /// <returns></returns>
         public override string ToSQL()
         {
-            string tableName = MyStagingUtils.GetMapping(typeof(T));
-            this.CommandText = $"DELETE FROM {tableName} a {"WHERE " + string.Join("\nAND ", WhereConditions)}";
+            string tableName = MyStagingUtils.GetMapping(typeof(T), ProviderType.PostgreSQL);
+            this.CommandText = $"DELETE FROM {tableName} {"WHERE " + string.Join("\nAND ", WhereConditions)}";
 
             return this.CommandText;
         }

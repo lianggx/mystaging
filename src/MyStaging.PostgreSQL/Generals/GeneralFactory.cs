@@ -115,25 +115,39 @@ SELECT table_name,'view' as type FROM INFORMATION_SCHEMA.views WHERE table_schem
                 throw new FileNotFoundException($"在 {dir} 搜索不到文件 {fileName}");
 
             var types = Assembly.LoadFrom(providerFile).GetTypes();
+            List<TableInfo> entitys = new List<TableInfo>();
             foreach (var t in types)
             {
                 var tableAttribute = t.GetCustomAttribute<TableAttribute>();
                 if (tableAttribute == null)
                     continue;
 
-                var newTable = new TableInfo
+                entitys.Add(new TableInfo
                 {
                     Name = tableAttribute.Name,
-                    Schema = tableAttribute.Schema
-                };
+                    Schema = tableAttribute.Schema,
+                    EntityType = t
+                });
+            }
 
-                SerializeField(newTable, t);
+            foreach (var ent in entitys)
+            {
+                SerializeField(ent, ent.EntityType);
 
-                var oldTable = Tables.Where(f => f.Schema == newTable.Schema && f.Name == newTable.Name).FirstOrDefault();
-                if (oldTable == null) // CREATE
-                    DumpTable(newTable, ref sb);
+                var table = Tables.Where(f => f.Schema == ent.Schema && f.Name == ent.Name).FirstOrDefault();
+                if (table == null) // CREATE
+                    DumpTable(ent, ref sb);
                 else // ALTER
-                    DumpAlter(newTable, oldTable, ref sb);
+                    DumpAlter(ent, table, ref sb);
+            }
+
+            // 删除实体
+            foreach (var table in Tables)
+            {
+                if (entitys.Where(f => f.Schema == table.Schema && f.Name == table.Name).FirstOrDefault() == null)
+                {
+                    sb.AppendLine($"DROP TABLE {MyStagingUtils.GetTableName(table, ProviderType.PostgreSQL)};");
+                }
             }
 
             var sql = sb.ToString();
@@ -153,7 +167,7 @@ SELECT table_name,'view' as type FROM INFORMATION_SCHEMA.views WHERE table_schem
 
         private void DumpAlter(TableInfo newTable, TableInfo oldTable, ref StringBuilder sb)
         {
-            var alterSql = $"ALTER TABLE \"{newTable.Schema}\".\"{newTable.Name}\"";
+            var alterSql = $"ALTER TABLE {MyStagingUtils.GetTableName(newTable, ProviderType.PostgreSQL)}";
 
             // 常规
             foreach (var newFi in newTable.Fields)
@@ -291,7 +305,8 @@ SELECT table_name,'view' as type FROM INFORMATION_SCHEMA.views WHERE table_schem
 
         private void DumpTable(TableInfo table, ref StringBuilder sb)
         {
-            sb.AppendLine($"CREATE TABLE {table.Schema}.{table.Name}");
+            var tableName = MyStagingUtils.GetTableName(table, ProviderType.PostgreSQL);
+            sb.AppendLine($"CREATE TABLE {tableName}");
             sb.AppendLine("(");
             int length = table.Fields.Count;
             for (int i = 0; i < length; i++)
@@ -319,10 +334,10 @@ SELECT table_name,'view' as type FROM INFORMATION_SCHEMA.views WHERE table_schem
                 var seqName = $"{ table.Name }_{ fi.Name}_seq";
                 sb.AppendLine();
                 sb.AppendLine($"--{seqName} SEQUENCE");
-                sb.AppendLine($"ALTER TABLE \"{table.Schema}\".\"{table.Name}\" ALTER COLUMN {fi.Name} SET DEFAULT null;");
+                sb.AppendLine($"ALTER TABLE {tableName} ALTER COLUMN {fi.Name} SET DEFAULT null;");
                 sb.AppendLine($"DROP SEQUENCE IF EXISTS {seqName};");
                 sb.AppendLine($"CREATE SEQUENCE {seqName} START WITH 1;");
-                sb.AppendLine($"ALTER TABLE \"{table.Schema}\".\"{table.Name}\" ALTER COLUMN {fi.Name} SET DEFAULT nextval('{seqName}'::regclass);");
+                sb.AppendLine($"ALTER TABLE {tableName} ALTER COLUMN {fi.Name} SET DEFAULT nextval('{seqName}'::regclass);");
                 sb.AppendLine("-- SEQUENCE END");
             }
         }
@@ -399,7 +414,7 @@ where a.typtype = 'e' order by oid asc";
                 writer.WriteLine();
                 writer.WriteLine($"namespace {Config.ProjectName}");
                 writer.WriteLine("{");
-                writer.WriteLine($"\tpublic class {contextName} : DbContext");
+                writer.WriteLine($"\tpublic partial class {contextName} : DbContext");
                 writer.WriteLine("\t{");
                 writer.WriteLine($"\t\tpublic {contextName}(StagingOptions options) : base(options, ProviderType.PostgreSQL)");
                 writer.WriteLine("\t\t{");

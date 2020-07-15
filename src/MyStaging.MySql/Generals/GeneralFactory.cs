@@ -99,25 +99,39 @@ FROM information_schema.`TABLES` WHERE TABLE_SCHEMA = '{schema}'";
                 throw new FileNotFoundException($"在 {dir} 搜索不到文件 {fileName}");
 
             var types = Assembly.LoadFrom(providerFile).GetTypes();
+            List<TableInfo> entitys = new List<TableInfo>();
             foreach (var t in types)
             {
                 var tableAttribute = t.GetCustomAttribute<TableAttribute>();
                 if (tableAttribute == null)
                     continue;
 
-                var newTable = new TableInfo
+                entitys.Add(new TableInfo
                 {
                     Name = tableAttribute.Name,
-                    Schema = tableAttribute.Schema
-                };
+                    Schema = tableAttribute.Schema,
+                    EntityType = t
+                });
+            }
 
-                SerializeField(newTable, t);
+            foreach (var ent in entitys)
+            {
+                SerializeField(ent, ent.EntityType);
 
-                var oldTable = Tables.Where(f => f.Schema == newTable.Schema && f.Name == newTable.Name).FirstOrDefault();
-                if (oldTable == null) // CREATE
-                    DumpTable(newTable, ref sb);
+                var table = Tables.Where(f => f.Schema == ent.Schema && f.Name == ent.Name).FirstOrDefault();
+                if (table == null) // CREATE
+                    DumpTable(ent, ref sb);
                 else // ALTER
-                    DumpAlter(newTable, oldTable, ref sb);
+                    DumpAlter(ent, table, ref sb);
+            }
+
+            // 删除实体
+            foreach (var table in Tables)
+            {
+                if (entitys.Where(f => f.Schema == table.Schema && f.Name == table.Name).FirstOrDefault() == null)
+                {
+                    sb.AppendLine($"DROP TABLE {MyStagingUtils.GetTableName(table, ProviderType.MySql)};");
+                }
             }
 
             var sql = sb.ToString();
@@ -137,7 +151,8 @@ FROM information_schema.`TABLES` WHERE TABLE_SCHEMA = '{schema}'";
 
         private void DumpAlter(TableInfo newTable, TableInfo oldTable, ref StringBuilder sb)
         {
-            var alterSql = $"ALTER TABLE `{newTable.Schema}`.`{newTable.Name}`";
+
+            var alterSql = $"ALTER TABLE {MyStagingUtils.GetTableName(newTable, ProviderType.MySql)}";
 
             // 常规
             foreach (var newFi in newTable.Fields)
@@ -277,6 +292,10 @@ FROM information_schema.`TABLES` WHERE TABLE_SCHEMA = '{schema}'";
                 {
                     fi.DbTypeFull = GetFullDbType(fi);
                     fi.DbType = MysqlType.GetDbType(fi.CsType);
+                    if (fi.DbType == "varchar" || fi.DbType == "char")
+                    {
+                        fi.DbTypeFull = $"{fi.DbType}(255)";
+                    }
                 }
 
                 table.Fields.Add(fi);
@@ -285,7 +304,7 @@ FROM information_schema.`TABLES` WHERE TABLE_SCHEMA = '{schema}'";
 
         private void DumpTable(TableInfo table, ref StringBuilder sb)
         {
-            sb.AppendLine($"CREATE TABLE {table.Schema}.{table.Name}");
+            sb.AppendLine($"CREATE TABLE {MyStagingUtils.GetTableName(table, ProviderType.MySql)}");
             sb.AppendLine("(");
             int length = table.Fields.Count;
             List<string> keys = new List<string>();
@@ -293,20 +312,21 @@ FROM information_schema.`TABLES` WHERE TABLE_SCHEMA = '{schema}'";
             {
                 var fi = table.Fields[i];
 
-                sb.AppendFormat(" `{0}` {1} {2}{3} {4}",
+                sb.AppendFormat(" `{0}` {1} {2}{3},\n",
                     fi.Name,
-                    fi.DbType,
-                    fi.IsArray ? "[]" : "",
-                    fi.PrimaryKey || fi.NotNull ? "NOT NULL" : "DEFAULT NULL",
-                    (i + 1 == length) ? "" : ","
+                    fi.DbTypeFull ?? fi.DbType,
+                    fi.AutoIncrement ? "AUTO_INCREMENT" : "",
+                    fi.PrimaryKey || fi.NotNull ? " NOT NULL" : ""
                     );
-                sb.AppendLine();
+
                 if (fi.PrimaryKey)
                     keys.Add(string.Format("`{0}`", fi.Name));
             }
 
             if (keys.Count() > 0)
-                sb.AppendLine($" ,PRIMARY KEY ({string.Join(", ", keys)})");
+                sb.AppendLine($" PRIMARY KEY ({string.Join(", ", keys)})");
+            else
+                sb.Remove(sb.Length - 1, 1);
 
             sb.AppendLine(");");
         }
@@ -339,7 +359,7 @@ FROM information_schema.`TABLES` WHERE TABLE_SCHEMA = '{schema}'";
                 writer.WriteLine();
                 writer.WriteLine($"namespace {Config.ProjectName}");
                 writer.WriteLine("{");
-                writer.WriteLine($"\tpublic class {contextName} : DbContext");
+                writer.WriteLine($"\tpublic partial class {contextName} : DbContext");
                 writer.WriteLine("\t{");
                 writer.WriteLine($"\t\tpublic {contextName}(StagingOptions options) : base(options, ProviderType.MySql)");
                 writer.WriteLine("\t\t{");

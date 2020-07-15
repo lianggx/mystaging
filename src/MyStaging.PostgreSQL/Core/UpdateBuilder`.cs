@@ -146,7 +146,7 @@ namespace MyStaging.PostgreSQL.Core
         /// <returns></returns>
         public override string ToSQL()
         {
-            string tableName = MyStagingUtils.GetMapping(typeof(T));
+            string tableName = MyStagingUtils.GetMapping(typeof(T), ProviderType.PostgreSQL);
             this.CommandText = $"UPDATE {tableName} a SET {string.Join(",", this.setList)} {"WHERE " + string.Join("\nAND ", WhereConditions)}";
 
             return this.CommandText;
