@@ -39,11 +39,18 @@ namespace Mysql
                 State = true,
                 title = "回顾与众不同的10年"
             };
-            var a2 = context.Article.Insert.Add(newArticle);
 
+            var list = new System.Collections.Generic.List<Article>();
+            for (int i = 0; i < 10; i++)
+            {
+                list.Add(newArticle);
+            }
+            //  var a2 = context.Article.Insert.Add(newArticle);
+            var affrows = context.Article.Insert.AddRange(list).SaveChange();
+            Console.WriteLine(affrows);
             // context.Article.Delete.Where(f => f.id == a2.id).SaveChange();
 
-            Console.WriteLine(a2.id);
+            //    Console.WriteLine(a2.id);
 
             Console.WriteLine("success.....");
             Console.ReadKey();

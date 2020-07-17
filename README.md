@@ -1,6 +1,6 @@
 # 欢迎使用 MyStaging
 
- MyStaging 是一款基于 .NETCore 平台的 ORM 中间件，提供简单易用的接入工具，支持 DbFirst/CodeFirst，并支持多种数据库类型，和 EF 不同的是，对单个项目的多路上下文支持中引进了主从数据库概念，查询默认从库，也可以指定主库，删除/修改/新增操作默认走主库，地层还提供了对单个查询数据的分布式缓存操作，可以自由灵活配置，目前 MyStaging 还在持续完善中，欢迎加入 Star/Contributors/Fork。
+ MyStaging 是一款基于 .NETCore 平台的 ORM 中间件，提供简单易用的接入工具，支持 DbFirst/CodeFirst，而且两种模式（DbFirst/CodeFirst）可以无法切换，比如一开始你是先创建数据库，然后生成了实体，在接下来的开发过程中，改动实体对象后，可以使用CodeFirst进行无缝迁移，自由使用DbFirst/CodeFirst进行迁移工作 。支持多种数据库类型，和 EF 不同的是，对单个项目的多路上下文支持中引进了主从数据库概念，查询默认从库，也可以指定主库，删除/修改/新增操作默认走主库，地层还提供了对单个查询数据的分布式缓存操作，可以自由灵活配置，目前 MyStaging 还在持续完善中，欢迎加入 Star/Contributors/Fork。
 
 ```
 ////////////////////////////////////////////////////////
@@ -17,9 +17,9 @@
 ```
 
 # 在包管理控制台安装 MyStaging.Gen 到 dotnet tool 命令集
-  MyStaging.Gen 是一个独立的数据库迁移组件，其本质上是一个控制台程序，你可以单独下载这个包到本地，也可以将他注册到 dotnet tool ，注册到 dotnet tool 后，你就可以在 visual studio 中使用命令进行数据库的迁移工作。
+  MyStaging.Gen 是一个独立的数据库迁移组件，其本质上是一个控制台程序，你可以单独下载这个包到本地，也可以将他安装到 dotnet tool ，安装到 dotnet tool 后，你就可以在 visual studio 中使用命令进行数据库的迁移工作。
   
-* 安装
+* 安装迁移工具到 dotnet tool
 
 ```
 dotnet tool install -g MyStaging.Gen
