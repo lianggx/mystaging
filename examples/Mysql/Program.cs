@@ -28,24 +28,31 @@ namespace Mysql
             var customer = new Customer { Name = "好久不见" };
             context.Customer.Insert.Add(customer);
 
-            var article = context.Article.Select.InnerJoin<Customer>("b", (a, b) => a.userid == b.Id).Where<Customer>(f => f.Id == 2).ToOne();
+            //// 单个查询
+            //var article = context.Customer.Select.Where(f => f.Id == 2 && f.Name == "Ron").ToOne();
+            //// 列表查询，排序、分页、分组
+            //var articles = context.Customer.Select.OrderBy(f => f.Id).Page(1, 10).GroupBy("Name").ToList();
+            //// 表连接查询
+            //var article = context.Article.Select.InnerJoin<Customer>("b", (a, b) => a.userid == b.Id).Where<Customer>(f => f.Id == 2).ToOne();
+            //// 首字段查询，ToScalar 参数可以传递 Sql 参数，比如 SUM(x)
+            //var id = context.Customer.Select.Where(f => f.Id == 2 && f.Name == "Ron").ToScalar<int>("Id");
             var a3 = context.Article.Update.SetValue(f => f.content, "未来已来，从这里开始").Where(f => f.id == 1).SaveChange();
-            var newArticle = new Article()
+            var article = new Article()
             {
-                content = "博客内容简单无聊",
+                content = "你是谁？你从哪里来？要到哪里去？",
                 createtime = DateTime.Now,
                 userid = customer.Id,
                 IP = "127.0.0.1",
                 State = true,
-                title = "回顾与众不同的10年"
+                title = "振聋发聩的人生三问"
             };
 
             var list = new System.Collections.Generic.List<Article>();
             for (int i = 0; i < 10; i++)
             {
-                list.Add(newArticle);
+                list.Add(article);
             }
-            //  var a2 = context.Article.Insert.Add(newArticle);
+            var a2 = context.Article.Insert.Add(article);
             var affrows = context.Article.Insert.AddRange(list).SaveChange();
             Console.WriteLine(affrows);
             // context.Article.Delete.Where(f => f.id == a2.id).SaveChange();

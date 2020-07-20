@@ -14,6 +14,9 @@ namespace Mysql.Model
     {
         [Column(TypeName = "tinyint(1)")]
         public bool State { get; set; }
+        /// <summary>
+        ///  主键，自增
+        /// </summary>
         [PrimaryKey(AutoIncrement = true)]
         public int id { get; set; }
         public int userid { get; set; }
