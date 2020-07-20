@@ -2,6 +2,7 @@
 using MyStaging.Core;
 using MyStaging.DataAnnotations;
 using MyStaging.Interface.Core;
+using MyStaging.Metadata;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;

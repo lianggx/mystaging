@@ -231,6 +231,18 @@ namespace MyStaging.Common
         }
 
         /// <summary>
+        ///  隐式转换到 string
+        /// </summary>
+        /// <param name="objectId"></param>
+        public static implicit operator String(ObjectId objectId) => objectId.ToString();
+
+        /// <summary>
+        ///  隐式转换到 ObjectId
+        /// </summary>
+        /// <param name="objectId"></param>
+        public static implicit operator ObjectId(string objectId) => new ObjectId(objectId);
+
+        /// <summary>
         ///  获取一个长度为 24 位的值为 000000000000000000000000 的编号
         /// </summary>
         /// <returns></returns>

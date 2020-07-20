@@ -28,7 +28,6 @@ namespace MyStaging.Common
             GenerateConstants();
         }
 
-
         /// <summary>
         ///  产生一个新的 24 位唯一编号
         /// </summary>

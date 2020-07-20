@@ -3,12 +3,12 @@ using System.Collections.Generic;
 using System.Linq.Expressions;
 using System.Text;
 
-namespace MyStaging.Common
+namespace MyStaging.Metadata
 {
     /// <summary>
     ///  lambda 表达式模型对象
     /// </summary>
-    public class ExpressionModel
+    public class ExpressionInfo
     {
         /// <summary>
         ///  连接表别名

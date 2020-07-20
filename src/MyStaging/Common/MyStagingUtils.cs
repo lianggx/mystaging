@@ -127,5 +127,35 @@ namespace MyStaging.Common
 
             return exp.Member.Name;
         }
+
+        /// <summary>
+        ///  将首字母转大写
+        /// </summary>
+        /// <param name="text"></param>
+        /// <returns></returns>
+        public static string ToUpperPascal(string text)
+        {
+            if (string.IsNullOrEmpty(text)) return text;
+
+            string _first = text.Substring(0, 1).ToUpper();
+            string _value = text.Substring(1);
+
+            return $"{_first}{_value}";
+        }
+
+        /// <summary>
+        ///  将首字母转小写
+        /// </summary>
+        /// <param name="text"></param>
+        /// <returns></returns>
+        public static string ToLowerPascal(string text)
+        {
+            if (string.IsNullOrEmpty(text)) return text;
+
+            string _first = text.Substring(0, 1).ToLower();
+            string _value = text.Substring(1);
+
+            return $"{_first}{_value}";
+        }
     }
 }

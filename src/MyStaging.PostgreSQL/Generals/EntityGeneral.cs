@@ -70,14 +70,15 @@ namespace MyStaging.PostgreSQL.Generals
 
         private string CreateName(string separator = "")
         {
+            var tableName = MyStagingUtils.ToUpperPascal(table.Name);
             string className;
             if (table.Schema == "public")
             {
-                className = separator + table.Name.ToUpperPascal();
+                className = tableName;
             }
             else
             {
-                className = $"{table.Schema.ToUpperPascal()}{separator}{table.Name.ToUpperPascal()}";
+                className = $"{MyStagingUtils.ToUpperPascal(table.Schema)}{separator}{tableName}";
             }
 
             return className;

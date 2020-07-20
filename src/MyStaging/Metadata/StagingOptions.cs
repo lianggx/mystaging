@@ -4,7 +4,7 @@ using MyStaging.Core;
 using MyStaging.Interface;
 using System;
 
-namespace MyStaging.Common
+namespace MyStaging.Metadata
 {
     public class StagingOptions
     {

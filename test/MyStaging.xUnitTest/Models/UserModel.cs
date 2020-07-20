@@ -1,20 +1,22 @@
-﻿using System;
-using System.ComponentModel.DataAnnotations;
+﻿using MyStaging.DataAnnotations;
+using System;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace MyStaging.xUnitTest.Models
 {
+    [Table(name: "user", Schema = "mystaging")]
     public partial class UserModel
     {
-        [Key]
-        public string id { get; set; }
-        public string loginname { get; set; }
-        public string password { get; set; }
-        public string nickname { get; set; }
-        public bool? sex { get; set; }
-        public int age { get; set; }
-        public decimal money { get; set; }
-        public DateTime createtime { get; set; }
-        public decimal wealth { get; set; }
+        [PrimaryKey]
+        public int Id { get; set; }
+        public string LoginName { get; set; }
+        public string Password { get; set; }
+        public string Nickname { get; set; }
+        public bool? Sex { get; set; }
+        public int Age { get; set; }
+        public decimal Money { get; set; }
+        public DateTime CreateTime { get; set; }
+        public decimal Wealth { get; set; }
         public string IP { get; set; }
     }
 }

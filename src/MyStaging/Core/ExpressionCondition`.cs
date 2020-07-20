@@ -1,5 +1,6 @@
 ﻿using MyStaging.Common;
 using MyStaging.Interface;
+using MyStaging.Metadata;
 using System;
 using System.Collections.Generic;
 using System.Data.Common;
@@ -66,7 +67,7 @@ namespace MyStaging.Core
         /// <returns></returns>
         public virtual void Where<TResult>(string alisName, Expression<Func<TResult, bool>> predicate)
         {
-            ExpressionModel em = new ExpressionModel
+            ExpressionInfo em = new ExpressionInfo
             {
                 Body = predicate.Body,
                 Model = typeof(TResult),
@@ -132,7 +133,7 @@ namespace MyStaging.Core
         /// <summary>
         ///  获取或者设置查询表达式列表
         /// </summary>
-        public List<ExpressionModel> WhereExpressions { get; } = new List<ExpressionModel>();
+        public List<ExpressionInfo> WhereExpressions { get; } = new List<ExpressionInfo>();
 
         /// <summary>
         ///  获取或者设置查询条件列表

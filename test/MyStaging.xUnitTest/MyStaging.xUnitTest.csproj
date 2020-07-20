@@ -2,9 +2,7 @@
 
   <PropertyGroup>
     <TargetFramework>netcoreapp3.1</TargetFramework>
-
     <IsPackable>false</IsPackable>
-
     <RepositoryUrl></RepositoryUrl>
   </PropertyGroup>
 
@@ -19,11 +17,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\MyStaging\MyStaging.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="Core\" />
-    <Folder Include="Mapping\" />
   </ItemGroup>
 
 </Project>

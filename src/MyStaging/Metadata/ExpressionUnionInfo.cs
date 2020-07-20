@@ -3,12 +3,12 @@ using System.Collections.Generic;
 using System.Linq.Expressions;
 using System.Text;
 
-namespace MyStaging.Common
+namespace MyStaging.Metadata
 {
     /// <summary>
     ///  连接查询表达式模型
     /// </summary>
-    public class ExpressionUnionModel
+    public class ExpressionUnionInfo
     {
         /// <summary>
         ///  连接别名

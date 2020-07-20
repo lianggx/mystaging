@@ -4,12 +4,9 @@ using System.Text;
 using System.Linq;
 using System.Linq.Expressions;
 
-namespace MyStaging.Common
+namespace MyStaging.Function
 {
-    /// <summary>
-    ///  扩展方法对象
-    /// </summary>
-    public static class TypeExtension
+    public static class SqlFunction
     {
         /// <summary>
         /// 转换为数据库查询 in 查询
@@ -28,13 +25,6 @@ namespace MyStaging.Common
             return true;
         }
 
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <typeparam name="T"></typeparam>
-        /// <param name="sender"></param>
-        /// <param name="_vals"></param>
-        /// <returns></returns>
         public static bool In<T>(this T? sender, params T[] _vals) where T : struct
         {
             if (sender is null)
@@ -62,13 +52,6 @@ namespace MyStaging.Common
             return true;
         }
 
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <typeparam name="T"></typeparam>
-        /// <param name="sender"></param>
-        /// <param name="vals"></param>
-        /// <returns></returns>
         public static bool NotIn<T>(this T? sender, params T[] vals) where T : struct
         {
             return true;
@@ -94,36 +77,6 @@ namespace MyStaging.Common
         public static bool NotLike<T>(this T sender, T vals)
         {
             return true;
-        }
-
-        /// <summary>
-        ///  将首字母转大写
-        /// </summary>
-        /// <param name="text"></param>
-        /// <returns></returns>
-        public static string ToUpperPascal(this string text)
-        {
-            if (string.IsNullOrEmpty(text)) return text;
-
-            string _first = text.Substring(0, 1).ToUpper();
-            string _value = text.Substring(1);
-
-            return $"{_first}{_value}";
-        }
-
-        /// <summary>
-        ///  将首字母转小写
-        /// </summary>
-        /// <param name="text"></param>
-        /// <returns></returns>
-        public static string ToLowerPascal(this string text)
-        {
-            if (string.IsNullOrEmpty(text)) return text;
-
-            string _first = text.Substring(0, 1).ToLower();
-            string _value = text.Substring(1);
-
-            return $"{_first}{_value}";
         }
     }
 }

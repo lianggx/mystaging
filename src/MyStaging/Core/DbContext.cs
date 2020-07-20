@@ -1,17 +1,16 @@
 ﻿using Microsoft.Extensions.Logging;
 using MyStaging.Common;
+using MyStaging.Interface;
+using MyStaging.Metadata;
 using System;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
 using System.Data;
 using System.Data.Common;
+using System.IO;
+using System.Linq;
 using System.Reflection;
 using System.Text;
 using System.Threading;
-using System.Linq;
-using System.Diagnostics;
-using MyStaging.Interface;
-using System.IO;
 
 namespace MyStaging.Core
 {
@@ -64,7 +63,7 @@ namespace MyStaging.Core
         }
     }
 
-    public abstract class DbContext 
+    public abstract class DbContext
     {
         public DbContext(StagingOptions options, ProviderType provider)
         {

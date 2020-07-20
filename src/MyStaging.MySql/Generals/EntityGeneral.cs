@@ -27,7 +27,7 @@ namespace MyStaging.MySql.Generals
 
         public void Create()
         {
-            string _classname = this.table.Name.ToUpperPascal();
+            string _classname = MyStagingUtils.ToUpperPascal(this.table.Name);
             string _fileName = $"{config.ModelPath}/{_classname}.cs";
             using StreamWriter writer = new StreamWriter(File.Create(_fileName), System.Text.Encoding.UTF8);
             writer.WriteLine("using System;");

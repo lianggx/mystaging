@@ -1,6 +1,7 @@
 ﻿using MyStaging.Common;
 using MyStaging.Core;
 using MyStaging.Interface.Core;
+using MyStaging.Metadata;
 using System;
 using System.Collections.Generic;
 using System.Data;

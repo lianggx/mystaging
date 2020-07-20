@@ -26,7 +26,7 @@ namespace MyStaging.App
             {
                 IGeneralFactory factory = CreateGeneral(config);
 
-                if (config.Mode == GeneralMode.Db)
+                if (config.Mode == GeneralInfo.Db)
                     factory.DbFirst(config);
                 else
                     factory.CodeFirst(config);
@@ -117,8 +117,8 @@ namespace MyStaging.App
                 return null;
             }
 
-            config.Mode = mode == "db" ? GeneralMode.Db : GeneralMode.Code;
-            if (config.Mode == GeneralMode.Db && string.IsNullOrEmpty(config.OutputDir))
+            config.Mode = mode == "db" ? GeneralInfo.Db : GeneralInfo.Code;
+            if (config.Mode == GeneralInfo.Db && string.IsNullOrEmpty(config.OutputDir))
             {
                 config.OutputDir = Path.Combine(config.ProjectName, "Model");
             }

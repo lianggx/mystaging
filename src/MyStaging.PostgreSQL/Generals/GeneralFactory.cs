@@ -34,7 +34,7 @@ namespace MyStaging.PostgreSQL.Generals
 
             CheckNotNull.NotEmpty(config.ProjectName, nameof(config.ProjectName));
 
-            if (config.Mode == GeneralMode.Db)
+            if (config.Mode == GeneralInfo.Db)
             {
                 CheckNotNull.NotEmpty(config.OutputDir, nameof(config.OutputDir));
                 Config = new GeneralConfig
@@ -410,6 +410,7 @@ where a.typtype = 'e' order by oid asc";
                 writer.WriteLine("using Npgsql;");
                 writer.WriteLine("using MyStaging.Core;");
                 writer.WriteLine("using MyStaging.Common;");
+                writer.WriteLine("using MyStaging.MetaData;");
                 writer.WriteLine("using Newtonsoft.Json.Linq;");
                 writer.WriteLine();
                 writer.WriteLine($"namespace {Config.ProjectName}");
@@ -449,7 +450,8 @@ where a.typtype = 'e' order by oid asc";
 
                 foreach (var table in Tables)
                 {
-                    writer.WriteLine($"\t\tpublic DbSet<{table.Name.ToUpperPascal()}> {table.Name.ToUpperPascal()} {{ get; set; }}");
+                    var tableName = MyStagingUtils.ToUpperPascal(table.Name);
+                    writer.WriteLine($"\t\tpublic DbSet<{tableName}> {tableName} {{ get; set; }}");
                 }
 
                 writer.WriteLine("\t}"); // class end

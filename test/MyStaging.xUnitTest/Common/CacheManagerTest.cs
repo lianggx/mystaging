@@ -1,7 +1,9 @@
 ﻿using MyStaging.Common;
+using MyStaging.Metadata;
 using MyStaging.xUnitTest.Models;
 using System;
 using System.Collections.Generic;
+using System.Data.Common;
 using System.Text;
 using Xunit;
 
@@ -10,7 +12,7 @@ namespace MyStaging.xUnitTest.Common
     public class CacheManagerTest
     {
         private readonly CacheManager cacheManager;
-        public CacheManagerTest(CacheManager cacheManager)
+        public CacheManagerTest()
         {
             CacheOptions options = new CacheOptions()
             {
@@ -24,8 +26,8 @@ namespace MyStaging.xUnitTest.Common
         {
             var user = new UserModel
             {
-                id = "5dd8e7f9b5ee486b0c000001",
-                age = 18,
+                Id = 1,
+                Age = 18,
             };
 
             cacheManager.SetItemCache(user);
@@ -36,11 +38,12 @@ namespace MyStaging.xUnitTest.Common
         {
             var user = new UserModel
             {
-                id = "5dd8e7f9b5ee486b0c000001",
-                age = 18,
+                Id = 1,
+                Age = 18,
             };
 
-         //   cacheManager.GetItemCache(user);
+            IList<DbParameter> parameters = new List<DbParameter>();
+            user = cacheManager.GetItemCache<UserModel, DbParameter>(parameters);
         }
     }
 }

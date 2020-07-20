@@ -26,10 +26,10 @@ namespace MyStaging.Core
             { DbType.Decimal,0},
             { DbType.Double,0},
             { DbType.Boolean,0},
-             { DbType.VarNumeric,0},
+            { DbType.VarNumeric,0},
             { DbType.Currency,0},
             { DbType.Byte,0},
-             { DbType.Single,0}
+            { DbType.Single,0}
         };
 
         #region Identity

@@ -22,7 +22,7 @@ namespace Mysql
             //    Provider = "MySql"
             //});
 
-            var options = new MyStaging.Common.StagingOptions("MySql", "server=127.0.0.1;user id=root;password=root;database=mystaging");
+            var options = new MyStaging.Metadata.StagingOptions("MySql", "server=127.0.0.1;user id=root;password=root;database=mystaging");
             var context = new MysqlDbContext(options);
 
             var customer = new Customer { Name = "好久不见" };

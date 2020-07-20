@@ -3,6 +3,7 @@ using MyStaging.Common;
 using MyStaging.Core;
 using MyStaging.Interface;
 using MyStaging.Interface.Core;
+using MyStaging.Metadata;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
@@ -456,7 +457,7 @@ namespace MyStaging.MySql.Core
 
             if (alisName != masterAlisName && last == null)
             {
-                ExpressionUnionModel u2 = new ExpressionUnionModel
+                ExpressionUnionInfo u2 = new ExpressionUnionInfo
                 {
                     Model = typeof(TModel1),
                     MasterType = typeof(T),
@@ -468,7 +469,7 @@ namespace MyStaging.MySql.Core
                 UnionList.Add(u2);
             }
 
-            ExpressionUnionModel us = new ExpressionUnionModel
+            ExpressionUnionInfo us = new ExpressionUnionInfo
             {
                 Model = typeof(TModel2),
                 MasterType = typeof(TModel1),
@@ -628,7 +629,7 @@ namespace MyStaging.MySql.Core
                     }
                     else
                     {
-                        ExpressionUnionModel union = null;
+                        ExpressionUnionInfo union = null;
                         if (item.UnionAlisName == null)
                             union = UnionList.FirstOrDefault(f => f.Model == item.Model);
                         else
@@ -732,7 +733,7 @@ namespace MyStaging.MySql.Core
         /// <summary>
         ///  获取或者设置表连接查询列表
         /// </summary>
-        protected List<ExpressionUnionModel> UnionList { get; set; } = new List<ExpressionUnionModel>();
+        protected List<ExpressionUnionInfo> UnionList { get; set; } = new List<ExpressionUnionInfo>();
 
         /// <summary>
         ///  获取或者设置查询字段列表

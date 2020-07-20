@@ -2,11 +2,9 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace MyStaging.Metadata
+namespace MyStaging.xUnitTest.Core
 {
-    public enum GeneralMode
+    public class SQLExecuteTest
     {
-        Db,
-        Code
     }
 }

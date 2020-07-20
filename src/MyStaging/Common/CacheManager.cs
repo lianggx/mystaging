@@ -1,8 +1,9 @@
 ﻿using Microsoft.Extensions.Caching.Distributed;
+using MyStaging.DataAnnotations;
+using MyStaging.Metadata;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
 using System.Data;
 using System.Data.Common;
 using System.Linq;
@@ -26,7 +27,7 @@ namespace MyStaging.Common
             if (item != null)
             {
                 string id = null; // 仅缓存单个对象，此对象必须具有主键
-                var properties = typeof(T).GetProperties().Where(f => f.GetCustomAttribute<KeyAttribute>() != null).ToList();
+                var properties = typeof(T).GetProperties().Where(f => f.GetCustomAttribute<PrimaryKeyAttribute>() != null).ToList();
                 if (properties == null || properties.Count == 0) return;
 
                 foreach (var pi in properties)
@@ -55,7 +56,7 @@ namespace MyStaging.Common
         {
             TResult obj = default(TResult);
             //仅针对主键进行缓存，无主键不缓存
-            var pkCount = typeof(TResult).GetProperties().Where(f => f.GetCustomAttribute<KeyAttribute>() != null).Count();
+            var pkCount = typeof(TResult).GetProperties().Where(f => f.GetCustomAttribute<PrimaryKeyAttribute>() != null).Count();
             if (parameters?.Count == pkCount && pkCount > 0)
             {
                 var id = GetKeys<TParameter>(parameters);

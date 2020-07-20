@@ -20,9 +20,12 @@ namespace MyStaging.MySql
             MySqlConnection.ClearAllPools();
             ConnectionManager.Remove(name);
             ConnectionManager.Add(name, master, false);
-            foreach (var conn in slaves)
+            if (slaves?.Length > 0)
             {
-                ConnectionManager.Add(name, conn, true);
+                foreach (var conn in slaves)
+                {
+                    ConnectionManager.Add(name, conn, true);
+                }
             }
         }
     }

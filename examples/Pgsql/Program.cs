@@ -15,7 +15,7 @@ namespace Pgsql
             factory.CodeFirst(new MyStaging.Metadata.ProjectConfig()
             {
                 ConnectionString = "Host=127.0.0.1;Port=5432;Username=postgres;Password=postgres;Database=mystaging;",
-                Mode = MyStaging.Metadata.GeneralMode.Db,
+                Mode = MyStaging.Metadata.GeneralInfo.Db,
                 OutputDir = @"D:\MyGitHub\mystaging\examples\Pgsql\Models",
                 ProjectName = "Pgsql",
                 Provider = "PostgreSQL"
