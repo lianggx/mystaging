@@ -6,7 +6,7 @@
     <AssemblyName>MyStaging.Gen</AssemblyName>
     <ApplicationIcon />
     <StartupObject></StartupObject>
-    <Version>3.0.2</Version>
+    <Version>3.0.3</Version>
     <PackageLicenseFile>LICENSE</PackageLicenseFile>
     <PackageId>MyStaging.Gen</PackageId>
     <Authors>MyStaging.Gen</Authors>
@@ -28,7 +28,7 @@
 
   <ItemGroup>
     <None Update="build.bat">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
     </None>
     <None Include="..\..\LICENSE">
       <Pack>True</Pack>
@@ -37,11 +37,12 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\MyStaging.MySql\MyStaging.MySql.csproj" />
+    <ProjectReference Include="..\MyStaging.PostgreSQL\MyStaging.PostgreSQL.csproj" />
     <ProjectReference Include="..\MyStaging\MyStaging.csproj" />
   </ItemGroup>
 
   <ItemGroup>
     <Folder Include="Properties\" />
   </ItemGroup>
-
 </Project>

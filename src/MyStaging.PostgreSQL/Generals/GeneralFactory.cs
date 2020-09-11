@@ -14,25 +14,22 @@ using System.Linq;
 using System.Reflection;
 using System.Text;
 using MyStaging.DataAnnotations;
+using Npgsql;
 
 namespace MyStaging.PostgreSQL.Generals
 {
     public class GeneralFactory : IGeneralFactory
     {
-        private DbContext dbContext;
+        private ProjectConfig config;
 
         public void Initialize(ProjectConfig config)
         {
+            this.config = config;
             Tables = new List<TableInfo>();
-            StagingOptions options = new StagingOptions(config.ProjectName, config.ConnectionString)
-            {
-                Provider = ProviderType.PostgreSQL
-            };
-            dbContext = new PgDbContext(options);
 
             #region dir
 
-            CheckNotNull.NotEmpty(config.ProjectName, nameof(config.ProjectName));
+            CheckNotNull.NotEmpty(config.ContextName, nameof(config.ContextName));
 
             if (config.Mode == GeneralInfo.Db)
             {
@@ -40,7 +37,7 @@ namespace MyStaging.PostgreSQL.Generals
                 Config = new GeneralConfig
                 {
                     OutputDir = config.OutputDir,
-                    ProjectName = config.ProjectName,
+                    ProjectName = config.ContextName,
                     ModelPath = config.OutputDir
                 };
 
@@ -58,7 +55,7 @@ namespace MyStaging.PostgreSQL.Generals
 
             string sql = $@"SELECT schema_name FROM information_schema.schemata WHERE SCHEMA_NAME NOT IN({string.Join(",", filters)}) ORDER BY SCHEMA_NAME; ";
             List<string> schemas = new List<string>();
-            dbContext.Execute.ExecuteDataReader(dr =>
+            SQLContext.ExecuteDataReader(dr =>
             {
                 schemas.Add(dr[0].ToString());
             }, CommandType.Text, sql);
@@ -70,7 +67,7 @@ namespace MyStaging.PostgreSQL.Generals
                 string _sqltext = $@"SELECT table_name,'table' as type FROM INFORMATION_SCHEMA.tables WHERE table_schema='{schema}' AND table_type='BASE TABLE'
 UNION ALL
 SELECT table_name,'view' as type FROM INFORMATION_SCHEMA.views WHERE table_schema = '{schema}'";
-                dbContext.Execute.ExecuteDataReader(dr =>
+                SQLContext.ExecuteDataReader(dr =>
                 {
                     var table = new TableInfo()
                     {
@@ -107,7 +104,7 @@ SELECT table_name,'view' as type FROM INFORMATION_SCHEMA.views WHERE table_schem
             StringBuilder sb = new StringBuilder();
             List<TableInfo> tables = new List<TableInfo>();
 
-            var fileName = config.ProjectName + ".dll";
+            var fileName = config.ContextName + ".dll";
             var dir = System.IO.Directory.GetCurrentDirectory();
 
             var providerFile = System.IO.Directory.GetFiles(dir, fileName, SearchOption.AllDirectories).FirstOrDefault();
@@ -161,7 +158,7 @@ SELECT table_name,'view' as type FROM INFORMATION_SCHEMA.views WHERE table_schem
                 Console.WriteLine("------------------SQL------------------");
                 Console.WriteLine(sql);
                 Console.WriteLine("------------------SQL END------------------");
-                dbContext.Execute.ExecuteNonQuery(CommandType.Text, sql);
+                SQLContext.ExecuteNonQuery(CommandType.Text, sql);
             }
         }
 
@@ -366,7 +363,7 @@ INNER JOIN pg_namespace b on a.typnamespace = b.oid
 where a.typtype = 'e' order by oid asc";
 
             List<EnumTypeInfo> enums = new List<EnumTypeInfo>();
-            dbContext.Execute.ExecuteDataReader(dr =>
+            SQLContext.ExecuteDataReader(dr =>
             {
                 enums.Add(new EnumTypeInfo()
                 {
@@ -391,7 +388,7 @@ where a.typtype = 'e' order by oid asc";
                     writer.WriteLine($"\tpublic enum {item.TypeName}");
                     writer.WriteLine("\t{");
                     string sql = $"select oid,enumlabel from pg_enum WHERE enumtypid = {item.Oid} ORDER BY oid asc";
-                    dbContext.Execute.ExecuteDataReader(dr =>
+                    SQLContext.ExecuteDataReader(dr =>
                     {
                         string c = i < enums.Count ? "," : "";
                         writer.WriteLine($"\t\t{dr["enumlabel"]}{c}");
@@ -410,7 +407,7 @@ where a.typtype = 'e' order by oid asc";
                 writer.WriteLine("using Npgsql;");
                 writer.WriteLine("using MyStaging.Core;");
                 writer.WriteLine("using MyStaging.Common;");
-                writer.WriteLine("using MyStaging.MetaData;");
+                writer.WriteLine("using MyStaging.Metadata;");
                 writer.WriteLine("using Newtonsoft.Json.Linq;");
                 writer.WriteLine();
                 writer.WriteLine($"namespace {Config.ProjectName}");
@@ -500,7 +497,7 @@ where a.typtype = 'e' order by oid asc";
                                                                             WHERE b.nspname='{0}' and a.relname='{1}';";
 
             _sqltext = string.Format(_sqltext, table.Schema, table.Name);
-            dbContext.Execute.ExecuteDataReader(dr =>
+            SQLContext.ExecuteDataReader(dr =>
             {
                 DbFieldInfo fi = new DbFieldInfo
                 {
@@ -563,7 +560,7 @@ where a.typtype = 'e' order by oid asc";
                                               inner join information_schema.constraint_column_usage b on a.constraint_name=b.constraint_name
                                               where a.table_schema || '.' || a.table_name='{table.Schema}.{table.Name}' and a.constraint_type='PRIMARY KEY'";
 
-            dbContext.Execute.ExecuteDataReader(dr =>
+            SQLContext.ExecuteDataReader(dr =>
             {
                 var constaint = new ConstraintInfo
                 {
@@ -597,6 +594,7 @@ where a.typtype = 'e' order by oid asc";
         };
         public GeneralConfig Config { get; set; }
         public List<TableInfo> Tables { get; set; }
+        private SQLExecute SQLContext => new SQLExecute(new NpgsqlConnection(config.ConnectionString));
         #endregion
     }
 }

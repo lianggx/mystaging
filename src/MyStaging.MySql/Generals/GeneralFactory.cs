@@ -20,22 +20,17 @@ namespace MyStaging.MySql.Generals
 {
     public class GeneralFactory : IGeneralFactory
     {
-        private DbContext dbContext;
+        private ProjectConfig config;
 
         public void Initialize(ProjectConfig config)
         {
+            this.config = config;
             Tables = new List<TableInfo>();
-            StagingOptions options = new StagingOptions(config.ProjectName, config.ConnectionString)
-            {
-                Provider = ProviderType.MySql
-            };
 
-            string schema = new MySqlConnection(options.Master).Database;
-            dbContext = new MySqlDbContext(options);
-
+            string schema = new MySqlConnection(config.ConnectionString).Database;
             #region dir
 
-            CheckNotNull.NotEmpty(config.ProjectName, nameof(config.ProjectName));
+            CheckNotNull.NotEmpty(config.ContextName, nameof(config.ContextName));
 
             if (config.Mode == GeneralInfo.Db)
             {
@@ -43,7 +38,7 @@ namespace MyStaging.MySql.Generals
                 Config = new GeneralConfig
                 {
                     OutputDir = config.OutputDir,
-                    ProjectName = config.ProjectName,
+                    ProjectName = config.ContextName,
                     ModelPath = config.OutputDir
                 };
 
@@ -56,17 +51,17 @@ namespace MyStaging.MySql.Generals
 
             string _sqltext = $@"SELECT TABLE_SCHEMA,TABLE_NAME,(CASE WHEN TABLE_TYPE = 'BASE TABLE' THEN 'TABLE'ELSE TABLE_TYPE END ) AS TABLE_TYPE 
 FROM information_schema.`TABLES` WHERE TABLE_SCHEMA = '{schema}'";
-            dbContext.Execute.ExecuteDataReader(dr =>
-            {
-                var table = new TableInfo()
-                {
-                    Schema = dr["TABLE_SCHEMA"].ToString(),
-                    Name = dr["TABLE_NAME"].ToString(),
-                    Type = Enum.Parse<TableType>(dr["TABLE_TYPE"].ToString(), true)
-                };
-                GetFields(table);
-                Tables.Add(table);
-            }, CommandType.Text, _sqltext);
+            SQLContext.ExecuteDataReader(dr =>
+              {
+                  var table = new TableInfo()
+                  {
+                      Schema = dr["TABLE_SCHEMA"].ToString(),
+                      Name = dr["TABLE_NAME"].ToString(),
+                      Type = Enum.Parse<TableType>(dr["TABLE_TYPE"].ToString(), true)
+                  };
+                  GetFields(table);
+                  Tables.Add(table);
+              }, CommandType.Text, _sqltext);
 
             #endregion
         }
@@ -91,7 +86,7 @@ FROM information_schema.`TABLES` WHERE TABLE_SCHEMA = '{schema}'";
             StringBuilder sb = new StringBuilder();
             List<TableInfo> tables = new List<TableInfo>();
 
-            var fileName = config.ProjectName + ".dll";
+            var fileName = config.ContextName + ".dll";
             var dir = System.IO.Directory.GetCurrentDirectory();
 
             var providerFile = System.IO.Directory.GetFiles(dir, fileName, SearchOption.AllDirectories).FirstOrDefault();
@@ -145,7 +140,8 @@ FROM information_schema.`TABLES` WHERE TABLE_SCHEMA = '{schema}'";
                 Console.WriteLine("------------------SQL------------------");
                 Console.WriteLine(sql);
                 Console.WriteLine("------------------SQL END------------------");
-                dbContext.Execute.ExecuteNonQuery(CommandType.Text, sql);
+
+                SQLContext.ExecuteNonQuery(CommandType.Text, sql);
             }
         }
 
@@ -355,7 +351,7 @@ FROM information_schema.`TABLES` WHERE TABLE_SCHEMA = '{schema}'";
                 writer.WriteLine("using System;");
                 writer.WriteLine("using MyStaging.Core;");
                 writer.WriteLine("using MyStaging.Common;");
-                writer.WriteLine("using MyStaging.MetaData;");
+                writer.WriteLine("using MyStaging.Metadata;");
                 writer.WriteLine("using Newtonsoft.Json.Linq;");
                 writer.WriteLine();
                 writer.WriteLine($"namespace {Config.ProjectName}");
@@ -399,7 +395,7 @@ FROM information_schema.`TABLES` WHERE TABLE_SCHEMA = '{schema}'";
                                              from information_schema.`COLUMNS` where TABLE_SCHEMA='{table.Schema}' and TABLE_NAME='{table.Name}';";
 
             _sqltext = string.Format(_sqltext, table.Schema, table.Name);
-            dbContext.Execute.ExecuteDataReader(dr =>
+            SQLContext.ExecuteDataReader(dr =>
             {
                 DbFieldInfo fi = new DbFieldInfo
                 {
@@ -433,7 +429,7 @@ FROM information_schema.`TABLES` WHERE TABLE_SCHEMA = '{schema}'";
         {
             string _sqltext = $@"SELECT COLUMN_NAME,CONSTRAINT_NAME FROM information_schema.KEY_COLUMN_USAGE where TABLE_SCHEMA = '{table.Schema}' and TABLE_NAME = '{table.Name}' AND CONSTRAINT_NAME = 'PRIMARY'";
 
-            dbContext.Execute.ExecuteDataReader(dr =>
+            SQLContext.ExecuteDataReader(dr =>
             {
                 var constaint = new ConstraintInfo
                 {
@@ -451,6 +447,8 @@ FROM information_schema.`TABLES` WHERE TABLE_SCHEMA = '{schema}'";
         #region Properties
         public GeneralConfig Config { get; set; }
         public List<TableInfo> Tables { get; set; }
+        private SQLExecute SQLContext => new SQLExecute(new MySqlConnection(config.ConnectionString));
+
         #endregion
     }
 }

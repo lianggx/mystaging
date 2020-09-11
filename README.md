@@ -36,7 +36,7 @@ MyStaging一共分为三个部分，分别是：
 dotnet tool install -g MyStaging.Gen
 ```
 
-要使用 MyStaging.Gen 请跟进下面的参数说明，执行创建实体对象映射.
+要使用 MyStaging.Gen 请根据下面的参数说明，执行创建实体对象映射.
 
 ```
 --help 查看帮助

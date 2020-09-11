@@ -1,1 +1,1 @@
-mystaging.gen -m code -t PostgreSQL -p Pgsql -d "Host=127.0.0.1;Port=5432;Username=postgres;Password=postgres;Database=mystaging;Pooling=true;Maximum Pool Size=10;"
+mystaging.gen -m code -t MySql -n MySql -d "Host=127.0.0.1;Port=3306;Username=root;Password=root;Database=mystaging;"

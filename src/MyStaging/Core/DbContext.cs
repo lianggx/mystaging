@@ -32,7 +32,7 @@ namespace MyStaging.Core
                     var fileName = "MyStaging." + options.Provider + ".dll";
                     var providerFile = System.IO.Directory.GetFiles(System.IO.Directory.GetCurrentDirectory(), fileName, SearchOption.AllDirectories).FirstOrDefault();
                     if (string.IsNullOrEmpty(providerFile))
-                        throw new FileNotFoundException(fileName);
+                        throw new FileNotFoundException($"找不到提供程序，确保已经引用程序集：{fileName}");
 
                     var assembly = Assembly.LoadFrom(providerFile);
                     var types = assembly.GetTypes();
