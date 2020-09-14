@@ -82,7 +82,7 @@ namespace MyStaging.App
             Console.WriteLine("-t [dbtype[Mysql/PostgreSQL]，数据库提供程序]  required");
             Console.WriteLine("-d [database，数据库连接字符串] required");
             Console.WriteLine("-n [name，数据库上下文名称]  required");
-            Console.WriteLine("-o [output，实体对象输出路径]，默认为 {name}/Models");
+            Console.WriteLine("-o [output，实体对象输出路径]，默认为 {name}/Model");
             Console.WriteLine();
             Console.WriteLine("==============示例==============");
             Console.WriteLine("  CodeFirst：");

@@ -43,8 +43,8 @@ dotnet tool install -g MyStaging.Gen
 -m [mode，db[DbFirst]/code[CodeFirst]，默认为 DbFirst
 -t [dbtype[Mysql/PostgreSQL]，数据库提供程序]  required
 -d [database，数据库连接字符串] required
--p [project，项目名称]  required
--o [output，实体对象输出路径]，默认为 {project}/Models
+-n [name，数据库上下文名称]  required
+-o [output，实体对象输出路径]，默认为 {name}/Model
 ```
 ```
 ==============示例==============
