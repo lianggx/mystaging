@@ -2,13 +2,13 @@
 
   <PropertyGroup>
     <TargetFramework>netstandard2.1</TargetFramework>
-    <Version>3.0.4</Version>
+    <Version>3.0.5</Version>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="MySqlConnector" Version="0.69.5" />
+    <PackageReference Include="MySql.Data" Version="8.0.21" />
   </ItemGroup>
 
   <ItemGroup>

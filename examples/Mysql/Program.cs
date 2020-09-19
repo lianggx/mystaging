@@ -22,12 +22,24 @@ namespace Mysql
             //    Provider = "MySql"
             //});
 
-            var options = new MyStaging.Metadata.StagingOptions("MySql", "server=127.0.0.1;user id=root;password=root;database=mystaging");
+            var options = new MyStaging.Metadata.StagingOptions("MySql", "server=127.0.0.1;user id=root;password=root;");
             var context = new MysqlDbContext(options);
 
             var customer = new Customer { Name = "好久不见" };
-            context.Customer.Insert.Add(customer);
 
+            try
+            {
+                // 测试事务
+                context.BeginTransaction();
+                context.Customer.Insert.Add(customer);
+                context.CommitTransaction();
+
+                var nc = context.Customer.Select.Where(f => f.Id == customer.Id).ToOne();
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e.Message);
+            }
             //// 单个查询
             //var article = context.Customer.Select.Where(f => f.Id == 2 && f.Name == "Ron").ToOne();
             //// 列表查询，排序、分页、分组
