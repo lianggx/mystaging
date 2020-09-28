@@ -10,10 +10,11 @@ using System.Data;
 using System.Data.Common;
 using System.Reflection;
 using System.Text;
+using System.Text.Json;
 
 namespace MyStaging.PostgreSQL.Core
 {
-    public class InsertBuilder<T> : IInsertBuilder<T> where T : class
+    public class InsertBuilder<T> : DbRecord, IInsertBuilder<T> where T : class
     {
         private readonly DbContext dbContext;
         private readonly List<T> models = new List<T>();
@@ -34,18 +35,11 @@ namespace MyStaging.PostgreSQL.Core
             this.models.Add(model);
             this.ToSQL();
             CommandText += " RETURNING *;";
-            var properties = MyStagingUtils.GetDbFields(typeof(T));
             using var reader = dbContext.ByMaster().Execute.ExecuteDataReader(CommandType.Text, CommandText, this.Parameters.ToArray());
             try
             {
                 reader.Read();
-                T obj = (T)Activator.CreateInstance(typeof(T));
-                foreach (var pi in properties)
-                {
-                    var value = reader[pi.Name];
-                    if (value != DBNull.Value)
-                        pi.SetValue(obj, value);
-                }
+                T obj = GetResult<T>(reader);
                 return obj;
             }
             finally

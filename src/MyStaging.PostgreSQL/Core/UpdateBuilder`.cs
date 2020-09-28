@@ -119,24 +119,18 @@ namespace MyStaging.PostgreSQL.Core
             CheckNotNull.NotEmpty(setList, "Fields to be updated must be provided!");
             CheckNotNull.NotEmpty(WhereConditions, "The update operation must specify where conditions!");
 
-            this.ToSQL();
-            this.CommandText += " RETURNING *;";
-            var properties = MyStagingUtils.GetDbFields(typeof(T));
-            using var reader = dbContext.ByMaster().Execute.ExecuteDataReader(CommandType.Text, CommandText, this.Parameters.ToArray());
             try
             {
+                this.ToSQL();
+                this.CommandText += " RETURNING *;";
+                using var reader = dbContext.ByMaster().Execute.ExecuteDataReader(CommandType.Text, CommandText, this.Parameters.ToArray());
                 reader.Read();
-                T obj = (T)Activator.CreateInstance(typeof(T));
-                foreach (var pi in properties)
-                {
-                    var value = reader[pi.Name];
-                    if (value != DBNull.Value)
-                        pi.SetValue(obj, value);
-                }
+                T obj = GetResult<T>(reader);
                 return obj;
             }
             finally
             {
+                setList.Clear();
                 Clear();
             }
         }

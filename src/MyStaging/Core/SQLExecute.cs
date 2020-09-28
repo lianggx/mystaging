@@ -49,6 +49,7 @@ namespace MyStaging.Core
         ///  构造函数
         /// </summary>
         /// <param name="connection">数据库连接</param>
+        /// <param name="transaction">事务</param>
         public SQLExecute(DbConnection connection, DbTransaction transaction) : this(null, connection, transaction)
         {
             Connection = connection;
@@ -59,6 +60,7 @@ namespace MyStaging.Core
         /// </summary>
         /// <param name="logger">日志输出对象</param>
         /// <param name="connection">数据库连接</param>
+        /// <param name="transaction">事务</param>
         public SQLExecute(ILogger logger, DbConnection connection, DbTransaction transaction)
         {
             Logger = logger ?? new LoggerFactory().CreateLogger<SQLExecute>();
@@ -380,11 +382,11 @@ namespace MyStaging.Core
         public void ExecuteDataReaderPipe(Action<DbDataReader> action, CommandType commandType, string commandText, DbParameter[] parameters)
         {
             DbCommand command = null;
-            DbDataReader reader = null;
             try
             {
                 command = PrepareCommand(commandType, commandText, parameters);
                 OpenConnection(command);
+                DbDataReader reader;
                 using (reader = command.ExecuteReader())
                 {
                     action?.Invoke(reader);

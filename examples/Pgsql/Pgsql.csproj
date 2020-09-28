@@ -10,10 +10,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Remove="ContextTest.cs" />
-  </ItemGroup>
-
-  <ItemGroup>
     <Folder Include="Model\" />
   </ItemGroup>
 

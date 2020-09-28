@@ -3,7 +3,6 @@ using MyStaging.Common;
 using MyStaging.Core;
 using MyStaging.Interface.Core;
 using MyStaging.Metadata;
-using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -17,7 +16,6 @@ namespace MyStaging.MySql.Core
     /// <typeparam name="T"></typeparam>
     public class UpdateBuilder<T> : ExpressionCondition<T>, IUpdateBuilder<T> where T : class
     {
-        //  public Action<T> OnChanged = null;
         private readonly List<string> setList = new List<string>();
 
         public UpdateBuilder() { }
@@ -96,23 +94,17 @@ namespace MyStaging.MySql.Core
             CheckNotNull.NotEmpty(setList, "Fields to be updated must be provided!");
             CheckNotNull.NotEmpty(WhereConditions, "The update operation must specify where conditions!");
 
-            this.ToSQL();
-            var properties = MyStagingUtils.GetDbFields(typeof(T));
-            using var reader = dbContext.ByMaster().Execute.ExecuteDataReader(CommandType.Text, CommandText, this.Parameters.ToArray());
             try
             {
+                this.ToSQL();
+                using var reader = dbContext.ByMaster().Execute.ExecuteDataReader(CommandType.Text, CommandText, this.Parameters.ToArray());
                 reader.Read();
-                T obj = (T)Activator.CreateInstance(typeof(T));
-                foreach (var pi in properties)
-                {
-                    var value = reader[pi.Name];
-                    if (value != DBNull.Value)
-                        pi.SetValue(obj, value);
-                }
+                T obj = GetResult<T>(reader);
                 return obj;
             }
             finally
             {
+                setList.Clear();
                 Clear();
             }
         }

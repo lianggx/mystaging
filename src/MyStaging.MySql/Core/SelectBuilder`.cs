@@ -4,7 +4,6 @@ using MyStaging.Core;
 using MyStaging.Interface;
 using MyStaging.Interface.Core;
 using MyStaging.Metadata;
-using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -632,7 +631,7 @@ namespace MyStaging.MySql.Core
                         }
                         else
                         {
-                            throw new NotSupportedException($"找不到 where {item.Body.ToString()}条件的表，不支持的表查询条件");
+                            throw new NotSupportedException($"找不到 where {item.Body}条件的表，不支持的表查询条件");
                         }
                     }
                     expression.Visit(item.Body);

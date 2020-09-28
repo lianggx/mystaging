@@ -2,7 +2,6 @@
 using MyStaging.Core;
 using MyStaging.Metadata;
 using MyStaging.Interface;
-using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -246,8 +245,10 @@ FROM information_schema.`TABLES` WHERE TABLE_SCHEMA = '{schema}'";
             var properties = MyStagingUtils.GetDbFields(type);
             foreach (var pi in properties)
             {
-                var fi = new DbFieldInfo();
-                fi.Name = pi.Name;
+                var fi = new DbFieldInfo
+                {
+                    Name = pi.Name
+                };
                 var customAttributes = pi.GetCustomAttributes();
                 var genericAttrs = customAttributes.Select(f => f.GetType()).ToArray();
                 if (pi.PropertyType.Name == "Nullable`1")
@@ -352,7 +353,7 @@ FROM information_schema.`TABLES` WHERE TABLE_SCHEMA = '{schema}'";
                 writer.WriteLine("using MyStaging.Core;");
                 writer.WriteLine("using MyStaging.Common;");
                 writer.WriteLine("using MyStaging.Metadata;");
-                writer.WriteLine("using Newtonsoft.Json.Linq;");
+                writer.WriteLine("using System.Text.Json;");
                 writer.WriteLine();
                 writer.WriteLine($"namespace {Config.ProjectName}");
                 writer.WriteLine("{");
@@ -410,7 +411,7 @@ FROM information_schema.`TABLES` WHERE TABLE_SCHEMA = '{schema}'";
                 };
 
                 fi.CsType = MysqlType.SwitchToCSharp(fi.DbType);
-                if (!fi.NotNull && fi.CsType != "string" && fi.CsType != "byte[]" && fi.CsType != "JToken")
+                if (!fi.NotNull && fi.CsType != "string" && fi.CsType != "byte[]" && fi.CsType != "JsonElement")
                     fi.RelType = $"{fi.CsType}?";
                 else
                     fi.RelType = fi.CsType;

@@ -366,26 +366,33 @@ namespace MyStaging.PostgreSQL.Core
         /// <returns></returns>
         public List<TResult> ExecuteReader<TResult>(string cmdText)
         {
-            var objType = typeof(TResult);
-            var properties = MyStagingUtils.GetDbFields(typeof(TResult));
+            //var objType = typeof(TResult);
+            //var properties = MyStagingUtils.GetDbFields(typeof(TResult));
+            //List<TResult> list = new List<TResult>();
+            //SQLExecute execute = byMaster ? dbContext.ByMaster().Execute : dbContext.Execute;
+            //using var reader = execute.ExecuteDataReader(CommandType.Text, cmdText, Parameters.ToArray());
+            //while (reader.Read())
+            //{
+            //    TResult obj = (TResult)Activator.CreateInstance(objType);
+            //    foreach (var pi in properties)
+            //    {
+            //        var value = reader[pi.Name];
+            //        if (value == DBNull.Value)
+            //            continue;
+            //        else
+            //            pi.SetValue(obj, value);
+            //    }
+            //    list.Add(obj);
+            //};
+
             List<TResult> list = new List<TResult>();
             SQLExecute execute = byMaster ? dbContext.ByMaster().Execute : dbContext.Execute;
             using var reader = execute.ExecuteDataReader(CommandType.Text, cmdText, Parameters.ToArray());
             while (reader.Read())
             {
-                TResult obj = (TResult)Activator.CreateInstance(objType);
-                foreach (var pi in properties)
-                {
-                    var value = reader[pi.Name];
-                    if (value == DBNull.Value)
-                        continue;
-                    else
-                        pi.SetValue(obj, value);
-                }
-
+                var obj = GetResult<TResult>(reader);
                 list.Add(obj);
             };
-
             this.Clear();
 
             return list;
@@ -642,7 +649,7 @@ namespace MyStaging.PostgreSQL.Core
                         }
                         else
                         {
-                            throw new NotSupportedException($"找不到 where {item.Body.ToString()}条件的表，不支持的表查询条件");
+                            throw new NotSupportedException($"找不到 where {item.Body}条件的表，不支持的表查询条件");
                         }
                     }
                     expression.Visit(item.Body);

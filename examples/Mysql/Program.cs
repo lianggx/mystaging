@@ -1,10 +1,6 @@
 ﻿using Mysql.Model;
 using Mysql.Services;
-using MyStaging.Common;
-using MyStaging.Interface;
 using MyStaging.Metadata;
-using MyStaging.MySql.Generals;
-using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 
@@ -34,8 +30,10 @@ namespace Mysql
                 // 测试事务
                 dbContext.BeginTransaction();
                 dbContext.Customer.Insert.Add(customer);
-                List<Customer> li = new List<Customer>();
-                li.Add(new Customer { Name = "test" });
+                List<Customer> li = new List<Customer>
+                {
+                    new Customer { Name = "test" }
+                };
                 dbContext.Customer.Insert.AddRange(li).SaveChange();
                 dbContext.Customer.Update.SetValue(a => a.Name, "12345").Where(f => f.Id == customer.Id).SaveChange();
                 dbContext.CommitTransaction();

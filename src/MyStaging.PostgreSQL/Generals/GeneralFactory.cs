@@ -2,7 +2,6 @@
 using MyStaging.Core;
 using MyStaging.Metadata;
 using MyStaging.Interface;
-using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -215,7 +214,7 @@ SELECT table_name,'view' as type FROM INFORMATION_SCHEMA.views WHERE table_schem
                     {
                         var indexOf = seq.ColumnDefault.IndexOf("'") + 1;
                         var lastIndexOf = seq.ColumnDefault.LastIndexOf("'");
-                        var seqName = seq.ColumnDefault.Substring(indexOf, lastIndexOf - indexOf);
+                        var seqName = seq.ColumnDefault[indexOf..lastIndexOf];
 
                         sb.AppendLine($"{alterSql} ALTER COLUMN {seq.Name} SET DEFAULT null;");
                         sb.AppendLine($"DROP SEQUENCE IF EXISTS {seqName};");
@@ -254,8 +253,10 @@ SELECT table_name,'view' as type FROM INFORMATION_SCHEMA.views WHERE table_schem
             var properties = MyStagingUtils.GetDbFields(type);
             foreach (var pi in properties)
             {
-                var fi = new DbFieldInfo();
-                fi.Name = pi.Name;
+                var fi = new DbFieldInfo
+                {
+                    Name = pi.Name
+                };
                 var customAttributes = pi.GetCustomAttributes();
                 var genericAttrs = customAttributes.Select(f => f.GetType()).ToArray();
                 var pk = pi.GetCustomAttribute<PrimaryKeyAttribute>();
@@ -408,7 +409,7 @@ where a.typtype = 'e' order by oid asc";
                 writer.WriteLine("using MyStaging.Core;");
                 writer.WriteLine("using MyStaging.Common;");
                 writer.WriteLine("using MyStaging.Metadata;");
-                writer.WriteLine("using Newtonsoft.Json.Linq;");
+                writer.WriteLine("using System.Text.Json;");
                 writer.WriteLine();
                 writer.WriteLine($"namespace {Config.ProjectName}");
                 writer.WriteLine("{");
@@ -420,7 +421,7 @@ where a.typtype = 'e' order by oid asc";
                 writer.WriteLine();
                 writer.WriteLine($"\t\tstatic {contextName}()");
                 writer.WriteLine("\t\t{");
-                writer.WriteLine("\t\t\tType[] jsonTypes = { typeof(JToken), typeof(JObject), typeof(JArray) };");
+                writer.WriteLine("\t\t\tType[] jsonTypes = { typeof(JsonElement) };");
                 writer.WriteLine("\t\t\tNpgsqlNameTranslator translator = new NpgsqlNameTranslator();");
                 writer.WriteLine("\t\t\tNpgsqlConnection.GlobalTypeMapper.UseJsonNet(jsonTypes);");
 
@@ -522,7 +523,7 @@ where a.typtype = 'e' order by oid asc";
                 if (
                 fi.CsType != "string"
                 && fi.CsType != "byte[]"
-                && fi.CsType != "JToken"
+                && fi.CsType != "JsonElement"
                 && !fi.IsArray
                 && fi.CsType != "System.Net.IPAddress"
                 && fi.CsType != "System.Net.NetworkInformation.PhysicalAddress"

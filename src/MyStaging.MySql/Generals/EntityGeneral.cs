@@ -32,8 +32,7 @@ namespace MyStaging.MySql.Generals
             using StreamWriter writer = new StreamWriter(File.Create(_fileName), System.Text.Encoding.UTF8);
             writer.WriteLine("using System;");
             writer.WriteLine("using System.Linq;");
-            writer.WriteLine("using Newtonsoft.Json;");
-            writer.WriteLine("using Newtonsoft.Json.Linq;");
+            writer.WriteLine("using System.Text.Json;");
             writer.WriteLine("using MySql.Data.Types;");
             writer.WriteLine("using System.ComponentModel.DataAnnotations.Schema;");
             writer.WriteLine("using System.ComponentModel.DataAnnotations;");

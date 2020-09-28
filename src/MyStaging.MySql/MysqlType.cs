@@ -37,7 +37,7 @@ namespace MyStaging.MySql
                 { "enum", "string"},
                 { "binary", "byte[]"},
                  { "varbinary", "byte[]"},
-                { "json", "JToken"}
+                { "json", "JsonElement"}
         };
         private readonly static Dictionary<string, string> dbTypes = new Dictionary<string, string> {
                 { "Guid","char(36)" },
@@ -58,7 +58,7 @@ namespace MyStaging.MySql
                 { "DateTimeOffset","datetime" },
                 { "TimeSpan","time"},
                 { "DateTime", "datetime"},
-                { "JToken", "json"}
+                { "JsonElement", "json"}
         };
         private readonly static Dictionary<string, string> contrastTypes = new Dictionary<string, string> {
                 { "int", "int"},
@@ -74,7 +74,7 @@ namespace MyStaging.MySql
                 { "timestamp", "DateTime" },
                 { "datetime", "DateTime" },
                 { "time", "TimeSpan"},
-                { "json", "JToken"},
+                { "json", "JsonElement"},
                { "tinyint", "sbyte" },
         };
 

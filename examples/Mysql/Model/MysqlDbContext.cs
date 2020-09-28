@@ -2,7 +2,6 @@
 using System;
 using MyStaging.Core;
 using MyStaging.Common;
-using Newtonsoft.Json.Linq;
 using MyStaging.Metadata;
 
 namespace Mysql

@@ -1,7 +1,6 @@
 ﻿using Microsoft.Extensions.Caching.Distributed;
 using MyStaging.DataAnnotations;
 using MyStaging.Metadata;
-using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -9,13 +8,15 @@ using System.Data.Common;
 using System.Linq;
 using System.Reflection;
 using System.Text;
+using System.Text.Json;
 
 namespace MyStaging.Common
 {
     public class CacheManager
     {
         private readonly CacheOptions cacheOpt = null;
-        private readonly static JsonSerializerSettings JSON_SETTING = new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore };
+        //   private readonly static JsonSerializerSettings JSON_SETTING = new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore };
+        private readonly static JsonSerializerOptions JSON_SETTING = new JsonSerializerOptions { IgnoreNullValues = true };
 
         public CacheManager(CacheOptions options)
         {
@@ -46,7 +47,8 @@ namespace MyStaging.Common
                 }
                 var key = FormatKey<T>(id);
 
-                var json = JsonConvert.SerializeObject(item, JSON_SETTING);
+                // var json = JsonConvert.SerializeObject(item, JSON_SETTING);               
+                var json = JsonSerializer.Serialize(item, JSON_SETTING);
                 var data = Encoding.UTF8.GetBytes(json);
                 this.cacheOpt.Cache.Set(key, data, opt);
             }
@@ -54,7 +56,7 @@ namespace MyStaging.Common
 
         public TResult GetItemCache<TResult, TParameter>(IList<TParameter> parameters) where TParameter : DbParameter
         {
-            TResult obj = default(TResult);
+            TResult obj = default;
             //仅针对主键进行缓存，无主键不缓存
             var pkCount = typeof(TResult).GetProperties().Where(f => f.GetCustomAttribute<PrimaryKeyAttribute>() != null).Count();
             if (parameters?.Count == pkCount && pkCount > 0)
@@ -65,7 +67,8 @@ namespace MyStaging.Common
                 if (data != null)
                 {
                     var json = Encoding.UTF8.GetString(data);
-                    obj = JsonConvert.DeserializeObject<TResult>(json, JSON_SETTING);
+                    //obj = JsonConvert.DeserializeObject<TResult>(json, JSON_SETTING);
+                    obj = JsonSerializer.Deserialize<TResult>(json, JSON_SETTING);
                 }
             }
 

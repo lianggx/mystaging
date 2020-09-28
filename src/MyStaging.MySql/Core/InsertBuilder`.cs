@@ -15,7 +15,7 @@ using MyStaging.Metadata;
 
 namespace MyStaging.MySql.Core
 {
-    public class InsertBuilder<T> : IInsertBuilder<T> where T : class
+    public class InsertBuilder<T> : DbRecord, IInsertBuilder<T> where T : class
     {
         private readonly DbContext dbContext;
         private readonly List<T> models = new List<T>();
@@ -50,12 +50,13 @@ namespace MyStaging.MySql.Core
                 }
             }
 
-            if (autoIncrement != null)
-            {
-                this.CommandText += "\n SELECT LAST_INSERT_ID();";
-            }
             try
             {
+                if (autoIncrement != null)
+                {
+                    this.CommandText += "\n SELECT LAST_INSERT_ID();";
+                }
+
                 using var reader = dbContext.ByMaster().Execute.ExecuteDataReader(CommandType.Text, CommandText, this.Parameters.ToArray());
                 if (autoIncrement != null)
                 {
