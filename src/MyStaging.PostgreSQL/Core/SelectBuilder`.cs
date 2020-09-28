@@ -391,6 +391,8 @@ namespace MyStaging.PostgreSQL.Core
             return list;
         }
 
+
+
         /// <summary>
         ///  该方法没有对sql注入进行参数化过滤
         /// </summary>
@@ -711,6 +713,7 @@ namespace MyStaging.PostgreSQL.Core
 
         public new void Clear()
         {
+            this.UnionList.Clear();
             this.Parameters.Clear();
             this.WhereConditions.Clear();
             this.WhereExpressions.Clear();

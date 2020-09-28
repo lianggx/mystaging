@@ -594,7 +594,7 @@ where a.typtype = 'e' order by oid asc";
         };
         public GeneralConfig Config { get; set; }
         public List<TableInfo> Tables { get; set; }
-        private SQLExecute SQLContext => new SQLExecute(new NpgsqlConnection(config.ConnectionString));
+        private SQLExecute SQLContext => new SQLExecute(new NpgsqlConnection(config.ConnectionString), null);
         #endregion
     }
 }

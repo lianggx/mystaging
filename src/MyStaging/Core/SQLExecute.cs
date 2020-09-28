@@ -34,6 +34,7 @@ namespace MyStaging.Core
 
         #region Identity
         public DbConnection Connection { get; set; }
+        public DbTransaction Transaction { get; set; }
         /// <summary>
         ///  日志输出对象
         /// </summary>
@@ -48,7 +49,7 @@ namespace MyStaging.Core
         ///  构造函数
         /// </summary>
         /// <param name="connection">数据库连接</param>
-        public SQLExecute(DbConnection connection) : this(null, connection)
+        public SQLExecute(DbConnection connection, DbTransaction transaction) : this(null, connection, transaction)
         {
             Connection = connection;
         }
@@ -58,10 +59,11 @@ namespace MyStaging.Core
         /// </summary>
         /// <param name="logger">日志输出对象</param>
         /// <param name="connection">数据库连接</param>
-        public SQLExecute(ILogger logger, DbConnection connection)
+        public SQLExecute(ILogger logger, DbConnection connection, DbTransaction transaction)
         {
             Logger = logger ?? new LoggerFactory().CreateLogger<SQLExecute>();
             Connection = connection;
+            this.Transaction = transaction;
         }
 
         /// <summary>
@@ -106,6 +108,7 @@ namespace MyStaging.Core
             DbCommand command;
             if (commandText == null || commandText.Length == 0) throw new ArgumentNullException("commandText");
             command = Connection.CreateCommand();
+            command.Transaction = this.Transaction;
             OpenConnection(command);
             command.CommandText = commandText;
             command.CommandType = commandType;

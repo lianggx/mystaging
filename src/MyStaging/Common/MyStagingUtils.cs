@@ -5,6 +5,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 using System.Data;
 using System.Linq.Expressions;
 using System.Reflection;
+using System.Text.Json;
 
 namespace MyStaging.Common
 {
@@ -76,36 +77,6 @@ namespace MyStaging.Common
                 if (pi.CanWrite)
                     pi.SetValue(targetObj, pi.GetValue(sourceObj, null), null);
             }
-        }
-
-        /// <summary>
-        ///  将查询结果转换为元组对象
-        /// </summary>
-        /// <param name="objType">元组类型</param>
-        /// <param name="dr">查询流</param>
-        /// <param name="columnIndex">dr index</param>
-        /// <returns></returns>
-        protected static object GetValueTuple(Type objType, IDataReader dr, ref int columnIndex)
-        {
-            bool isTuple = objType.Namespace == "System" && objType.Name.StartsWith("ValueTuple`");
-            if (isTuple)
-            {
-                FieldInfo[] fs = objType.GetFields();
-                Type[] types = new Type[fs.Length];
-                object[] parameters = new object[fs.Length];
-                for (int i = 0; i < fs.Length; i++)
-                {
-                    types[i] = fs[i].FieldType;
-                    parameters[i] = GetValueTuple(types[i], dr, ref columnIndex);
-                }
-                ConstructorInfo info = objType.GetConstructor(types);
-                return info.Invoke(parameters);
-            }
-            ++columnIndex;
-            object dbValue = dr[columnIndex];
-            dbValue = dbValue is DBNull ? null : dbValue;
-
-            return dbValue;
         }
 
         /// <summary>

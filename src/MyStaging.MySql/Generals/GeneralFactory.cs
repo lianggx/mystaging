@@ -447,7 +447,7 @@ FROM information_schema.`TABLES` WHERE TABLE_SCHEMA = '{schema}'";
         #region Properties
         public GeneralConfig Config { get; set; }
         public List<TableInfo> Tables { get; set; }
-        private SQLExecute SQLContext => new SQLExecute(new MySqlConnection(config.ConnectionString));
+        private SQLExecute SQLContext => new SQLExecute(new MySqlConnection(config.ConnectionString), null);
 
         #endregion
     }

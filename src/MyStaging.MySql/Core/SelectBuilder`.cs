@@ -368,27 +368,12 @@ namespace MyStaging.MySql.Core
         /// <returns></returns>
         public List<TResult> ExecuteReader<TResult>(string cmdText)
         {
-            var objType = typeof(TResult);
-            var properties = MyStagingUtils.GetDbFields(typeof(TResult));
             List<TResult> list = new List<TResult>();
             SQLExecute execute = byMaster ? dbContext.ByMaster().Execute : dbContext.Execute;
             using var reader = execute.ExecuteDataReader(CommandType.Text, cmdText, Parameters.ToArray());
             while (reader.Read())
             {
-                TResult obj = (TResult)Activator.CreateInstance(objType);
-                foreach (var pi in properties)
-                {
-                    var value = reader[pi.Name];
-                    if (value == DBNull.Value)
-                        continue;
-                    else if (pi.PropertyType.Name == "JToken")
-                    {
-                        pi.SetValue(obj, JToken.Parse(value.ToString()));
-                    }
-                    else
-                        pi.SetValue(obj, value);
-                }
-
+                var obj = GetResult<TResult>(reader);
                 list.Add(obj);
             };
 
@@ -718,6 +703,7 @@ namespace MyStaging.MySql.Core
 
         public new void Clear()
         {
+            this.UnionList.Clear();
             this.Parameters.Clear();
             this.WhereConditions.Clear();
             this.WhereExpressions.Clear();

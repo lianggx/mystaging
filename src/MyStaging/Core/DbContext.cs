@@ -219,7 +219,7 @@ namespace MyStaging.Core
                 Connection = Options.Connection.GetConnection(Options.Name, byMaster);
             }
 
-            return new SQLExecute(Connection);
+            return new SQLExecute(Connection, CurrentThreadTransaction);
         }
 
         /// <summary>
