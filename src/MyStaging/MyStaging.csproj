@@ -8,7 +8,7 @@
     <Copyright>MIT</Copyright>
     <PackageLicenseUrl></PackageLicenseUrl>
     <PackageProjectUrl>https://github.com/lianggx/mystaging</PackageProjectUrl>
-    <Version>3.0.4</Version>
+    <Version>3.0.7</Version>
     <PackageReleaseNotes>全新架构改动，支持多库/多路上下文，支持 DbFirst/CodeFirst。旧版本请使用2.1.10版本。</PackageReleaseNotes>
     <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
     <PackageLicenseFile>LICENSE</PackageLicenseFile>
