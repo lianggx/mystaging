@@ -39,9 +39,9 @@ namespace Mysql
                 dbContext.CommitTransaction();
 
                 ArticleService articleService = new ArticleService(dbContext);
-                var art = articleService.Detail(29);
-                art = articleService.Update(art.id, "修改了标题", art.content);
-                bool success = articleService.Delete(art.id);
+                var art = articleService.Detail(13);
+                art = articleService.Update(art.Id, "修改了标题", art.Content);
+                bool success = articleService.Delete(art.Id);
             }
             catch (Exception e)
             {
@@ -56,7 +56,7 @@ namespace Mysql
             // 列表查询，排序、分页、分组
             var articles = dbContext.Customer.Select.OrderBy(f => f.Name).Page(1, 10).GroupBy("Id,Name").ToList<(int id, string name)>("Id,Name");
             // 表连接查询
-            var ac = dbContext.Article.Select.InnerJoin<Customer>("b", (a, b) => a.userid == b.Id).Where<Customer>(f => f.Id == 2).ToOne();
+            var ac = dbContext.Article.Select.InnerJoin<Customer>("b", (a, b) => a.UserId == b.Id).Where<Customer>(f => f.Id == 2).ToOne();
             // 首字段查询，ToScalar 参数可以传递 Sql 参数，比如 SUM(x)
             var id = dbContext.Customer.Select.Where(f => f.Id == 2 && f.Name == "Ron").ToScalar<int>("Id");
         }
@@ -65,12 +65,12 @@ namespace Mysql
         {
             var art = new Article()
             {
-                content = "你是谁？你从哪里来？要到哪里去？",
-                createtime = DateTime.Now,
-                userid = 43,
+                Content = "你是谁？你从哪里来？要到哪里去？",
+                CreateTime = DateTime.Now,
+                UserId = 43,
                 IP = "127.0.0.1",
                 State = true,
-                title = "振聋发聩的人生三问"
+                Title = "振聋发聩的人生三问"
             };
 
             var articles = new List<Article>();
@@ -81,9 +81,9 @@ namespace Mysql
             var a2 = dbContext.Article.Insert.Add(art);
             var affrows = dbContext.Article.Insert.AddRange(articles).SaveChange();
 
-            var a3 = dbContext.Article.Update.SetValue(f => f.content, "未来已来，从这里开始").Where(f => f.id == 1).SaveChange();
-            var a4 = dbContext.Article.Select.OrderByDescing(f => f.createtime).ToOne();
-            dbContext.Article.Delete.Where(f => f.id == a4.id).SaveChange();
+            var a3 = dbContext.Article.Update.SetValue(f => f.Content, "未来已来，从这里开始").Where(f => f.Id == 1).SaveChange();
+            var a4 = dbContext.Article.Select.OrderByDescing(f => f.CreateTime).ToOne();
+            dbContext.Article.Delete.Where(f => f.Id == a4.Id).SaveChange();
         }
     }
 }

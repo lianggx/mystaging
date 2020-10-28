@@ -17,4 +17,8 @@
     <ProjectReference Include="..\..\src\MyStaging.MySql\MyStaging.MySql.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Model\" />
+  </ItemGroup>
+
 </Project>

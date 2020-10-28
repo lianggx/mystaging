@@ -3,17 +3,17 @@ using System;
 using MyStaging.Core;
 using MyStaging.Common;
 using MyStaging.Metadata;
+using System.Text.Json;
 
 namespace Mysql
 {
-    public class MysqlDbContext : DbContext
-    {
-        public MysqlDbContext(StagingOptions options) : base(options, ProviderType.MySql)
-        {
-        }
+	public partial class MysqlDbContext : DbContext
+	{
+		public MysqlDbContext(StagingOptions options) : base(options, ProviderType.MySql)
+		{
+		}
 
-        public DbSet<Article> Article { get; set; }
-        public DbSet<M_type> M_type { get; set; }
-        public DbSet<Customer> Customer { get; set; }
-    }
+		public DbSet<Article> Article { get; set; }
+		public DbSet<Customer> Customer { get; set; }
+	}
 }

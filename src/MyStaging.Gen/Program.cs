@@ -8,6 +8,7 @@ using System.IO;
 using System.Diagnostics;
 using MyStaging.Interface;
 using System.Runtime.Loader;
+using MyStaging.Common;
 
 namespace MyStaging.App
 {
@@ -17,7 +18,7 @@ namespace MyStaging.App
         {
             if (args.Length == 0)
             {
-                Drawing();
+                ShowHelp();
                 return;
             }
 
@@ -47,58 +48,49 @@ namespace MyStaging.App
             {
                 Console.WriteLine("{0}\n{1}", ex.Message, ex.StackTrace);
             }
-
+            Console.WriteLine("OutputDir：{0}", config.OutputDir);
             Console.WriteLine("success.");
         }
 
-        static void Drawing()
+        static void ShowHelp()
         {
-            Console.WriteLine("欢迎使用 MyStaging.Gen");
-            Console.WriteLine();
-            Console.WriteLine("////////////////////////////////////////////////////////");
-            Console.WriteLine("///                                                  ///");
-            Console.WriteLine("///                        | |      (_)              ///");
-            Console.WriteLine("///    _ __ ___  _   _ ___| |_ __ _ _ _ __   __ _    ///");
-            Console.WriteLine(@"///   | '_ ` _ \| | | / __| __/ _` | | '_ \ / _` |   ///");
-            Console.WriteLine(@"///   | | | | | | |_| \__ \ || (_| | | | | | (_| |   ///");
-            Console.WriteLine(@"///   |_| |_| |_|\__, |___/\__\__,_|_|_| |_|\__, |   ///");
-            Console.WriteLine("///               __/ |                      __/ |   ///");
-            Console.WriteLine("///              |___/                      |___/    ///");
-            Console.WriteLine("///                                                  ///");
-            Console.WriteLine("////////////////////////////////////////////////////////");
-            Console.WriteLine();
+            Console.WriteLine(@"欢迎使用 MyStaging.Gen，查看帮助请使用命令 mystaging.gen --help
 
-            Help();
-            Console.WriteLine("查看帮助请使用命令 mystaging.gen --help");
-            Console.WriteLine();
-        }
+////////////////////////////////////////////////////////
+///                                                  ///
+///                       | |      (_)               ///
+///    _ __ ___  _   _ ___| |_ __ _ _ _ __   __ _    ///
+///   | '_ ` _ \| | | / __| __/ _` | | '_ \ / _` |   ///
+///   | | | | | | |_| \__ \ || (_| | | | | | (_| |   ///
+///   |_| |_| |_|\__, |___/\__\__,_|_|_| |_|\__, |   ///
+///               __/ |                      __/ |   ///
+///              |___/                      |___/    ///
+///                                                  ///
+////////////////////////////////////////////////////////
 
-        static void Help()
-        {
-            Console.WriteLine("要使用 MyStaging.Gen 请跟进下面的参数说明，执行创建实体对象映射.");
-            Console.WriteLine();
-            Console.WriteLine("--help 查看帮助");
-            Console.WriteLine("-m [mode，db[DbFirst]/code[CodeFirst]，默认为 DbFirst");
-            Console.WriteLine("-t [dbtype[Mysql/PostgreSQL]，数据库提供程序]  required");
-            Console.WriteLine("-d [database，数据库连接字符串] required");
-            Console.WriteLine("-n [name，数据库上下文名称]  required");
-            Console.WriteLine("-o [output，实体对象输出路径]，默认为 {name}/Model");
-            Console.WriteLine();
-            Console.WriteLine("==============示例==============");
-            Console.WriteLine("  CodeFirst：");
-            Console.WriteLine("  mystaging.gen -m code -t PostgreSQL -p Pgsql -d \"Host=127.0.0.1;Port=5432;Username=postgres;Password=postgres;Database=mystaging;\"");
-            Console.WriteLine();
-            Console.WriteLine("  DbFirst：");
-            Console.WriteLine("  mystaging.gen -m db -t PostgreSQL -p Pgsql -d \"Host=127.0.0.1;Port=5432;Username=postgres;Password=postgres;Database=mystaging;\"");
-            Console.WriteLine("================================");
-            Console.WriteLine();
+要使用 MyStaging.Gen 请跟据下面的参数说明，执行创建实体对象映射.
+
+--help 查看帮助
+- m[mode，db[DbFirst] / code[CodeFirst]，默认为 DbFirst
+- t[dbtype[Mysql / PostgreSQL]，数据库提供程序]  required
+- d[database，数据库连接字符串] required
+- n[name，数据库上下文名称]  required
+- o[output，实体对象输出路径]，默认为 { name}/ Model
+
+==============示例==============
+  CodeFirst：
+  mystaging.gen -m code -t Mysql -n Mysql -o Model -d ""server=127.0.0.1;port=3306;user id=root;password=root;database=mystaging;""
+  DbFirst：
+  mystaging.gen -m db -t Mysql -n Mysql -o Model -d ""server=127.0.0.1;port=3306;user id=root;password=root;database=mystaging;""
+================================
+");
         }
 
         static ProjectConfig GetConfig(string[] args)
         {
             if (args[0] == "--help")
             {
-                Drawing();
+                ShowHelp();
                 return null;
             }
 
@@ -120,10 +112,10 @@ namespace MyStaging.App
                 i++;
             }
 
-            MyStaging.Common.CheckNotNull.NotEmpty(config.ConnectionString, "-d 参数必须提供");
-            MyStaging.Common.CheckNotNull.NotEmpty(config.ContextName, "-n 参数必须提供");
-            MyStaging.Common.CheckNotNull.NotEmpty(config.Provider, "-t 参数必须提供");
-            MyStaging.Common.CheckNotNull.NotEmpty(mode, "-m 参数必须提供");
+            CheckNotNull.NotEmpty(config.ConnectionString, "-d 参数必须提供");
+            CheckNotNull.NotEmpty(config.ContextName, "-n 参数必须提供");
+            CheckNotNull.NotEmpty(config.Provider, "-t 参数必须提供");
+            CheckNotNull.NotEmpty(mode, "-m 参数必须提供");
 
             if (mode != "db" && mode != "code")
             {
@@ -162,7 +154,7 @@ namespace MyStaging.App
         static IGeneralFactory CreateGeneral(Assembly providerAssembly)
         {
             var type = providerAssembly.GetTypes().Where(f => f.GetInterface(typeof(IGeneralFactory).Name) != null).FirstOrDefault();
-            MyStaging.Common.CheckNotNull.NotNull(typeof(IGeneralFactory), $"程序集中 {providerAssembly.FullName} 找不到 IGeneralFactory 的实现。");
+            CheckNotNull.NotNull(typeof(IGeneralFactory), $"程序集中 {providerAssembly.FullName} 找不到 IGeneralFactory 的实现。");
             return (IGeneralFactory)Activator.CreateInstance(type);
         }
     }

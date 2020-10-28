@@ -14,15 +14,15 @@ namespace Mysql.Services
 
         public List<Article> List(PageModel model)
         {
-            var build = dbContext.Article.Select.Page(model.PageIndex, model.PageSize).OrderByDescing(f => f.createtime);
+            var build = dbContext.Article.Select.Page(model.PageIndex, model.PageSize).OrderByDescing(f => f.CreateTime);
             if (model.UserId > 0)
             {
-                build.Where(f => f.userid == model.UserId);
+                build.Where(f => f.UserId == model.UserId);
             }
 
             if (!string.IsNullOrEmpty(model.Keyword))
             {
-                build.Where(f => f.title.Like(model.Keyword));
+                build.Where(f => f.Title.Like(model.Keyword));
             }
 
             return build.ToList();
@@ -34,7 +34,7 @@ namespace Mysql.Services
             {
                 return null;
             }
-            var detail = dbContext.Article.Select.Where(f => f.id == id).ToOne();
+            var detail = dbContext.Article.Select.Where(f => f.Id == id).ToOne();
 
             return detail;
         }
@@ -42,20 +42,20 @@ namespace Mysql.Services
         public Article Add(Article model)
         {
 
-            var detail = dbContext.Article.Select.Where(f => f.id == model.id).ToOne();
+            var detail = dbContext.Article.Select.Where(f => f.Id == model.Id).ToOne();
 
             return detail;
         }
 
         public Article Update(int id, string title, string content)
         {
-            var article = dbContext.Article.Select.Where(f => f.id == id).ToOne();
+            var article = dbContext.Article.Select.Where(f => f.Id == id).ToOne();
             if (article == null)
                 throw new KeyNotFoundException($"找不到Id={id} 的记录");
 
-            article = dbContext.Article.Update.SetValue(f => f.content, content)
-                                                         .SetValue(f => f.title, title)
-                                                         .Where(f => f.id == article.id)
+            article = dbContext.Article.Update.SetValue(f => f.Content, content)
+                                                         .SetValue(f => f.Title, title)
+                                                         .Where(f => f.Id == article.Id)
                                                          .SaveChange();
 
             return article;
@@ -63,13 +63,20 @@ namespace Mysql.Services
 
         public bool Delete(int id)
         {
-            var article = dbContext.Article.Select.Where(f => f.id == id).ToOne();
+            var article = dbContext.Article.Select.Where(f => f.Id == id).ToOne();
             if (article == null)
                 throw new KeyNotFoundException($"找不到Id={id} 的记录");
 
-            var affrows = dbContext.Article.Delete.Where(f => f.id == id).SaveChange();
+            var affrows = dbContext.Article.Delete.Where(f => f.Id == id).SaveChange();
 
             return affrows > 0;
+        }
+
+        public long Total()
+        {
+            var total = dbContext.Article.Select.Where(f => f.State == true).Count();
+
+            return total;
         }
     }
 }
