@@ -6,7 +6,7 @@
     <AssemblyName>MyStaging.Gen</AssemblyName>
     <ApplicationIcon />
     <StartupObject></StartupObject>
-    <Version>3.0.8</Version>
+    <Version>3.0.9</Version>
     <PackageLicenseFile>LICENSE</PackageLicenseFile>
     <PackageId>MyStaging.Gen</PackageId>
     <Authors>MyStaging.Gen</Authors>

@@ -1,1 +1,0 @@
-﻿mystaging.gen -m Code -t Mysql -n Mysql -d "server=127.0.0.1;Port=3306;user id=root;password=root;Database=mystaging;" -o Model

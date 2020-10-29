@@ -1,14 +1,11 @@
-﻿using MyStaging.Metadata;
-using System;
-using System.Reflection;
-using System.Text;
-using System.Linq;
-using System.Collections;
-using System.IO;
-using System.Diagnostics;
+﻿using MyStaging.Common;
 using MyStaging.Interface;
+using MyStaging.Metadata;
+using System;
+using System.IO;
+using System.Linq;
+using System.Reflection;
 using System.Runtime.Loader;
-using MyStaging.Common;
 
 namespace MyStaging.App
 {
@@ -16,40 +13,28 @@ namespace MyStaging.App
     {
         static void Main(string[] args)
         {
-            if (args.Length == 0)
+            if (args.Length == 0 || args[0] == "--help")
             {
                 ShowHelp();
                 return;
             }
 
-            ProjectConfig config = GetConfig(args);
-            if (config == null)
-                return;
-
-            //ProjectConfig config = new ProjectConfig()
-            //{
-            //    ConnectionString = "Host=127.0.0.1;Port=3306;Username=root;Password=root;Database=mystaging;",
-            //    Mode = GeneralInfo.Db,
-            //    OutputDir = "Models",
-            //    ContextName = "MyStaging",
-            //    Provider = "MySql",
-            //    ProviderAssembly = Assembly.LoadFile(@"D:\MyGitHub\mystaging\src\MyStaging.Gen\bin\Debug\netcoreapp3.1\MyStaging.MySql.dll")
-            //};
-
             try
             {
-                IGeneralFactory factory = CreateGeneral(config.ProviderAssembly);
+                var config = GetConfig(args);
+                var factory = CreateGeneral(config.ProviderAssembly);
                 if (config.Mode == GeneralInfo.Db)
                     factory.DbFirst(config);
                 else
                     factory.CodeFirst(config);
+
+                Console.WriteLine("OutputDir：{0}", config.OutputDir);
+                Console.WriteLine("success.");
             }
             catch (Exception ex)
             {
                 Console.WriteLine("{0}\n{1}", ex.Message, ex.StackTrace);
             }
-            Console.WriteLine("OutputDir：{0}", config.OutputDir);
-            Console.WriteLine("success.");
         }
 
         static void ShowHelp()
@@ -88,12 +73,6 @@ namespace MyStaging.App
 
         static ProjectConfig GetConfig(string[] args)
         {
-            if (args[0] == "--help")
-            {
-                ShowHelp();
-                return null;
-            }
-
             var config = new ProjectConfig();
             string mode = "db";
             for (int i = 0; i < args.Length; i++)
@@ -119,8 +98,7 @@ namespace MyStaging.App
 
             if (mode != "db" && mode != "code")
             {
-                Console.WriteLine("-m 参数错误，必须为 db 或者 code");
-                return null;
+                throw new ArgumentException("-m 参数错误，必须为 db 或者 code");
             }
 
             config.Mode = mode == "db" ? GeneralInfo.Db : GeneralInfo.Code;
@@ -131,22 +109,6 @@ namespace MyStaging.App
 
             var fileName = "MyStaging." + config.Provider;
             config.ProviderAssembly = AssemblyLoadContext.Default.LoadFromAssemblyName(new AssemblyName(fileName));
-
-            // 生成批处理文件
-            StringBuilder sb = new StringBuilder();
-            sb.AppendFormat("mystaging.gen -m {0}", config.Mode)
-                .AppendFormat(" -t {0}", config.Provider)
-                .AppendFormat(" -n {0}", config.ContextName)
-                .AppendFormat(" -d \"{0}\"", config.ConnectionString)
-                .AppendFormat(" -o {0}", config.OutputDir);
-
-            var buildFile = Path.Combine(config.ContextName, "build.bat");
-            if (!Directory.Exists(config.ContextName))
-            {
-                Directory.CreateDirectory(config.ContextName);
-            }
-
-            File.WriteAllText(buildFile, sb.ToString(), Encoding.UTF8);
 
             return config;
         }
