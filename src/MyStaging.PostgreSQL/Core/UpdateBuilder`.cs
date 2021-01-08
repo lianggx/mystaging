@@ -124,8 +124,12 @@ namespace MyStaging.PostgreSQL.Core
                 this.ToSQL();
                 this.CommandText += " RETURNING *;";
                 using var reader = dbContext.ByMaster().Execute.ExecuteDataReader(CommandType.Text, CommandText, this.Parameters.ToArray());
-                reader.Read();
-                T obj = GetResult<T>(reader);
+                T obj = default;
+
+                if (reader.Read())
+                {
+                    obj = GetResult<T>(reader);
+                }
                 return obj;
             }
             finally

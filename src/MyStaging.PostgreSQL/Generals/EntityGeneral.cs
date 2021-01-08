@@ -1,12 +1,6 @@
 ﻿using MyStaging.Common;
-using MyStaging.Core;
 using MyStaging.Metadata;
-using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.Data;
 using System.IO;
-using System.Linq;
 
 namespace MyStaging.PostgreSQL.Generals
 {

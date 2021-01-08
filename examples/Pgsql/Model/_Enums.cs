@@ -1,8 +1,6 @@
-﻿using System;
-
-namespace Pgsql.Model
+﻿namespace Pgsql.Model
 {
-	public enum et_data_state
+    public enum et_data_state
 	{
 		正常,
 		删除,

@@ -1,10 +1,11 @@
 ﻿using MyStaging.Common;
 using MyStaging.Core;
-using MyStaging.Metadata;
+using MyStaging.DataAnnotations;
 using MyStaging.Interface;
+using MyStaging.Metadata;
+using Npgsql;
 using System;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Data;
@@ -12,8 +13,6 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Text;
-using MyStaging.DataAnnotations;
-using Npgsql;
 
 namespace MyStaging.PostgreSQL.Generals
 {

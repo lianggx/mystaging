@@ -1,7 +1,4 @@
-﻿using System;
-using NpgsqlTypes;
-using System.Collections.Generic;
-using MyStaging.Common;
+﻿using System.Collections.Generic;
 
 namespace MyStaging.PostgreSQL
 {

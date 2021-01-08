@@ -1,9 +1,7 @@
-﻿using System;
-using System.Linq;
-using NpgsqlTypes;
-using System.ComponentModel.DataAnnotations.Schema;
-using MyStaging.DataAnnotations;
+﻿using MyStaging.DataAnnotations;
+using System;
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Text.Json;
 
 namespace Pgsql.Model

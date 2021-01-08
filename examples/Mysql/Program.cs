@@ -40,8 +40,11 @@ namespace Mysql
 
                 ArticleService articleService = new ArticleService(dbContext);
                 var art = articleService.Detail(13);
-                art = articleService.Update(art.Id, "修改了标题", art.Content);
-                bool success = articleService.Delete(art.Id);
+                if (art != null)
+                {
+                    art = articleService.Update(art.Id, "修改了标题", art.Content);
+                    bool success = articleService.Delete(art.Id);
+                }
             }
             catch (Exception e)
             {

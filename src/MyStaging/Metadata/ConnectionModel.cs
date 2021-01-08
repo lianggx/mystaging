@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Data.Common;
-using System.Text;
-
-namespace MyStaging.Metadata
+﻿namespace MyStaging.Metadata
 {
     public class ConnectionModel
     {

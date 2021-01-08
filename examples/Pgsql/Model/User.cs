@@ -1,13 +1,11 @@
-﻿using System;
-using System.Linq;
-using NpgsqlTypes;
-using System.ComponentModel.DataAnnotations.Schema;
-using MyStaging.DataAnnotations;
+﻿using MyStaging.DataAnnotations;
+using System;
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Pgsql.Model
 {
-	[Table(name: "user", Schema = "public")]
+    [Table(name: "user", Schema = "public")]
 	public partial class User
 	{
 		[PrimaryKey]

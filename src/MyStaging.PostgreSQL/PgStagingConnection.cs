@@ -1,13 +1,7 @@
-﻿using MyStaging.Common;
-using MyStaging.Core;
+﻿using MyStaging.Core;
 using MyStaging.Interface;
 using Npgsql;
-using System;
-using System.Collections.Concurrent;
-using System.Collections.Generic;
 using System.Data.Common;
-using System.Diagnostics;
-using System.Linq;
 
 namespace MyStaging.PostgreSQL
 {

@@ -31,7 +31,9 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "provider", "provider", "{03
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Pgsql", "examples\Pgsql\Pgsql.csproj", "{621779F6-14CF-42D7-9B59-EE6EF77350AF}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Mysql", "examples\Mysql\Mysql.csproj", "{19095EB9-CF13-454A-93AD-DF0BBD065BF7}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Mysql", "examples\Mysql\Mysql.csproj", "{19095EB9-CF13-454A-93AD-DF0BBD065BF7}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "IdentityHost", "examples\IdentityHost\IdentityHost.csproj", "{601EBC66-D9BC-49BB-820D-500CACE386A9}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -67,6 +69,10 @@ Global
 		{19095EB9-CF13-454A-93AD-DF0BBD065BF7}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{19095EB9-CF13-454A-93AD-DF0BBD065BF7}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{19095EB9-CF13-454A-93AD-DF0BBD065BF7}.Release|Any CPU.Build.0 = Release|Any CPU
+		{601EBC66-D9BC-49BB-820D-500CACE386A9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{601EBC66-D9BC-49BB-820D-500CACE386A9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{601EBC66-D9BC-49BB-820D-500CACE386A9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{601EBC66-D9BC-49BB-820D-500CACE386A9}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -81,6 +87,7 @@ Global
 		{03066DAC-D9A2-4B81-8295-1412C6EB3DCC} = {D8A84CB8-E1D8-4E53-8AA0-64A0B5EF52DC}
 		{621779F6-14CF-42D7-9B59-EE6EF77350AF} = {05B860F5-AC6E-4D15-A9A5-11DC1FF8DD16}
 		{19095EB9-CF13-454A-93AD-DF0BBD065BF7} = {05B860F5-AC6E-4D15-A9A5-11DC1FF8DD16}
+		{601EBC66-D9BC-49BB-820D-500CACE386A9} = {05B860F5-AC6E-4D15-A9A5-11DC1FF8DD16}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {9C02132D-DD97-411D-A882-5DC796A8CC2D}

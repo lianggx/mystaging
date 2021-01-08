@@ -1,0 +1,791 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>IdentityHost</name>
+    </assembly>
+    <members>
+        <member name="P:IdentityHost.APIReturn.成功">
+            <summary>
+            成功 0
+            </summary>
+        </member>
+        <member name="P:IdentityHost.APIReturn.失败">
+            <summary>
+             失败 99
+            </summary>
+        </member>
+        <member name="P:IdentityHost.APIReturn.记录不存在">
+            <summary>
+            记录不存在 98
+            </summary>
+        </member>
+        <member name="P:IdentityHost.APIReturn.参数格式不正确">
+            <summary>
+            参数格式不正确 97
+            </summary>
+        </member>
+        <member name="P:IdentityHost.APIReturn.没有访问权限">
+            <summary>
+             没有访问权限 96
+            </summary>
+        </member>
+        <member name="P:IdentityHost.APIReturn.系统内置_内部异常">
+            <summary>
+             系统内置_内部异常 5001000
+            </summary>
+        </member>
+        <member name="P:IdentityHost.APIReturn.用户_未登录">
+            <summary>
+             用户_未登录 1001005
+            </summary>
+        </member>
+        <member name="M:IdentityHost.Controllers.AccountController.SignIn(IdentityHost.ViewModel.LoginViewModel)">
+            <summary>
+             登入
+            </summary>
+            <remarks>
+            <code>
+             detail:{
+                 id:
+                 img_face:
+                 name:
+                 code:
+                },
+                menus:[{
+                    id:
+                    name:
+                    resource
+                }],
+                roles:[{
+                      id:
+                      name:
+                }]
+            </code>
+            </remarks>
+            <param name="model"></param>
+            <returns></returns>
+        </member>
+        <member name="M:IdentityHost.Controllers.AccountController.SignOut">
+            <summary>
+             登出
+            </summary>
+            <returns></returns>
+        </member>
+        <member name="M:IdentityHost.Controllers.AccountController.MyInfo">
+            <summary>
+             我的个人资料
+            </summary>
+            <remarks>
+            <code>
+             detail:{
+                 id: id
+                 img_face: 头像
+                 name: 姓名
+                 code: 员工编号
+                 bonus: 绩效奖金
+                 dept: 部门
+                 salary: 基础工资
+                 phone: 手机号码
+                 level: 职级
+                 gender: 性别，null=未知，0=女，1=男
+                }
+            </code>
+            </remarks>
+            <returns></returns>
+        </member>
+        <member name="M:IdentityHost.Controllers.PasswordController.Edit(IdentityHost.ViewModel.PasswordViewModel)">
+            <summary>
+             修改密码
+            </summary>
+            <remarks>
+            调用成功自动清除登录信息
+            </remarks>
+            <param name="model"></param>
+            <returns></returns>
+        </member>
+        <member name="T:IdentityHost.Controllers.R2RController">
+            <summary>
+             Role 2 Resource
+            </summary>
+        </member>
+        <member name="M:IdentityHost.Controllers.R2RController.Add(IdentityHost.ViewModel.R2RViewModel)">
+            <summary>
+             添加角色资源权限
+            </summary>
+            <param name="model"></param>
+            <returns></returns>
+        </member>
+        <member name="T:IdentityHost.Controllers.R2UController">
+            <summary>
+             Role 2 User
+            </summary>
+        </member>
+        <member name="M:IdentityHost.Controllers.R2UController.Add(IdentityHost.ViewModel.R2UViewModel)">
+            <summary>
+             添加授权
+            </summary>
+            <remarks>
+            <code>
+            data:{
+                id:
+                }
+            </code>
+            </remarks>
+            <param name="model"></param>
+            <returns></returns>
+        </member>
+        <member name="M:IdentityHost.Controllers.ResourceController.Add(IdentityHost.ViewModel.AddResourceViewModel)">
+            <summary>
+             添加资源
+            </summary>
+            <remarks>
+            <code>
+            data:{
+                id:
+                }
+            </code>
+            </remarks>
+            <param name="model"></param>
+            <returns></returns>
+        </member>
+        <member name="M:IdentityHost.Controllers.ResourceController.Edit(IdentityHost.ViewModel.EditResourceViewModel)">
+            <summary>
+             编辑资源
+            </summary>
+            <remarks>
+            <code>
+            data:{
+                id:
+                }
+            </code>
+            </remarks>
+            <param name="model"></param>
+            <returns></returns>
+        </member>
+        <member name="M:IdentityHost.Controllers.ResourceController.Delete(IdentityHost.ViewModel.IdViewModel)">
+            <summary>
+             删除资源
+            </summary>
+            <param name="model"></param>
+            <returns></returns>
+        </member>
+        <member name="M:IdentityHost.Controllers.ResourceController.List(IdentityHost.ViewModel.ResourceListViewModel)">
+            <summary>
+             资源列表
+            </summary>
+            <remarks>
+            <code>
+            data:[{
+                       id:
+                       parent_id
+                       name:  名称
+                       type: 资源类型
+                       resource: 资源内容
+                       sort:排序号
+                       authorize: 是否需要授权登录
+                       children:资源列表
+                }]
+            </code>
+            </remarks>
+            <param name="model"></param>
+            <returns></returns>
+        </member>
+        <member name="M:IdentityHost.Controllers.ResourceController.Root(IdentityHost.ViewModel.ResourceRootViewModel)">
+            <summary>
+             顶级资源列表
+            </summary>
+            <remarks>
+            <code>
+            data:[{
+                       id:
+                       name:  名称
+                       type: 资源类型
+                       resource: 资源内容
+                       sort:排序号
+                       authorize: 是否需要授权登录
+                }]
+            </code>
+            </remarks>
+            <param name="model"></param>
+            <returns></returns>
+        </member>
+        <member name="M:IdentityHost.Controllers.RoleController.Add(IdentityHost.ViewModel.AddRoleViewModel)">
+            <summary>
+             添加角色
+            </summary>
+            <remarks>
+            <code>
+            data:{
+                id:
+                }
+            </code>
+            </remarks>
+            <param name="model"></param>
+            <returns></returns>
+        </member>
+        <member name="M:IdentityHost.Controllers.RoleController.Edit(IdentityHost.ViewModel.EditRoleViewModel)">
+            <summary>
+             编辑角色
+            </summary>
+            <remarks>
+            <code>
+            data:{
+                id:
+                }
+            </code>
+            </remarks>
+            <param name="model"></param>
+            <returns></returns>
+        </member>
+        <member name="M:IdentityHost.Controllers.RoleController.Delete(IdentityHost.ViewModel.IdViewModel)">
+            <summary>
+             删除角色
+            </summary>
+            <param name="model"></param>
+            <returns></returns>
+        </member>
+        <member name="M:IdentityHost.Controllers.RoleController.Detail(IdentityHost.ViewModel.IdViewModel)">
+            <summary>
+             角色详情
+            </summary>
+            <remarks>
+            <code>
+            data:[
+            role:{
+                       id:
+                       name:  名称
+                },
+                resources:[{
+                    id:
+                    parent_id:
+                    name:
+                    resource:
+            }]]
+            </code>
+            </remarks>
+            <param name="model"></param>
+            <returns></returns>
+        </member>
+        <member name="M:IdentityHost.Controllers.RoleController.List(IdentityHost.ViewModel.PageViewModel)">
+            <summary>
+             角色列表
+            </summary>
+            <remarks>
+            <code>
+            data:[{
+                       id:
+                       name:  名称
+                }]
+            </code>
+            </remarks>
+            <param name="model"></param>
+            <returns></returns>
+        </member>
+        <member name="M:IdentityHost.Controllers.UserController.Add(IdentityHost.ViewModel.AddM_UserViewModel)">
+            <summary>
+             添加
+            </summary>
+            <param name="model"></param>
+            <returns></returns>
+        </member>
+        <member name="M:IdentityHost.Controllers.UserController.Edit(IdentityHost.ViewModel.EditUserViewModel)">
+            <summary>
+             编辑
+            </summary>
+            <param name="model"></param>
+            <returns></returns>
+        </member>
+        <member name="M:IdentityHost.Controllers.UserController.Delete(IdentityHost.ViewModel.IdViewModel)">
+            <summary>
+             删除
+            </summary>
+            <param name="model"></param>
+            <returns></returns>
+        </member>
+        <member name="M:IdentityHost.Controllers.UserController.Detail(IdentityHost.ViewModel.IdViewModel)">
+            <summary>
+             详情
+            </summary>
+            <remarks>
+            <code>
+             data:{
+                        detail:{
+                        
+                        },
+                        roles:[{
+                                id:
+                                name:
+                        }]
+            }
+            </code>
+            </remarks>
+            <param name="model"></param>
+            <returns></returns>
+        </member>
+        <member name="M:IdentityHost.Controllers.UserController.List(IdentityHost.ViewModel.UserListViewModel)">
+            <summary>
+             列表
+            </summary>
+            <remarks>
+            <code>
+            data:[{
+                     Id:
+                    code:
+                    dept:
+                    name:
+                    title:
+                    state:
+            }]
+            </code>
+            </remarks>
+            <param name="model"></param>
+            <returns></returns>
+        </member>
+        <member name="M:IdentityHost.Helpers.HttpHelper.#ctor(System.Net.Http.IHttpClientFactory)">
+            <summary>
+             
+            </summary>
+            <returns></returns>
+        </member>
+        <member name="T:IdentityHost.Helpers.HttpHelper.HttpMethodEnum">
+            <summary>
+            
+            </summary>
+        </member>
+        <member name="F:IdentityHost.Helpers.HttpHelper.HttpMethodEnum.POST">
+            <summary>
+            
+            </summary>
+        </member>
+        <member name="F:IdentityHost.Helpers.HttpHelper.HttpMethodEnum.GET">
+            <summary>
+            
+            </summary>
+        </member>
+        <member name="M:IdentityHost.Helpers.HttpHelper.HttpRequest(System.String,IdentityHost.Helpers.HttpHelper.HttpMethodEnum,System.String,System.Collections.Generic.Dictionary{System.String,System.String},System.String)">
+            <summary>
+            
+            </summary>
+            <param name="url"></param>
+            <param name="httpMethod"></param>
+            <param name="data"></param>
+            <param name="headers"></param>
+            <param name="contentType"></param>
+            <returns></returns>
+        </member>
+        <member name="M:IdentityHost.Helpers.HttpHelper.GetFrom(System.String,System.Nullable{System.Int32})">
+            <summary>
+             使用 Get 方式调用远程服务
+            </summary>
+            <param name="url"></param>
+            <param name="timeout"></param>
+            <returns></returns>
+        </member>
+        <member name="P:IdentityHost.Model.M_Accesslog.UserId">
+            <summary>
+            用户编号
+            </summary>
+        </member>
+        <member name="P:IdentityHost.Model.M_Accesslog.Resource">
+            <summary>
+            资源内容
+            </summary>
+        </member>
+        <member name="P:IdentityHost.Model.M_Accesslog.ResourceId">
+            <summary>
+            资源编号
+            </summary>
+        </member>
+        <member name="P:IdentityHost.Model.M_Accesslog.ReqContent">
+            <summary>
+            请求内容
+            </summary>
+        </member>
+        <member name="P:IdentityHost.Model.M_Accesslog.ResContent">
+            <summary>
+            响应内容
+            </summary>
+        </member>
+        <member name="P:IdentityHost.Model.M_Accesslog.IP">
+            <summary>
+            客户端IP地址
+            </summary>
+        </member>
+        <member name="P:IdentityHost.Model.M_Accesslog.Code">
+            <summary>
+            响应代码
+            </summary>
+        </member>
+        <member name="P:IdentityHost.Model.M_Accesslog.Remark">
+            <summary>
+            备注
+            </summary>
+        </member>
+        <member name="P:IdentityHost.Model.M_Accesslog.CreateTime">
+            <summary>
+            创建时间
+            </summary>
+        </member>
+        <member name="P:IdentityHost.Model.M_Mapping.UserId">
+            <summary>
+            用户编号
+            </summary>
+        </member>
+        <member name="P:IdentityHost.Model.M_Mapping.RoleId">
+            <summary>
+            角色编号
+            </summary>
+        </member>
+        <member name="P:IdentityHost.Model.M_Mapping.CreateTime">
+            <summary>
+            创建时间
+            </summary>
+        </member>
+        <member name="P:IdentityHost.Model.M_Resource.ParentId">
+            <summary>
+            上级编号
+            </summary>
+        </member>
+        <member name="P:IdentityHost.Model.M_Resource.Name">
+            <summary>
+            资源名称
+            </summary>
+        </member>
+        <member name="P:IdentityHost.Model.M_Resource.Content">
+            <summary>
+            资源内容
+            </summary>
+        </member>
+        <member name="P:IdentityHost.Model.M_Resource.Type">
+            <summary>
+            资源类型，0=API，1=网页元素
+            </summary>
+        </member>
+        <member name="P:IdentityHost.Model.M_Resource.State">
+            <summary>
+            状态，0=正常，1=冻结，2=删除
+            </summary>
+        </member>
+        <member name="P:IdentityHost.Model.M_Resource.Authorize">
+            <summary>
+            是否需要授权访问
+            </summary>
+        </member>
+        <member name="P:IdentityHost.Model.M_Resource.Sort">
+            <summary>
+            排序号，按数字顺序排序
+            </summary>
+        </member>
+        <member name="P:IdentityHost.Model.M_Resource.CreateTime">
+            <summary>
+            创建时间
+            </summary>
+        </member>
+        <member name="P:IdentityHost.Model.M_Role.Id">
+            <summary>
+            编号
+            </summary>
+        </member>
+        <member name="P:IdentityHost.Model.M_Role.Name">
+            <summary>
+            名称
+            </summary>
+        </member>
+        <member name="P:IdentityHost.Model.M_Role.State">
+            <summary>
+            状态，0=正常，1=冻结，2=删除
+            </summary>
+        </member>
+        <member name="P:IdentityHost.Model.M_Role.CreateTime">
+            <summary>
+            创建时间
+            </summary>
+        </member>
+        <member name="P:IdentityHost.Model.M_Roleresource.RoleId">
+            <summary>
+            角色编号
+            </summary>
+        </member>
+        <member name="P:IdentityHost.Model.M_Roleresource.ResourceId">
+            <summary>
+            资源编号
+            </summary>
+        </member>
+        <member name="P:IdentityHost.Model.M_User.Id">
+            <summary>
+            编号
+            </summary>
+        </member>
+        <member name="P:IdentityHost.Model.M_User.ImgFace">
+            <summary>
+            头像
+            </summary>
+        </member>
+        <member name="P:IdentityHost.Model.M_User.Name">
+            <summary>
+            姓名
+            </summary>
+        </member>
+        <member name="P:IdentityHost.Model.M_User.Phone">
+            <summary>
+            手机号码
+            </summary>
+        </member>
+        <member name="P:IdentityHost.Model.M_User.LoginName">
+            <summary>
+            登录名
+            </summary>
+        </member>
+        <member name="P:IdentityHost.Model.M_User.Password">
+            <summary>
+            登录密码
+            </summary>
+        </member>
+        <member name="P:IdentityHost.Model.M_User.State">
+            <summary>
+            状态，0=正常，1=未激活，2=冻结，3=删除
+            </summary>
+        </member>
+        <member name="P:IdentityHost.Model.M_User.CreateTime">
+            <summary>
+            创建时间
+            </summary>
+        </member>
+        <member name="T:IdentityHost.Properties.Resource">
+            <summary>
+              一个强类型的资源类，用于查找本地化的字符串等。
+            </summary>
+        </member>
+        <member name="P:IdentityHost.Properties.Resource.ResourceManager">
+            <summary>
+              返回此类使用的缓存的 ResourceManager 实例。
+            </summary>
+        </member>
+        <member name="P:IdentityHost.Properties.Resource.Culture">
+            <summary>
+              重写当前线程的 CurrentUICulture 属性
+              重写当前线程的 CurrentUICulture 属性。
+            </summary>
+        </member>
+        <member name="P:IdentityHost.Properties.Resource.AlreadyExists">
+            <summary>
+              查找类似 记录已经存在：{0} 的本地化字符串。
+            </summary>
+        </member>
+        <member name="P:IdentityHost.Properties.Resource.FileInvalid">
+            <summary>
+              查找类似 文件不合法 的本地化字符串。
+            </summary>
+        </member>
+        <member name="P:IdentityHost.Properties.Resource.NotFound">
+            <summary>
+              查找类似 资源不存在 的本地化字符串。
+            </summary>
+        </member>
+        <member name="P:IdentityHost.Properties.Resource.NotSupport">
+            <summary>
+              查找类似 不支持多级分类 的本地化字符串。
+            </summary>
+        </member>
+        <member name="P:IdentityHost.Properties.Resource.ParentNotFound">
+            <summary>
+              查找类似 上级分类不存在 的本地化字符串。
+            </summary>
+        </member>
+        <member name="P:IdentityHost.Properties.Resource.Repeat">
+            <summary>
+              查找类似 重复的操作 的本地化字符串。
+            </summary>
+        </member>
+        <member name="P:IdentityHost.Properties.Resource.Test">
+            <summary>
+              查找类似 测试 的本地化字符串。
+            </summary>
+        </member>
+        <member name="P:IdentityHost.Properties.Resource.TimeTooEarly">
+            <summary>
+              查找类似 生效时间必须大于当前时间 的本地化字符串。
+            </summary>
+        </member>
+        <member name="P:IdentityHost.ViewModel.IdViewModel.Id">
+            <summary>
+             Id
+            </summary>
+        </member>
+        <member name="P:IdentityHost.ViewModel.LoginViewModel.LoginName">
+            <summary>
+             登录名
+            </summary>
+        </member>
+        <member name="P:IdentityHost.ViewModel.LoginViewModel.Password">
+            <summary>
+             密码
+            </summary>
+        </member>
+        <member name="P:IdentityHost.ViewModel.PageViewModel.PageIndex">
+            <summary>
+             页码，默认=1
+            </summary>
+        </member>
+        <member name="P:IdentityHost.ViewModel.PageViewModel.PageSize">
+            <summary>
+             每页查询数量，默认=10
+            </summary>
+        </member>
+        <member name="P:IdentityHost.ViewModel.UserListViewModel.State">
+            <summary>
+             状态，-1=全部，0=正常，1=未激活，2=冻结，3=删除
+            </summary>
+        </member>
+        <member name="P:IdentityHost.ViewModel.UserListViewModel.Name">
+            <summary>
+             名称，搜索条件，非模糊搜索
+            </summary>
+        </member>
+        <member name="P:IdentityHost.ViewModel.PasswordViewModel.OldPassword">
+            <summary>
+             旧密码
+            </summary>
+        </member>
+        <member name="P:IdentityHost.ViewModel.PasswordViewModel.NewPassword">
+            <summary>
+             新密码
+            </summary>
+        </member>
+        <member name="P:IdentityHost.ViewModel.PasswordViewModel.RePassword">
+            <summary>
+             重复新密码
+            </summary>
+        </member>
+        <member name="P:IdentityHost.ViewModel.R2UViewModel.RoleId">
+            <summary>
+             角色Id
+            </summary>
+        </member>
+        <member name="P:IdentityHost.ViewModel.R2UViewModel.UserId">
+            <summary>
+             员工Id
+            </summary>
+        </member>
+        <member name="P:IdentityHost.ViewModel.R2RViewModel.RoleId">
+            <summary>
+             角色Id
+            </summary>
+        </member>
+        <member name="P:IdentityHost.ViewModel.R2RViewModel.ResourceId">
+            <summary>
+             资源Id
+            </summary>
+        </member>
+        <member name="P:IdentityHost.ViewModel.AddResourceViewModel.Name">
+            <summary>
+             名称
+            </summary>
+        </member>
+        <member name="P:IdentityHost.ViewModel.AddResourceViewModel.Content">
+            <summary>
+             资源内容
+            </summary>
+        </member>
+        <member name="P:IdentityHost.ViewModel.AddResourceViewModel.Type">
+            <summary>
+             资源类型，0=API，1=网页元素
+            </summary>
+        </member>
+        <member name="P:IdentityHost.ViewModel.AddResourceViewModel.Authorize">
+            <summary>
+             是否需要授权才允许访问
+            </summary>
+        </member>
+        <member name="P:IdentityHost.ViewModel.AddResourceViewModel.ParentId">
+            <summary>
+             资源分类编号
+            </summary>
+        </member>
+        <member name="P:IdentityHost.ViewModel.AddResourceViewModel.Sort">
+            <summary>
+             排序号，倒序排序
+            </summary>
+        </member>
+        <member name="P:IdentityHost.ViewModel.EditResourceViewModel.Id">
+            <summary>
+             Id
+            </summary>
+        </member>
+        <member name="P:IdentityHost.ViewModel.ResourceListViewModel.Type">
+            <summary>
+             资源类型，0=API，1=网页元素，默认=0
+            </summary>
+        </member>
+        <member name="P:IdentityHost.ViewModel.ResourceRootViewModel.Type">
+            <summary>
+             资源类型，0=API，1=网页元素，默认= null
+            </summary>
+        </member>
+        <member name="P:IdentityHost.ViewModel.AddRoleViewModel.Name">
+            <summary>
+             角色名称
+            </summary>
+        </member>
+        <member name="P:IdentityHost.ViewModel.EditRoleViewModel.Id">
+            <summary>
+             Id
+            </summary>
+        </member>
+        <member name="P:IdentityHost.ViewModel.AddM_UserViewModel.Name">
+            <summary>
+             姓名
+            </summary>
+        </member>
+        <member name="P:IdentityHost.ViewModel.AddM_UserViewModel.ImgFace">
+            <summary>
+             头像
+            </summary>
+        </member>
+        <member name="P:IdentityHost.ViewModel.AddM_UserViewModel.LoginName">
+            <summary>
+             登录名
+            </summary>
+        </member>
+        <member name="P:IdentityHost.ViewModel.AddM_UserViewModel.Phone">
+            <summary>
+             手机号码
+            </summary>
+        </member>
+        <member name="P:IdentityHost.ViewModel.AddM_UserViewModel.Password">
+            <summary>
+             密码
+            </summary>
+        </member>
+        <member name="P:IdentityHost.ViewModel.AddM_UserViewModel.Role">
+            <summary>
+            角色列表
+            </summary>
+        </member>
+        <member name="P:IdentityHost.ViewModel.EditUserViewModel.Id">
+            <summary>
+             用户编号
+            </summary>
+        </member>
+        <member name="P:IdentityHost.ViewModel.EditUserViewModel.Name">
+            <summary>
+             姓名
+            </summary>
+        </member>
+        <member name="P:IdentityHost.ViewModel.EditUserViewModel.ImgFace">
+            <summary>
+             头像
+            </summary>
+        </member>
+        <member name="P:IdentityHost.ViewModel.EditUserViewModel.Phone">
+            <summary>
+             手机号码
+            </summary>
+        </member>
+        <member name="P:IdentityHost.ViewModel.EditUserViewModel.Role">
+            <summary>
+            角色列表
+            </summary>
+        </member>
+    </members>
+</doc>

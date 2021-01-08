@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace MyStaging.Interface
+﻿namespace MyStaging.Interface
 {
     public interface ISaveChanged
     {

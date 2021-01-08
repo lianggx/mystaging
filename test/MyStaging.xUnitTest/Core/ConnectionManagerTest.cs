@@ -1,7 +1,4 @@
 ﻿using MyStaging.Core;
-using System;
-using System.Collections.Generic;
-using System.Text;
 using Xunit;
 
 namespace MyStaging.xUnitTest.Core
