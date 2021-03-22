@@ -38,7 +38,7 @@ namespace IdentityHost.Controllers
         {
             var role = roleService.Add(new M_Role { Name = model.Name });
 
-            return APIReturn.成功.SetData("id", role.Id);
+            return APIResult.成功.SetData("id", role.Id);
         }
 
         /// <summary>
@@ -58,11 +58,11 @@ namespace IdentityHost.Controllers
         {
             var role = roleService.Detail(model.Id);
             if (role == null)
-                return APIReturn.记录不存在;
+                return APIResult.记录不存在;
 
             role = roleService.EditName(role.Id, model.Name);
 
-            return APIReturn.成功.SetData("id", role.Id);
+            return APIResult.成功.SetData("id", role.Id);
         }
 
         /// <summary>
@@ -75,11 +75,11 @@ namespace IdentityHost.Controllers
         {
             var role = roleService.Detail(model.Id);
             if (role == null)
-                return APIReturn.记录不存在;
+                return APIResult.记录不存在;
 
             var success = roleService.Delete(role.Id);
 
-            return success ? APIReturn.成功 : APIReturn.失败;
+            return success ? APIResult.成功 : APIResult.失败;
         }
 
         /// <summary>
@@ -107,11 +107,11 @@ namespace IdentityHost.Controllers
         {
             var role = roleService.Detail(model.Id);
             if (role == null)
-                return APIReturn.记录不存在;
+                return APIResult.记录不存在;
 
             var resources = resourceService.ResourceByRole(role.Id);
 
-            return APIReturn.成功.SetData("role", new
+            return APIResult.成功.SetData("role", new
             {
                 role.Id,
                 role.Name
@@ -142,7 +142,7 @@ namespace IdentityHost.Controllers
         {
             var list = roleService.List(model.PageIndex, model.PageSize);
 
-            return APIReturn.成功.SetData("list", list.Select(f => new
+            return APIResult.成功.SetData("list", list.Select(f => new
             {
                 f.Id,
                 f.Name

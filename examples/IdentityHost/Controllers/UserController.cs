@@ -32,7 +32,7 @@ namespace IdentityHost.Controllers
         {
             var user = userService.Detail(model.LoginName);
             if (user != null)
-                return APIReturn.失败.SetMessage(string.Format(Resource.AlreadyExists, model.LoginName));
+                return APIResult.失败.SetMessage(string.Format(Resource.AlreadyExists, model.LoginName));
 
             user = userService.Add(new M_User
             {
@@ -44,7 +44,7 @@ namespace IdentityHost.Controllers
             }, model.Role);
 
 
-            return APIReturn.成功.SetData("id", user.Id);
+            return APIResult.成功.SetData("id", user.Id);
         }
 
         /// <summary>
@@ -57,11 +57,11 @@ namespace IdentityHost.Controllers
         {
             var user = userService.Detail(model.Id);
             if (user == null)
-                return APIReturn.记录不存在;
+                return APIResult.记录不存在;
 
             userService.Edit(model.Id, model.Name, model.ImgFace, model.Phone, model.Role);
 
-            return APIReturn.成功;
+            return APIResult.成功;
         }
 
         /// <summary>
@@ -74,11 +74,11 @@ namespace IdentityHost.Controllers
         {
             var user = userService.Detail(model.Id);
             if (user == null)
-                return APIReturn.记录不存在;
+                return APIResult.记录不存在;
 
             var result = userService.Delete(model.Id);
 
-            return result ? APIReturn.成功 : APIReturn.失败;
+            return result ? APIResult.成功 : APIResult.失败;
         }
 
         /// <summary>
@@ -104,12 +104,12 @@ namespace IdentityHost.Controllers
         {
             var user = userService.Detail(model.Id);
             if (user == null)
-                return APIReturn.记录不存在;
+                return APIResult.记录不存在;
 
             // 查询角色
             var roles = roleService.GetRoles(user.Id);
 
-            return APIReturn.成功.SetData("detail", new
+            return APIResult.成功.SetData("detail", new
             {
                 user.Name,
                 user.LoginName,
@@ -145,7 +145,7 @@ namespace IdentityHost.Controllers
         public IActionResult List([FromBody] UserListViewModel model)
         {
             var result = userService.List(model.Name, model.State, model.PageIndex, model.PageSize);
-            return APIReturn.成功.SetData("list", result.Select(f => new
+            return APIResult.成功.SetData("list", result.Select(f => new
             {
                 f.Name,
                 f.LoginName,

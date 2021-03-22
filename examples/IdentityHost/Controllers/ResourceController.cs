@@ -38,10 +38,10 @@ namespace IdentityHost.Controllers
 
             var resource = resourceService.Detail(model.Content);
             if (resource != null)
-                return APIReturn.失败.SetMessage(string.Format(LocalResource.AlreadyExists, model.Content));
+                return APIResult.失败.SetMessage(string.Format(LocalResource.AlreadyExists, model.Content));
 
             var check = CheckParent(model.ParentId);
-            if (check.Code != APIReturn.OK)
+            if (check.Code != APIResult.OK)
                 return check;
 
             resource = resourceService.Add(
@@ -55,7 +55,7 @@ namespace IdentityHost.Controllers
                     Sort = model.Sort
                 });
 
-            return APIReturn.成功.SetData("id", resource.Id);
+            return APIResult.成功.SetData("id", resource.Id);
         }
 
         /// <summary>
@@ -75,33 +75,33 @@ namespace IdentityHost.Controllers
         {
             var resource = resourceService.Detail(model.Id);
             if (resource == null)
-                return APIReturn.记录不存在;
+                return APIResult.记录不存在;
 
             var check = CheckParent(model.ParentId);
-            if (check.Code != APIReturn.OK)
+            if (check.Code != APIResult.OK)
                 return check;
 
             resource = resourceService.Edit(model.Id, model.Content, model.Name, model.Authorize, model.Type, model.ParentId, model.Sort);
 
-            return resource != null ? APIReturn.成功 : APIReturn.失败;
+            return resource != null ? APIResult.成功 : APIResult.失败;
         }
 
-        private APIReturn CheckParent(int? parentId)
+        private APIResult CheckParent(int? parentId)
         {
             if (parentId.HasValue)
             {
                 var parent = resourceService.Detail(parentId.Value);
                 if (parent == null)
                 {
-                    return APIReturn.失败.SetMessage(LocalResource.ParentNotFound);
+                    return APIResult.失败.SetMessage(LocalResource.ParentNotFound);
                 }
                 else if (parentId.HasValue)
                 {
-                    return APIReturn.失败.SetMessage(LocalResource.NotSupport);
+                    return APIResult.失败.SetMessage(LocalResource.NotSupport);
                 }
             }
 
-            return APIReturn.成功;
+            return APIResult.成功;
         }
 
         /// <summary>
@@ -114,11 +114,11 @@ namespace IdentityHost.Controllers
         {
             var resource = resourceService.Detail(model.Id);
             if (resource == null)
-                return APIReturn.记录不存在;
+                return APIResult.记录不存在;
 
             var result = resourceService.Delete(model.Id);
 
-            return result ? APIReturn.成功 : APIReturn.失败;
+            return result ? APIResult.成功 : APIResult.失败;
         }
 
         /// <summary>
@@ -145,7 +145,7 @@ namespace IdentityHost.Controllers
         {
             var list = resourceService.List(model.Type);
 
-            return APIReturn.成功.SetData("list", list.Select(f => new
+            return APIResult.成功.SetData("list", list.Select(f => new
             {
                 f.Id,
                 f.ParentId,
@@ -189,7 +189,7 @@ namespace IdentityHost.Controllers
         {
             var list = resourceService.Root(model.Type);
 
-            return APIReturn.成功.SetData("list", list.Select(f => new
+            return APIResult.成功.SetData("list", list.Select(f => new
             {
                 f.Id,
                 f.Name,

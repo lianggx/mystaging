@@ -76,7 +76,7 @@ namespace IdentityHost.Controllers
                 foreach (var value in context.ModelState.Values)
                     if (value.Errors.Any())
                     {
-                        context.Result = APIReturn.参数格式不正确.SetMessage($"参数格式不正确：{value.Errors.First().ErrorMessage}");
+                        context.Result = APIResult.参数格式不正确.SetMessage($"参数格式不正确：{value.Errors.First().ErrorMessage}");
                         return;
                     }
             }
@@ -84,7 +84,7 @@ namespace IdentityHost.Controllers
 
         public override void OnActionExecuted(ActionExecutedContext context)
         {
-            if (context.Result is APIReturn apiReturn)
+            if (context.Result is APIResult apiReturn)
             {
                 var response = JsonSerializer.Serialize(apiReturn);
                 _ = GetService<AccessLogService>().Add(

@@ -29,7 +29,7 @@ namespace IdentityHost.Extensions
             }
             if (context.Exception is APIReturnException ar)
             {
-                context.Result = new APIReturn(ar.HResult, ar.Message);
+                context.Result = new APIResult(ar.HResult, ar.Message);
                 return;
             }
             string exmessage = string.Empty;
@@ -53,11 +53,11 @@ namespace IdentityHost.Extensions
 
             if (_env.IsDevelopment() || _env.IsStaging())
             {
-                context.Result = APIReturn.失败.SetMessage(context.Exception.Message);
+                context.Result = APIResult.失败.SetMessage(context.Exception.Message);
             }
             else
             {
-                context.Result = APIReturn.系统内置_内部异常;
+                context.Result = APIResult.系统内置_内部异常;
             }
             context.ExceptionHandled = true;
         }
@@ -70,18 +70,18 @@ namespace IdentityHost.Extensions
         {
             HResult = code;
         }
-        public APIReturnException(APIReturn ar) : base(ar.Message)
+        public APIReturnException(APIResult ar) : base(ar.Message)
         {
             HResult = ar.Code;
 
         }
-        public static implicit operator APIReturnException(APIReturn value)
+        public static implicit operator APIReturnException(APIResult value)
         {
             return new APIReturnException(value);
         }
-        public static implicit operator APIReturn(APIReturnException value)
+        public static implicit operator APIResult(APIReturnException value)
         {
-            return new APIReturn(value.HResult, value.Message);
+            return new APIResult(value.HResult, value.Message);
         }
     }
 }

@@ -32,7 +32,7 @@ namespace IdentityHost.Controllers
         {
             var password = SecurityHelper.GetSHA256SignString(model.OldPassword);
             if (LoginUser.Password != password)
-                return APIReturn.失败.SetMessage("旧密码错误");
+                return APIResult.失败.SetMessage("旧密码错误");
 
             var result = userService.UpdatePassword(LoginUser.Id, model.NewPassword);
 
@@ -41,7 +41,7 @@ namespace IdentityHost.Controllers
                 await redisClient.GetDatabase().KeyDeleteAsync(SignInKey + Token);
             }
 
-            return result ? APIReturn.成功 : APIReturn.失败;
+            return result ? APIResult.成功 : APIResult.失败;
         }
     }
 }

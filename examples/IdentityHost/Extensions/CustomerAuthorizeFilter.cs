@@ -57,34 +57,34 @@ namespace IdentityHost.Extensions
             }
         }
 
-        private async Task<APIReturn> CheckResource(HttpContext ctx, string path)
+        private async Task<APIResult> CheckResource(HttpContext ctx, string path)
         {
             resource = resourceService.Detail(path);
             if (resource == null)
-                return APIReturn.失败.SetMessage(LocalResource.NotFound);
+                return APIResult.失败.SetMessage(LocalResource.NotFound);
 
             if (resource.Authorize)
             {
                 var token = ctx.Request.Headers["token"];
                 if (string.IsNullOrEmpty(token))
-                    return APIReturn.用户_未登录;
+                    return APIResult.用户_未登录;
 
                 int.TryParse(await redisClient.GetDatabase().StringGetAsync(SignInKey + token), out userId);
                 var roleId = roleService.GetRoles(userId).Select(f => f.Id).ToList();
                 if (roleId.Count == 0)
-                    return APIReturn.没有访问权限;
+                    return APIResult.没有访问权限;
                 else
                 {
                     var access = roleService.ValidatorRole(resource.Id, roleId.ToArray());
                     if (!access)
-                        return APIReturn.没有访问权限;
+                        return APIResult.没有访问权限;
                 }
             }
 
-            return APIReturn.成功;
+            return APIResult.成功;
         }
 
-        private void AddAccessLog(APIReturn apiReturn, HttpContext context)
+        private void AddAccessLog(APIResult apiReturn, HttpContext context)
         {
             var resourceName = resource == null ? context.Request.Path.Value : resource.Content;
             _ = accessLogService.Add(new M_Accesslog

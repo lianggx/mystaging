@@ -39,11 +39,11 @@ namespace IdentityHost.Controllers
         {
             var user = userService.Detail(model.UserId);
             if (user == null && user.State != 3)
-                return APIReturn.记录不存在;
+                return APIResult.记录不存在;
 
             var result = roleService.AddR2U(user.Id, model.RoleId.ToArray());
 
-            return result ? APIReturn.成功 : APIReturn.失败;
+            return result ? APIResult.成功 : APIResult.失败;
         }
     }
 }

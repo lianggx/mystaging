@@ -4,37 +4,37 @@
         <name>IdentityHost</name>
     </assembly>
     <members>
-        <member name="P:IdentityHost.APIReturn.成功">
+        <member name="P:IdentityHost.APIResult.成功">
             <summary>
             成功 0
             </summary>
         </member>
-        <member name="P:IdentityHost.APIReturn.失败">
+        <member name="P:IdentityHost.APIResult.失败">
             <summary>
              失败 99
             </summary>
         </member>
-        <member name="P:IdentityHost.APIReturn.记录不存在">
+        <member name="P:IdentityHost.APIResult.记录不存在">
             <summary>
             记录不存在 98
             </summary>
         </member>
-        <member name="P:IdentityHost.APIReturn.参数格式不正确">
+        <member name="P:IdentityHost.APIResult.参数格式不正确">
             <summary>
             参数格式不正确 97
             </summary>
         </member>
-        <member name="P:IdentityHost.APIReturn.没有访问权限">
+        <member name="P:IdentityHost.APIResult.没有访问权限">
             <summary>
              没有访问权限 96
             </summary>
         </member>
-        <member name="P:IdentityHost.APIReturn.系统内置_内部异常">
+        <member name="P:IdentityHost.APIResult.系统内置_内部异常">
             <summary>
              系统内置_内部异常 5001000
             </summary>
         </member>
-        <member name="P:IdentityHost.APIReturn.用户_未登录">
+        <member name="P:IdentityHost.APIResult.用户_未登录">
             <summary>
              用户_未登录 1001005
             </summary>
@@ -65,7 +65,7 @@
             <param name="model"></param>
             <returns></returns>
         </member>
-        <member name="M:IdentityHost.Controllers.AccountController.SignOut">
+        <member name="M:IdentityHost.Controllers.AccountController.SignToOut">
             <summary>
              登出
             </summary>
@@ -339,6 +339,24 @@
             </code>
             </remarks>
             <param name="model"></param>
+            <returns></returns>
+        </member>
+        <member name="M:IdentityHost.Helpers.AesFactory.EncryptStringToBytes(System.String,System.String,System.String)">
+            <summary>
+             加密字符串
+            </summary>
+            <param name="plainText">待加密文本</param>
+            <param name="key">密钥，长度为32</param>
+            <param name="iv">向量，长度为16</param>
+            <returns></returns>
+        </member>
+        <member name="M:IdentityHost.Helpers.AesFactory.DecryptStringFromBytes(System.Byte[],System.String,System.String)">
+            <summary>
+             解密字符串
+            </summary>
+            <param name="cipherData">待解密数据</param>
+            <param name="key">密钥，长度为32</param>
+            <param name="iv">向量，长度为16</param>
             <returns></returns>
         </member>
         <member name="M:IdentityHost.Helpers.HttpHelper.#ctor(System.Net.Http.IHttpClientFactory)">

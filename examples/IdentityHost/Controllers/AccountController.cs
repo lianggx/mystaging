@@ -1,4 +1,5 @@
-﻿using IdentityHost.Helpers;
+﻿using IdentityHost.Extensions;
+using IdentityHost.Helpers;
 using IdentityHost.Model;
 using IdentityHost.Services;
 using IdentityHost.ViewModel;
@@ -10,6 +11,8 @@ using StackExchange.Redis;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
+using System.Text.Json;
 using System.Threading.Tasks;
 
 namespace IdentityHost.Controllers
@@ -23,7 +26,7 @@ namespace IdentityHost.Controllers
         private readonly RoleService roleService;
 
         public AccountController(IConfiguration cfg,
-            ILogger<AccountController> logger, IEnumerable<IManagerService> managerServices,ConnectionMultiplexer multiplexer) : base(cfg, logger, managerServices,multiplexer)
+            ILogger<AccountController> logger, IEnumerable<IManagerService> managerServices, ConnectionMultiplexer multiplexer) : base(cfg, logger, managerServices, multiplexer)
         {
             userService = GetService<UserService>();
             resourceService = GetService<ResourceService>();
@@ -62,14 +65,14 @@ namespace IdentityHost.Controllers
             var user = userService.Detail(model.LoginName);
 
             if (user == null || user.State != 0)
-                return APIReturn.记录不存在;
+                return APIResult.记录不存在;
             else if (user.Password != password)
-                return APIReturn.失败.SetMessage("用户名或者密码错误");
+                return APIResult.失败.SetMessage("用户名或者密码错误");
             else
                 return await SignIn(user);
         }
 
-        private async Task<APIReturn> SignIn(M_User user)
+        private async Task<APIResult> SignIn(M_User user)
         {
             var token = Guid.NewGuid().ToString("N");
             var key = SignInKey + token;
@@ -84,7 +87,7 @@ namespace IdentityHost.Controllers
                 token
             };
 
-            return APIReturn.成功.SetData("detail", detail);
+            return APIResult.成功.SetData("detail", detail);
         }
 
         /// <summary>
@@ -92,13 +95,13 @@ namespace IdentityHost.Controllers
         /// </summary>
         /// <returns></returns>
         [HttpPost("signout")]
-        public async Task<IActionResult> SignOut()
+        public async Task<IActionResult> SignToOut()
         {
             if (!string.IsNullOrEmpty(base.Token))
             {
                 await redisClient.GetDatabase().KeyDeleteAsync(SignInKey + Token);
             }
-            return APIReturn.成功;
+            return APIResult.成功;
         }
 
         /// <summary>
@@ -137,7 +140,7 @@ namespace IdentityHost.Controllers
 
             }
 
-            return APIReturn.成功.SetData("detail", new
+            return APIResult.成功.SetData("detail", new
             {
                 user.Id,
                 user.Name,
@@ -168,5 +171,12 @@ namespace IdentityHost.Controllers
                 })
             }));
         }
+    }
+
+    public class TokenInfo
+    {
+        public int Id { get; set; }
+        public string Name { get; set; }
+        public DateTime ExpireTime { get; set; }
     }
 }

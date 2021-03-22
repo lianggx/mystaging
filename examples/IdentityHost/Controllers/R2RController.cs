@@ -30,10 +30,10 @@ namespace IdentityHost.Controllers
         {
             var role = roleService.Detail(model.RoleId);
             if (role == null)
-                return APIReturn.记录不存在;
+                return APIResult.记录不存在;
 
             var result = roleService.AddR2R(model.RoleId, model.ResourceId.ToArray());
-            return result ? APIReturn.成功 : APIReturn.失败;
+            return result ? APIResult.成功 : APIResult.失败;
         }
     }
 }
