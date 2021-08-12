@@ -330,7 +330,7 @@ namespace MyStaging.Core
         /// <param name="isLike">当前操作是 like（true）还是 not like (false) </param>
         protected void ParamenterLike(MethodCallExpression node, bool isLike)
         {
-            string methodName = isLike ? "ILIKE " : " NOT ILIKE ";
+            string methodName = isLike ? "LIKE " : " NOT LIKE ";
             this.SqlText.Builder.Append($" {methodName} '%' || ");
             Visit(node.Arguments[1]);
             this.SqlText.Builder.Append(" || '%'");
