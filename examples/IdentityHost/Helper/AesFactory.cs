@@ -24,15 +24,15 @@ namespace IdentityHost.Helpers
                 throw new ArgumentOutOfRangeException(nameof(iv));
 
             byte[] encrypted;
-            using (RijndaelManaged rijndael = new RijndaelManaged())
+            using (var aes = Aes.Create())
             {
-                rijndael.Key = Encoding.UTF8.GetBytes(key);
-                rijndael.IV = Encoding.UTF8.GetBytes(iv);
+                aes.Key = Encoding.UTF8.GetBytes(key);
+                aes.IV = Encoding.UTF8.GetBytes(iv);
 
-                ICryptoTransform encryptor = rijndael.CreateEncryptor(rijndael.Key, rijndael.IV);
-                using MemoryStream msEncrypt = new MemoryStream();
-                using CryptoStream csEncrypt = new CryptoStream(msEncrypt, encryptor, CryptoStreamMode.Write);
-                using (StreamWriter swEncrypt = new StreamWriter(csEncrypt))
+                ICryptoTransform encryptor = aes.CreateEncryptor(aes.Key, aes.IV);
+                using MemoryStream msEncrypt = new();
+                using CryptoStream csEncrypt = new(msEncrypt, encryptor, CryptoStreamMode.Write);
+                using (StreamWriter swEncrypt = new(csEncrypt))
                 {
                     swEncrypt.Write(plainText);
                 }
@@ -59,15 +59,15 @@ namespace IdentityHost.Helpers
                 throw new ArgumentOutOfRangeException(nameof(iv));
 
             string plainText;
-            using (RijndaelManaged rijndael = new RijndaelManaged())
+            using (var aes = Aes.Create())
             {
-                rijndael.Key = Encoding.UTF8.GetBytes(key);
-                rijndael.IV = Encoding.UTF8.GetBytes(iv);
+                aes.Key = Encoding.UTF8.GetBytes(key);
+                aes.IV = Encoding.UTF8.GetBytes(iv);
 
-                ICryptoTransform decryptor = rijndael.CreateDecryptor(rijndael.Key, rijndael.IV);
-                using MemoryStream msDecrypt = new MemoryStream(cipherData);
-                using CryptoStream csDecrypt = new CryptoStream(msDecrypt, decryptor, CryptoStreamMode.Read);
-                using StreamReader srDecrypt = new StreamReader(csDecrypt);
+                ICryptoTransform decryptor = aes.CreateDecryptor(aes.Key, aes.IV);
+                using MemoryStream msDecrypt = new(cipherData);
+                using CryptoStream csDecrypt = new(msDecrypt, decryptor, CryptoStreamMode.Read);
+                using StreamReader srDecrypt = new(csDecrypt);
                 plainText = srDecrypt.ReadToEnd();
             }
             return plainText;

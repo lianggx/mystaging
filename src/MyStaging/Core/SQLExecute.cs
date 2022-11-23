@@ -15,7 +15,7 @@ namespace MyStaging.Core
     /// </summary>
     public class SQLExecute
     {
-        private readonly static Dictionary<DbType, byte> dbTypes = new Dictionary<DbType, byte>
+        private readonly static Dictionary<DbType, byte> dbTypes = new()
         {
             { DbType.Int16,0},
             { DbType.Int32,0},
@@ -83,9 +83,9 @@ namespace MyStaging.Core
         /// </summary>
         /// <param name="command">DbCommand 对象</param>
         /// <param name="commandParameters">DbParameter 数组</param>
-        public void AttachParameters(DbCommand command, DbParameter[] commandParameters)
+        public static void AttachParameters(DbCommand command, DbParameter[] commandParameters)
         {
-            if (command == null) throw new ArgumentNullException("command");
+            if (command == null) throw new ArgumentNullException(nameof(command));
             if (commandParameters == null) return;
 
             foreach (DbParameter p in commandParameters)
@@ -96,7 +96,6 @@ namespace MyStaging.Core
 
                 command.Parameters.Add(p);
             }
-
         }
 
         /// <summary>
@@ -108,7 +107,7 @@ namespace MyStaging.Core
         public DbCommand PrepareCommand(CommandType commandType, string commandText, DbParameter[] parameters)
         {
             DbCommand command;
-            if (commandText == null || commandText.Length == 0) throw new ArgumentNullException("commandText");
+            if (commandText == null || commandText.Length == 0) throw new ArgumentNullException(nameof(commandText));
             command = Connection.CreateCommand();
             command.Transaction = this.Transaction;
             OpenConnection(command);
@@ -148,7 +147,7 @@ namespace MyStaging.Core
             catch (Exception ex)
             {
                 ExceptionOutPut(command, ex);
-                throw ex;
+                throw;
             }
             finally
             {
@@ -184,7 +183,7 @@ namespace MyStaging.Core
             catch (Exception ex)
             {
                 ExceptionOutPut(command, ex);
-                throw ex;
+                throw;
             }
             finally
             {
@@ -213,7 +212,7 @@ namespace MyStaging.Core
             catch (Exception ex)
             {
                 ExceptionOutPut(command, ex);
-                throw ex;
+                throw;
             }
             finally
             {
@@ -243,7 +242,7 @@ namespace MyStaging.Core
             catch (Exception ex)
             {
                 ExceptionOutPut(command, ex);
-                throw ex;
+                throw;
             }
             finally
             {
@@ -276,7 +275,7 @@ namespace MyStaging.Core
             catch (Exception ex)
             {
                 ExceptionOutPut(command, ex);
-                throw ex;
+                throw;
             }
             finally
             {
@@ -296,13 +295,13 @@ namespace MyStaging.Core
             catch (Exception ex)
             {
                 ExceptionOutPut(command, ex);
-                throw ex;
+                throw;
             }
         }
 
         public List<TResult> ExecuteDataReader<TResult>(CommandType commandType, string commandText, params DbParameter[] parameters)
         {
-            List<TResult> list = new List<TResult>();
+            List<TResult> list = new();
             DbCommand command = null;
             try
             {
@@ -337,7 +336,7 @@ namespace MyStaging.Core
             catch (Exception ex)
             {
                 ExceptionOutPut(command, ex);
-                throw ex;
+                throw;
             }
             finally
             {
@@ -421,7 +420,7 @@ namespace MyStaging.Core
                 for (int i = 0; i < coll.Count; i++)
                 {
                     var item = coll[i];
-                    ps += $"{ item.ParameterName}:{item.Value},";
+                    ps += $"{item.ParameterName}:{item.Value},";
                 }
 
                 for (int i = 0; i < coll.Count; i++)
@@ -438,7 +437,7 @@ namespace MyStaging.Core
             ex.Data["Parameters"] = ps;
 
             if (Logger != null)
-                Logger.LogError(new EventId(111111), ex, "数据库执行出错：===== \n {0}\n{1}", sql, ps);
+                Logger.LogError(new EventId(111111), ex, "数据库执行出错：===== \n {sql}\n{ps}", sql, ps);
             else
                 Console.WriteLine("数据库执行出错：===== \n {0}\n{1}", sql, ps);
         }
@@ -447,7 +446,7 @@ namespace MyStaging.Core
         ///  打开数据库连接
         /// </summary>
         /// <param name="cmd"></param>
-        private void OpenConnection(DbCommand cmd)
+        private static void OpenConnection(DbCommand cmd)
         {
             if (cmd.Connection.State == ConnectionState.Closed)
                 cmd.Connection.Open();

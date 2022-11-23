@@ -54,8 +54,8 @@ namespace IdentityHost.Extensions
             }
             catch (Exception ex)
             {
-                _logger.LogError("readasync error");
-                throw ex;
+                _logger.LogError(ex, "readasync error,{Message}", ex.Message);
+                throw;
             }
 
             var buffer = readResult.Buffer;
@@ -74,8 +74,8 @@ namespace IdentityHost.Extensions
                 ex.Data["segment"] = readResult.Buffer.IsSingleSegment;
                 ex.Data["start"] = buffer.Start.GetInteger();
                 ex.Data["end"] = buffer.End.GetInteger();
-                _logger.LogError("advanceTo error, {0}", JsonSerializer.Serialize(ex.Data));
-                throw ex;
+                _logger.LogError(ex, "Middleware pipereader error, {Message}", JsonSerializer.Serialize(ex.Data));
+                throw;
             }
             return resturnStr;
         }

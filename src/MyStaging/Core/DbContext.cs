@@ -17,16 +17,16 @@ namespace MyStaging.Core
     public class InternalDbContext
     {
         public readonly static string[] INTERFACES = { "ISelectBuilder`1", "IUpdateBuilder`1", "IInsertBuilder`1", "IDeleteBuilder`1", "IStagingConnection" };
-        public readonly static ConcurrentDictionary<string, Type> SERVICES = new ConcurrentDictionary<string, Type>();
-        public readonly static object objlock = new object();
+        public readonly static ConcurrentDictionary<string, Type> SERVICES = new();
+        public readonly static object objlock = new ();
 
         public static void Initializer(StagingOptions options)
         {
-            if (SERVICES.Count == 0)
+            if (SERVICES.IsEmpty)
             {
                 lock (objlock)
                 {
-                    if (SERVICES.Count > 0)
+                    if (!SERVICES.IsEmpty)
                         return;
 
                     var fileName = "MyStaging." + options.Provider + ".dll";
@@ -82,10 +82,6 @@ namespace MyStaging.Core
             CheckNotNull.NotNull(options.Name, nameof(options.Name));
 
             Options = options;
-            if (options.CacheOptions != null && options.CacheOptions.Cache != null)
-            {
-                CacheManager = new CacheManager(options.CacheOptions);
-            }
 
             InternalDbContext.Initializer(Options);
             var properties = this.GetType().GetProperties();
@@ -121,7 +117,7 @@ namespace MyStaging.Core
         /// <summary>
         ///  获取事务集
         /// </summary>
-        public ConcurrentDictionary<int, DbTransaction> Trans = new ConcurrentDictionary<int, DbTransaction>();
+        public ConcurrentDictionary<int, DbTransaction> Trans = new ();
 
         /// <summary>
         ///  获取当前线程产生的数据库事务
@@ -130,17 +126,12 @@ namespace MyStaging.Core
         {
             get
             {
-                int tid = Thread.CurrentThread.ManagedThreadId;
+                int tid = Environment.CurrentManagedThreadId;
                 if (Trans.ContainsKey(tid) && Trans[tid] != null)
                     return Trans[tid];
                 return null;
             }
         }
-
-        /// <summary>
-        ///  缓存管理
-        /// </summary>
-        public CacheManager CacheManager { get; set; } = null;
 
         /// <summary>
         ///  脚手架设置选项
@@ -191,7 +182,7 @@ namespace MyStaging.Core
 
         public void WriteLog(Exception ex)
         {
-            StringBuilder sb = new StringBuilder();
+            StringBuilder sb = new ();
             sb.AppendLine(ex.Message);
             sb.AppendLine(ex.StackTrace);
             if (ex.Data["DbConnection"] is DbConnection dbConnection)
@@ -247,7 +238,7 @@ namespace MyStaging.Core
                 Connection.Open();
 
             DbTransaction tran = Connection.BeginTransaction();
-            int tid = Thread.CurrentThread.ManagedThreadId;
+            int tid = Environment.CurrentManagedThreadId;
             if (Trans.ContainsKey(tid))
                 CommitTransaction();
             else
@@ -272,7 +263,7 @@ namespace MyStaging.Core
         /// <param name="iscommit">true=提交事务，false=回滚事务</param>
         public virtual DbTransaction CommitTransaction(bool iscommit)
         {
-            int tid = Thread.CurrentThread.ManagedThreadId;
+            int tid = Environment.CurrentManagedThreadId;
             if (Trans.TryRemove(tid, out DbTransaction tran))
             {
                 using var connection = tran.Connection;

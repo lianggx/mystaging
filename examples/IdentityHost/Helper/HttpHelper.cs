@@ -151,9 +151,9 @@ namespace IdentityHost.Helpers
                 HttpClient client = timeout.HasValue ? Create(timeout.Value) : null;
                 return_str = await HttpRequest(client, url, HttpMethodEnum.GET, null);
             }
-            catch (Exception ex)
+            catch
             {
-                throw ex;
+                throw;
             }
             return return_str;
         }

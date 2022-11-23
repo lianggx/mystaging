@@ -289,29 +289,12 @@ namespace MyStaging.MySql.Core
             Page(1, 1);
             ResetFields(fields);
 
-            var objType = typeof(TResult);
-            var enable = Cacheing && dbContext.CacheManager != null && objType.IsClass;
-            if (enable && cacheing)
-            {
-                // 读取缓存
-                TResult obj = dbContext.CacheManager.GetItemCache<TResult, DbParameter>(this.Parameters);
-                if (obj != null)
-                {
-                    this.Clear();
-                    return obj;
-                }
-            }
             List<TResult> list = ExecuteReader<TResult>(CommandText);
 
             if (list.Count > 0)
             {
-                var result = list[0];
-                if (enable)
-                {
-                    dbContext.CacheManager.SetItemCache(result, this.Expire);
-                }
                 this.Clear();
-                return result;
+                return list[0];
             }
             else
                 return default;
@@ -367,7 +350,7 @@ namespace MyStaging.MySql.Core
         /// <returns></returns>
         public List<TResult> ExecuteReader<TResult>(string cmdText)
         {
-            List<TResult> list = new List<TResult>();
+            List<TResult> list = new();
             SQLExecute execute = byMaster ? dbContext.ByMaster().Execute : dbContext.Execute;
             using var reader = execute.ExecuteDataReader(CommandType.Text, cmdText, Parameters.ToArray());
             while (reader.Read())
@@ -441,7 +424,7 @@ namespace MyStaging.MySql.Core
 
             if (alisName != masterAlisName && last == null)
             {
-                ExpressionUnionInfo u2 = new ExpressionUnionInfo
+                ExpressionUnionInfo u2 = new()
                 {
                     Model = typeof(TModel1),
                     MasterType = typeof(T),
@@ -453,7 +436,7 @@ namespace MyStaging.MySql.Core
                 UnionList.Add(u2);
             }
 
-            ExpressionUnionInfo us = new ExpressionUnionInfo
+            ExpressionUnionInfo us = new()
             {
                 Model = typeof(TModel2),
                 MasterType = typeof(TModel1),
@@ -578,14 +561,14 @@ namespace MyStaging.MySql.Core
             Type mastertype = typeof(T);
             string tableName = MyStagingUtils.GetMapping(mastertype, ProviderType.MySql);
             // master table
-            StringBuilder sqlText = new StringBuilder();
+            StringBuilder sqlText = new ();
             var fields = string.Join(",", Fields);
             sqlText.AppendLine($"SELECT {fields} FROM  {tableName} {masterAlisName}");
             // union
             int _index = 2;
             foreach (var item in UnionList)
             {
-                DbExpressionVisitor expression = new DbExpressionVisitor
+                DbExpressionVisitor expression = new ()
                 {
                     TypeMaster = item.MasterType,
                     AliasMaster = item.AlisName,
@@ -605,7 +588,7 @@ namespace MyStaging.MySql.Core
             {
                 foreach (var item in WhereExpressions)
                 {
-                    DbExpressionVisitor expression = new DbExpressionVisitor();
+                    DbExpressionVisitor expression = new ();
                     if (UnionList.Count == 0)
                     {
                         expression.TypeMaster = item.Model;
@@ -850,18 +833,18 @@ namespace MyStaging.MySql.Core
         {
             CheckNotNull.NotEmpty(contexts, nameof(contexts));
 
-            StringBuilder sb = new StringBuilder();
-            List<DbParameter> parameters = new List<DbParameter>();
+            StringBuilder sb = new ();
+            List<DbParameter> parameters = new ();
             foreach (var ctx in contexts)
             {
                 sb.AppendLine(ctx.CommandText);
-                sb.Append(";");
+                sb.Append(';');
                 parameters.AddRange(ctx.Parameters);
             }
 
             var cmdText = sb.ToString();
             int pipeLine = contexts.Length;
-            List<List<dynamic>> result = new List<List<dynamic>>();
+            List<List<dynamic>> result = new ();
             SQLExecute execute = master ? dbContext.ByMaster().Execute : dbContext.Execute;
             execute.ExecuteDataReaderPipe(dr =>
              {
@@ -876,7 +859,7 @@ namespace MyStaging.MySql.Core
         {
             for (int i = 0; i < pipeLine; i++)
             {
-                List<dynamic> list = new List<dynamic>();
+                List<dynamic> list = new ();
                 var ctx = contexts[i];
                 while (dr.Read())
                 {
@@ -888,7 +871,7 @@ namespace MyStaging.MySql.Core
             }
         }
 
-        private object ReadObj(DbDataReader reader, Type type)
+        private static object ReadObj(DbDataReader reader, Type type)
         {
             var properties = MyStagingUtils.GetDbFields(type);
             reader.Read();

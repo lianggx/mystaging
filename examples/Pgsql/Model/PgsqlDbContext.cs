@@ -16,9 +16,12 @@ namespace Pgsql
         static PgsqlDbContext()
         {
             Type[] jsonTypes = { typeof(JsonElement) };
-            NpgsqlNameTranslator translator = new NpgsqlNameTranslator();
+            NpgsqlNameTranslator translator = new();
+            //var dataSourceBuilder = new NpgsqlDataSourceBuilder("Host=localhost;Username=test;Password=test");
+            //dataSourceBuilder.MapEnum<et_data_state>("public.et_data_state");
+            //dataSourceBuilder.UseNodaTime();
+            //await using var dataSource = dataSourceBuilder.Build();
             NpgsqlConnection.GlobalTypeMapper.UseJsonNet(jsonTypes);
-
             NpgsqlConnection.GlobalTypeMapper.MapEnum<et_data_state>("public.et_data_state", translator);
             NpgsqlConnection.GlobalTypeMapper.MapEnum<et_role>("public.et_role", translator);
         }

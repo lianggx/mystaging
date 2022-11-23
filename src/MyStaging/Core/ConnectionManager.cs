@@ -8,7 +8,7 @@ namespace MyStaging.Core
 {
     public class ConnectionManager
     {
-        public static ConcurrentDictionary<string, List<ConnectionModel>> dict = new ConcurrentDictionary<string, List<ConnectionModel>>();
+        private readonly static ConcurrentDictionary<string, List<ConnectionModel>> dict = new();
 
         public static void Add(string name, string connectionString, bool readOnly)
         {
@@ -40,7 +40,7 @@ namespace MyStaging.Core
                 throw new InvalidOperationException("已无可用的数据库连接");
             }
 
-            ConnectionModel connection = models.Count == 1 ? models[0] : models.OrderBy(f => f.Used).First();
+            ConnectionModel connection = models.Count == 1 ? models[0] : models.Where(f => f.ReadOnly == readOnly).OrderBy(f => f.Used).First();
 
             if (connection.Used < long.MaxValue)
             {

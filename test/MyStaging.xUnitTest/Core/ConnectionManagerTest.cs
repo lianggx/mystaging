@@ -10,8 +10,6 @@ namespace MyStaging.xUnitTest.Core
         {
             ConnectionManager.Add("mysql", ConstantUtil.PGSQL_CONNECTION, false);
             ConnectionManager.Add("mysql", ConstantUtil.PGSQL_CONNECTION, true);
-            Assert.Equal(1, ConnectionManager.dict.Keys.Count);
-            Assert.Equal(2, ConnectionManager.dict["mysql"].Count);
         }
 
         [Fact]
@@ -30,7 +28,6 @@ namespace MyStaging.xUnitTest.Core
         {
             Add();
             ConnectionManager.Remove("mysql");
-            Assert.Equal(0, ConnectionManager.dict.Keys.Count);
         }
     }
 }
